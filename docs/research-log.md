@@ -64,6 +64,29 @@ the original (0.617 / 0.523), away from where it started untrained (0.357 / 0.29
 
 ---
 
+## 2026-11-21 — The playbook: where this is heading
+
+Wrote down a fuller plan in [`playbook.md`](playbook.md). The main shifts in thinking:
+
+- **Base model for Phase 1 is TinyLlama-1.1B** (standard Llama-2 layout, 22 layers), not only
+  Qwen. The Qwen harness is the warm-up.
+- **Two separate questions, kept separate.** Track A: does looping *add* reasoning depth
+  with the same weights? Track B: can looping *replace* layers with fewer weights at the same
+  depth? The current Qwen exp1 (`4:16:2:28`) is a Track B experiment.
+- **Don't break the model at the start.** Initialize so the looped model behaves exactly
+  like the original at step 0 (near-zero gates on extra passes), instead of slicing it and
+  then trying to recover.
+- **Never loop the first or last layers.** Keep a prelude and a coda.
+- **Measure curves, not points.** Evaluate every checkpoint at several loop counts and plot
+  metric vs. K. A fast synthetic task (multi-hop tracking, parity) should come first because
+  it shows the effect quickly. Factual recall (HellaSwag, TriviaQA) is a control that should
+  stay flat.
+- **Phase 2 is protein language models** (ESM-2 / ESMC). Folding is iterative constraint
+  satisfaction, so looping fits it naturally. These models have no KV cache and almost all
+  their weights sit in the transformer blocks.
+
+---
+
 ## Open questions / ideas to come back to
 - Does more loops at eval time help on a trained checkpoint, or does it only work at the loop
   count it was trained with?
