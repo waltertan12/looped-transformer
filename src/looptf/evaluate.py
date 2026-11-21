@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 import lm_eval
+import torch
 from lm_eval.models.huggingface import HFLM
 
 from .model import LoopSpec, apply_loop, describe, load_looped, load_model
@@ -31,6 +32,8 @@ def run_eval(
             apply_loop(model, loop)
     info = describe(model)
     print(info)
+    weight_gb = sum(p.numel() * p.element_size() for p in model.parameters()) / 2**30
+    torch.cuda.reset_peak_memory_stats()
 
     lm = HFLM(pretrained=model, tokenizer=tok, batch_size=batch_size)
     t0 = time.time()
@@ -43,6 +46,11 @@ def run_eval(
         log_samples=False,
     )
     elapsed = time.time() - t0
+    memory = {
+        "weights_gb": round(weight_gb, 3),
+        "peak_vram_gb": round(torch.cuda.max_memory_allocated() / 2**30, 3),
+    }
+    print(f"memory: {memory}")
 
     summary = {
         "model": model_name,
@@ -52,6 +60,7 @@ def run_eval(
         "tasks": tasks,
         "limit": limit,
         "elapsed_s": round(elapsed, 1),
+        "memory": memory,
         "results": res["results"],
     }
     out = Path(out_dir)
