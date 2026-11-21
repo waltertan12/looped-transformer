@@ -210,6 +210,56 @@ dials stuck at zero in every position. Placement only matters once the loop is o
 
 ---
 
+## 2026-11-21 — What we learned from exp1 and exp2
+
+**"Why did we even give it the option?"** The dials-start-at-zero design was a reaction to
+exp1. There, cutting layers out and looping broke the model on day one (accuracy near
+random), and training only partly repaired it. The playbook recommends identity-preserving
+gates for exactly this. They fixed the broken start, but they also gave the model a free way
+to opt out of the loop, and it took it. Nobody flagged that downside before the run.
+
+**How people usually train looped models (from memory, to verify against the papers):**
+- Most working looped models are trained with the loop **from the start**: Universal
+  Transformers, ALBERT, Huginn-3.5B (recurrent depth, 2025), Ouro/LoopLM (2025). The loop is
+  always fully on, and the number of loops is sampled at random each step.
+- Converting an existing model into a looped one (Relaxed Recursive Transformers, 2024;
+  retrofitted recurrence, 2025) uses **continued pretraining on billions of tokens**, with
+  the loop forced on and often a curriculum that adds loops gradually.
+- We used ~33M tokens of post-training, roughly 100× less than those or more, with an
+  opt-out. A short post-training bolt-on loop isn't a known working recipe.
+
+**Lessons.**
+1. **A loop the model can switch off will be switched off.** Pretrained layers were trained
+   to run once. A second application looks like noise at first, so the easy move is to
+   ignore it. To test looping, the model can't be allowed to opt out.
+2. **Safe start and forced use pull against each other.** Cut-and-loop (exp1) breaks the
+   model; zero dials (exp2) never use the loop. The middle ground is to force the loop on but
+   ease in, for example by adding loops gradually or starting the dials open.
+3. **The training data has to reward thinking.** On web text, the 0.6B is already close to
+   the 1.7B (KL about 0.3), so extra passes have little to gain. The real gap is multi-step
+   reasoning (GSM8K 0.54 vs 0.72), and the training text has little of it.
+4. **Training on general web text erodes math.** GSM8K dropped 0.54 → 0.44 even with no
+   looping. Any future recipe needs math in the mix, and must be judged against a control
+   trained the same way.
+5. **Always run a control.** Without the no-loop control, exp2's small ARC-Easy gain would
+   have looked like a looping win. It came from the training alone.
+6. **Extra passes cost something even when unused.** At K=3: 122 → 67 tok/s, KV cache
+   0.25 → 0.46 GB. At K=4: 54 tok/s, 0.56 GB. Weights stay at 1.11 GB. Any looping gain has
+   to be weighed against this.
+7. **The harness works.** Benchmarks, a fixed memory test, checkpoints that can be scored at
+   any K, and cache-correctness tests are all in place, so the next experiments are cheap to
+   set up.
+8. **Scale matters.** Published looped models use billions to trillions of tokens. On this
+   GPU (~7k tok/s for looped training), a few hundred million tokens is about a day. Any
+   positive result here is early evidence, not a match for the papers.
+
+**What this means for next steps.** Exp3 tests forcing the loop on ("forced"), starting the
+dials open ("half"), and faster-learning dials ("fastdial"). If none of them beats the
+control, the likely next steps are a loop-count curriculum, math in the training mix, and
+longer training, before concluding anything about looping itself.
+
+---
+
 ## 2026-11-21 — Exp3: switching the loop on
 
 Same setup as exp2's looped run (layers 8–19, teacher 1.7B, K ∈ {2,3,4}), 500 steps each,
