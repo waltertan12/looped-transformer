@@ -155,8 +155,8 @@ weights, but they do add KV-cache memory and compute, so that cost is reported t
 | looped, K=1 | 1.11 GB | 0.643 | 0.373 | 0.523 | 0.470 | 119 | 0.25 GB |
 | looped, K=2 | 1.11 GB | 0.643 | 0.380 | 0.520 | 0.473 | 84 | 0.35 GB |
 | looped, K=3 | 1.11 GB | 0.640 | 0.370 | 0.523 | 0.457 | 67 | 0.46 GB |
-| looped, K=4 | 1.11 GB | 0.643 | 0.377 | 0.517 | 0.467 | — | — |
-| looped, K=6 | _pending_ | | | | | | |
+| looped, K=4 | 1.11 GB | 0.643 | 0.377 | 0.517 | 0.467 | 54 | 0.56 GB |
+| looped, K=6 | 1.11 GB | 0.647 | 0.377 | 0.520 | 0.467 | 40 | 0.77 GB |
 
 \*acc_norm (accuracy adjusted for answer length). Margin of error is about ±0.03. Memory test: batch 1, 2048-token prompt, 256 new tokens.
 
