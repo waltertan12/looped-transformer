@@ -2,6 +2,7 @@
 
 Research repo for turning pretrained Qwen models into looped (weight-shared) transformers. See README.md.
 
+- Lives at `/mnt/data/walter/loop-transformer` (spare SSD). HF models/datasets cache: `/mnt/data/walter/huggingface` (set `HF_HOME` to it, or symlink `~/.cache/huggingface`).
 - Python venv at `.venv`; run things with `.venv/bin/python` or after `source .venv/bin/activate`.
 - GPU: a single RTX 5090, 32 GB, power-limited to 450 W. Everything must fit on that card.
 - Train memory is dominated by the fp32 full-vocab logits (152k vocab). Raise `grad_accum` instead of `batch_size`.
