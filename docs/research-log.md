@@ -107,6 +107,48 @@ Wrote down a fuller plan in [`playbook.md`](playbook.md). The main shifts in thi
 
 ---
 
+## 2026-11-21 — Memory is the scorecard; compare against the next size up (exp2)
+
+**My thinking.**
+- Track memory use in general. *If we end up needing as much memory as the regular model,
+  then we've lost.*
+- The framing: use the model as-is as the baseline, then compare the looped version against
+  the next step up in the same model family. If a looped Qwen3-0.6B gets close to Qwen3-1.7B
+  while using 0.6B-sized memory, that's a win.
+- Don't train on the benchmarks. Train on general text and keep the benchmarks for testing.
+- Keep experiments and datasets on the spare SSD (`/mnt/data`). That migration waits until I
+  have access to set up permissions. Until then, everything runs on the main drive.
+
+**How this changes the plan.** Looping with "dials" that start at zero (gated extra passes)
+keeps the weights at exactly 0.6B size. The model starts identical to the original 0.6B and
+learns to use the extra passes. The teacher is now the 1.7B, which shares the 0.6B's
+vocabulary. Distilling the 0.6B from itself would teach it nothing new.
+
+**Why there's a control run.** Learning from the 1.7B might improve the 0.6B by itself, with
+no looping at all. So exp2 trains a no-loop 0.6B on the same data and teacher. Looping only
+counts as helping if the looped model beats this control.
+
+**What exp2 measures.**
+
+| model | what it tells us |
+|---|---|
+| Qwen3-0.6B, unchanged | starting point |
+| Qwen3-1.7B, unchanged | the target |
+| 0.6B distilled from 1.7B, no loops | how much the training alone helps |
+| 0.6B distilled from 1.7B, looped (layers 8–19, 2–4 passes), scored at K = 1, 2, 3, 4, 6 | whether more passes = better, and whether it extrapolates past training (K = 6) |
+
+Benchmarks: ARC-Easy, ARC-Challenge, HellaSwag, GSM8K (300 questions each). HellaSwag is the
+control: it's mostly knowledge, so looping shouldn't help it much. ARC-Challenge and GSM8K
+are multi-step, so looping should help there if it helps anywhere.
+
+Memory is measured at a fixed workload (batch 1, 2048-token prompt, 256 new tokens):
+weights, generation memory (KV cache), peak GPU memory, and speed. Extra passes don't add
+weights, but they do add KV-cache memory and compute, so that cost is reported too.
+
+**Result:** _pending_
+
+---
+
 ## Open questions / ideas to come back to
 - Does more loops at eval time help on a trained checkpoint, or does it only work at the loop
   count it was trained with?
