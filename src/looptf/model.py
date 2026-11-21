@@ -32,6 +32,7 @@ class LoopSpec:
     n_loops: int = 1
     coda_start: int | None = None  # defaults to loop_end (no layers dropped)
     gated: bool = False
+    gate_init: float = 0.0  # starting value of the dials (0 = extra passes are no-ops)
 
     @classmethod
     def parse(cls, s: str, gated: bool = False) -> "LoopSpec":
@@ -50,15 +51,17 @@ class LoopSpec:
         s = f"{self.loop_start}-{self.loop_end}-x{self.n_loops}"
         if self.coda_start is not None and self.coda_start != self.loop_end:
             s += f"-coda{self.coda_start}"
-        return s + ("-gated" if self.gated else "")
+        if self.gated:
+            s += f"-gated{self.gate_init:g}"
+        return s
 
 
 class LoopGates(nn.Module):
     """Gate scalars, one row per extra pass (pass 2, 3, ...), one column per core layer."""
 
-    def __init__(self, n_core: int, n_extra: int):
+    def __init__(self, n_core: int, n_extra: int, init: float = 0.0):
         super().__init__()
-        self.weight = nn.Parameter(torch.zeros(max(n_extra, 1), n_core, dtype=torch.float32))
+        self.weight = nn.Parameter(torch.full((max(n_extra, 1), n_core), float(init), dtype=torch.float32))
 
     def ensure(self, n_extra: int):
         """Grow to n_extra rows. New rows copy the last trained row (for eval at larger K)."""
@@ -118,7 +121,7 @@ def apply_loop(model, spec: LoopSpec | list[int]):
     if gated:
         n_core = spec.loop_end - spec.loop_start
         if getattr(inner, "loop_gates", None) is None:
-            inner.loop_gates = LoopGates(n_core, spec.n_loops - 1).to(next(model.parameters()).device)
+            inner.loop_gates = LoopGates(n_core, spec.n_loops - 1, spec.gate_init).to(next(model.parameters()).device)
         inner.loop_gates.ensure(spec.n_loops - 1)
         gates = inner.loop_gates
 

@@ -145,11 +145,96 @@ Memory is measured at a fixed workload (batch 1, 2048-token prompt, 256 new toke
 weights, generation memory (KV cache), peak GPU memory, and speed. Extra passes don't add
 weights, but they do add KV-cache memory and compute, so that cost is reported too.
 
+**Result: the loop never switched on.**
+
+| model | weights | ARC-Easy | ARC-Chall.* | HellaSwag* | GSM8K | gen tok/s | KV cache |
+|---|---|---|---|---|---|---|---|
+| 0.6B, unchanged | 1.11 GB | 0.617 | 0.380 | 0.523 | 0.540 | 122 | 0.25 GB |
+| 1.7B, unchanged (target) | 3.21 GB | 0.700 | 0.443 | 0.577 | 0.723 | 118 | 0.25 GB |
+| 0.6B trained, no loops (control) | 1.11 GB | 0.643 | 0.373 | 0.520 | 0.440 | 121 | 0.25 GB |
+| looped, K=1 | 1.11 GB | 0.643 | 0.373 | 0.523 | 0.470 | 119 | 0.25 GB |
+| looped, K=2 | 1.11 GB | 0.643 | 0.380 | 0.520 | 0.473 | 84 | 0.35 GB |
+| looped, K=3 | 1.11 GB | 0.640 | 0.370 | 0.523 | 0.457 | 67 | 0.46 GB |
+| looped, K=4 | 1.11 GB | 0.643 | 0.377 | 0.517 | 0.467 | — | — |
+| looped, K=6 | _pending_ | | | | | | |
+
+\*acc_norm (accuracy adjusted for answer length). Margin of error is about ±0.03. Memory test: batch 1, 2048-token prompt, 256 new tokens.
+
+- Scores are flat across K. The looped model is indistinguishable from the no-loop control.
+- The dials ended at 0.028 (pass 2) and 0.004 (passes 3 and 4), where 1.0 is a full pass.
+  The extra passes were almost no-ops.
+- Training loss matched the control almost exactly (KL 0.2824 vs 0.2823).
+- Extra passes still cost compute and KV-cache memory (122 → 67 tok/s at K=3).
+- Training itself hurt math: GSM8K 0.54 → 0.44 for the control. FineWeb-Edu is general web
+  text, and the original Qwen was trained on a lot of math.
+
+### Thoughts and conclusions (2026-11-21)
+
+**My questions.** Is the training method bad? Does looping not inherently provide an
+advantage, so that we must be more "intelligent" about it? Do we need exp3 to understand
+better?
+
+**Is the training method bad? Partly, yes, in a specific way: it let the model opt out.**
+- The dials started at 0, so the model's easiest option was to leave them there. The
+  pretrained layers were only ever trained to be applied once. Applying them a second
+  time, even a little, probably looks like noise to the rest of the network and makes the
+  loss slightly worse. So the safe move was to keep the dials shut, and it took that.
+- Starting from "identical to the original" removed the broken start, but it also removed
+  any pressure to use the loop.
+
+**Did the training ask for extra thinking at all? Probably not.**
+- On web text, the 0.6B is already close to the 1.7B (KL about 0.3). There was little gap
+  for extra passes to close.
+- The gap that matters, GSM8K 0.54 vs 0.72, is multi-step reasoning. The training data has
+  very little of that, so nothing in training rewarded extra steps of thinking.
+
+**Does looping inherently help? Not answered yet.** This doesn't show looping is useless.
+It shows that this setup never made the model use the loop. As I understand published work
+on looped / recurrent-depth models, the gains come when the model is trained with the loop
+forced on (often from scratch, or with a long retrofit) on data where extra steps pay off.
+To check before relying on it.
+
+**So we have to be more deliberate**, in three ways:
+1. **Force the loop on**, or start the dials open, so the model has to learn to use the
+   extra passes instead of ignoring them.
+2. **Train on data where thinking pays off**: math, multi-step problems, synthetic
+   state-tracking (the playbook's "fast signal" task). Mixing in math also counters the
+   GSM8K loss.
+3. **Measure the fast signal first.** A synthetic multi-hop task should show quickly whether
+   K=3 beats K=1, before spending hours on slow benchmarks.
+
+**Do we need exp3? Yes, but not the planned one.** The planned exp3 compared where to put
+the loop, using the same dials-start-at-zero recipe. It would almost certainly have shown
+dials stuck at zero in every position. Placement only matters once the loop is on. So
+**exp3 now tests how to switch the loop on**, and placement moves to exp4.
+
+---
+
+## 2026-11-21 — Exp3: switching the loop on
+
+Same setup as exp2's looped run (layers 8–19, teacher 1.7B, K ∈ {2,3,4}), 500 steps each,
+scored at K = 1, 2, 4:
+
+| run | how the extra passes are used |
+|---|---|
+| forced | no dials; every extra pass applied in full |
+| half | dials start at 0.5 and are learned |
+| fastdial | dials start at 0 but learn 10× faster |
+
+**What we're looking for:** a run whose score rises with K and beats the no-loop control
+(ARC-Easy 0.643, ARC-Challenge 0.373, GSM8K 0.440). "forced" will probably start out
+damaged, like exp1, so it may need more steps to recover.
+
 **Result:** _pending_
 
 ---
 
 ## Open questions / ideas to come back to
+
+- Exp4: loop placement (early 4–15 / late 12–23 / small 10–15), once a recipe switches the
+  loop on.
+- Mix math / reasoning data into training (e.g. OpenMathInstruct-2), both to reward extra
+  passes and to stop GSM8K forgetting. Streamed, not downloaded.
 - Does more loops at eval time help on a trained checkpoint, or does it only work at the loop
   count it was trained with?
 - Training with a random loop count each step so the model works at any depth.

@@ -27,6 +27,7 @@ class TrainConfig:
     k_choices: str = ""  # e.g. "2,3,4": sample the number of loop passes per step
     teacher: str = ""  # defaults to `model` (distill from the unlooped original)
     gate_lr: float = 1e-2
+    gate_init: float = 0.0
     dataset: str = "HuggingFaceFW/fineweb-edu"
     dataset_config: str = "sample-10BT"
     seq_len: int = 1024
@@ -71,6 +72,7 @@ def train(cfg: TrainConfig):
     teacher.eval().requires_grad_(False)
     student, _ = load_model(cfg.model)
     spec = LoopSpec.parse(cfg.loop, gated=cfg.gated)
+    spec.gate_init = cfg.gate_init
     ks = [int(k) for k in cfg.k_choices.split(",")] if cfg.k_choices else [spec.n_loops]
     spec.n_loops = max(ks)  # build gates for the largest K up front
     apply_loop(student, spec)
