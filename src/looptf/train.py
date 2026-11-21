@@ -7,6 +7,7 @@ LoopSpec. Loss = alpha * KL(teacher || student) + (1 - alpha) * next-token CE on
 from __future__ import annotations
 
 import itertools
+import random
 import math
 import time
 from dataclasses import dataclass, field
@@ -15,13 +16,17 @@ import torch
 import torch.nn.functional as F
 from datasets import load_dataset
 
-from .model import LoopSpec, apply_loop, describe, load_model, save_looped
+from .model import LoopSpec, apply_loop, describe, load_model, save_looped, set_n_loops
 
 
 @dataclass
 class TrainConfig:
     model: str = "Qwen/Qwen3-0.6B-Base"
     loop: str = "4:16:2:16"
+    gated: bool = False  # Track A: extra passes start as no-ops (gate = 0)
+    k_choices: str = ""  # e.g. "2,3,4": sample the number of loop passes per step
+    teacher: str = ""  # defaults to `model` (distill from the unlooped original)
+    gate_lr: float = 1e-2
     dataset: str = "HuggingFaceFW/fineweb-edu"
     dataset_config: str = "sample-10BT"
     seq_len: int = 1024
@@ -52,12 +57,22 @@ def token_stream(tok, cfg: TrainConfig):
             yield chunk
 
 
+def gate_str(model) -> str:
+    gates = getattr(model.model, "loop_gates", None)
+    if gates is None:
+        return ""
+    return "gates " + "/".join(f"{r.abs().mean():.3f}" for r in gates.weight.data) + " "
+
+
 def train(cfg: TrainConfig):
     torch.manual_seed(0)
-    teacher, tok = load_model(cfg.model)
+    random.seed(0)
+    teacher, tok = load_model(cfg.teacher or cfg.model)
     teacher.eval().requires_grad_(False)
     student, _ = load_model(cfg.model)
-    spec = LoopSpec.parse(cfg.loop)
+    spec = LoopSpec.parse(cfg.loop, gated=cfg.gated)
+    ks = [int(k) for k in cfg.k_choices.split(",")] if cfg.k_choices else [spec.n_loops]
+    spec.n_loops = max(ks)  # build gates for the largest K up front
     apply_loop(student, spec)
     print("teacher:", describe(teacher))
     print("student:", describe(student))
@@ -75,8 +90,13 @@ def train(cfg: TrainConfig):
     student.train()
 
     params = [p for p in student.parameters() if p.requires_grad]
-    print(f"trainable params: {sum(p.numel() for p in params)/1e6:.1f}M")
-    opt = torch.optim.AdamW(params, lr=cfg.lr, betas=(0.9, 0.95), weight_decay=0.0, fused=True)
+    gates = getattr(student.model, "loop_gates", None)
+    gate_ids = {id(p) for p in gates.parameters()} if gates is not None else set()
+    groups = [{"params": [p for p in params if id(p) not in gate_ids], "lr": cfg.lr}]
+    if gate_ids:
+        groups.append({"params": [p for p in params if id(p) in gate_ids], "lr": cfg.gate_lr})
+    print(f"trainable params: {sum(p.numel() for p in params)/1e6:.1f}M  K choices: {ks}")
+    opt = torch.optim.AdamW(groups, betas=(0.9, 0.95), weight_decay=0.0)
     sched = torch.optim.lr_scheduler.LambdaLR(
         opt,
         lambda s: min(1.0, (s + 1) / cfg.warmup) * 0.5 * (1 + math.cos(math.pi * min(s, cfg.steps) / cfg.steps)),
@@ -86,6 +106,9 @@ def train(cfg: TrainConfig):
     t0 = time.time()
     for step in range(cfg.steps):
         stats = {"kl": 0.0, "ce": 0.0}
+        k = random.choice(ks)
+        if len(ks) > 1:
+            set_n_loops(student, k)
         for batch in itertools.islice(data, cfg.grad_accum):
             batch = batch.cuda()
             x, y = batch[:, :-1], batch[:, 1:]
@@ -112,10 +135,11 @@ def train(cfg: TrainConfig):
         if step % cfg.log_every == 0:
             tps = (step + 1) * cfg.grad_accum * cfg.batch_size * cfg.seq_len / (time.time() - t0)
             print(
-                f"step {step} kl {stats['kl']:.4f} ce {stats['ce']:.4f} gnorm {gnorm:.2f} "
-                f"lr {sched.get_last_lr()[0]:.2e} tok/s {tps:.0f} mem {torch.cuda.max_memory_allocated()/2**30:.1f}G",
+                f"step {step} K {k} kl {stats['kl']:.4f} ce {stats['ce']:.4f} gnorm {gnorm:.2f} "
+                f"lr {sched.get_last_lr()[0]:.2e} {gate_str(student)}tok/s {tps:.0f} mem {torch.cuda.max_memory_allocated()/2**30:.1f}G",
                 flush=True,
             )
         if (step + 1) % cfg.save_every == 0 or step + 1 == cfg.steps:
+            set_n_loops(student, max(ks))
             save_looped(student, cfg.model, f"{cfg.out}/step{step+1}.pt")
             print(f"saved {cfg.out}/step{step+1}.pt")
