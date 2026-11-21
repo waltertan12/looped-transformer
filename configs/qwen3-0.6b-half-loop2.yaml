@@ -1,0 +1,11 @@
+# Qwen3-0.6B-Base has 28 layers. Keep the first half (0-15), drop 16-27.
+# Layout: prelude 0-3, loop (4-15) x2  -> depth 28 from 16 unique layers.
+model: Qwen/Qwen3-0.6B-Base
+loop: "4:16:2:28"
+seq_len: 1024
+batch_size: 2
+grad_accum: 16
+lr: 1.0e-4
+steps: 2000
+alpha: 0.9
+out: checkpoints/qwen3-0.6b-half-loop2

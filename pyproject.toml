@@ -1,0 +1,16 @@
+[project]
+name = "looptf"
+version = "0.1.0"
+description = "Turn pretrained Qwen models into looped transformers and benchmark them"
+requires-python = ">=3.12"
+dependencies = ["torch", "transformers>=5", "accelerate", "datasets", "lm-eval[hf]", "pyyaml"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
