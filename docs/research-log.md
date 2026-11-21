@@ -68,8 +68,9 @@ the original (0.617 / 0.523), away from where it started untrained (0.357 / 0.29
 
 Wrote down a fuller plan in [`playbook.md`](playbook.md). The main shifts in thinking:
 
-- **Base model for Phase 1 is TinyLlama-1.1B** (standard Llama-2 layout, 22 layers), not only
-  Qwen. The Qwen harness is the warm-up.
+- **Base model for Phase 1 stays Qwen** (currently Qwen3-0.6B-Base, 28 layers). The
+  playbook was written for TinyLlama-1.1B, but its ideas carry over to Qwen; we're keeping
+  Qwen rather than switching.
 - **Two separate questions, kept separate.** Track A: does looping *add* reasoning depth
   with the same weights? Track B: can looping *replace* layers with fewer weights at the same
   depth? The current Qwen exp1 (`4:16:2:28`) is a Track B experiment.

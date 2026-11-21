@@ -5,6 +5,10 @@
 > ESM-2 sizes), it has been filled in and marked *(filled)*. Where the original value is
 > unknown (thresholds, gate init values, LoRA ranks and so on), it's marked **[?]** and
 > should be restored from the original.
+>
+> **Model choice for this repo:** Phase 1 uses **Qwen** (Qwen3-0.6B-Base to start), not
+> TinyLlama. The playbook text below still says TinyLlama; read it as "the Phase 1 base model".
+> Layer ranges need adapting to Qwen's depth (28 layers for 0.6B/1.7B, 36 for 4B).
 
 ---
 
