@@ -60,7 +60,26 @@ tokens, with checkpoints at steps 250 and 500.
 **What I'm looking for.** Does a short bit of training pull the looped model back up toward
 the original (0.617 / 0.523), away from where it started untrained (0.357 / 0.297)?
 
-**Result:** _pending_
+**Result:** partial recovery. Training helped a lot at first, then levelled off well short of
+the original.
+
+| model | arc_easy acc | hellaswag acc_norm |
+|---|---|---|
+| original (596M) | 0.617 | 0.523 |
+| looped, untrained (407M) | 0.357 | 0.297 |
+| looped, 250 steps (~8M tokens) | 0.440 | 0.393 |
+| looped, 500 steps (~16M tokens) | 0.447 | 0.403 |
+
+- The gap to the original's predictions (KL) fell from 5.7 to about 1.2 by step ~250, then
+  stopped improving; the learning rate was already decaying.
+- Most of the gain came in the first 250 steps. Steps 250→500 changed little (within noise
+  at 300 examples, ±0.03).
+- It recovered roughly a third to half of what slicing lost.
+- 12.4 GB of GPU memory, about 11.8k tokens/s, about 23 minutes.
+
+**My read so far.** The basic "match the original" recipe works, but a short run isn't
+enough. Either it needs much more training, or (per the playbook) the model shouldn't be
+broken at the start: initialize so the looped model matches the original at step 0.
 
 ---
 

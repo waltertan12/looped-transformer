@@ -56,7 +56,10 @@ def run_eval(
     }
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    tag = f"{Path(checkpoint or model_name).name}_{'loop-' + '-'.join(map(str, loop.__dict__.values())) if loop else 'base'}"
+    if checkpoint:
+        tag = f"{Path(checkpoint).parent.name}-{Path(checkpoint).stem}"
+    else:
+        tag = f"{Path(model_name).name}_{'loop-' + '-'.join(map(str, loop.__dict__.values())) if loop else 'base'}"
     path = out / f"{time.strftime('%Y%m%d-%H%M%S')}_{tag}.json"
     path.write_text(json.dumps(summary, indent=2, default=str))
     print(lm_eval.utils.make_table(res))
