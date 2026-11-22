@@ -16,7 +16,7 @@ Precise meanings as used in this repo, with code locations. Human-facing explana
 - **chain**: shuffled `v=expr;` statements, `chain_len` linked variables + 0–4 distractors, query `v?`; level = chain_len. Width 256.
 - **sequence format**: `prompt + str(answer) + "#"`; prompt ends `=` (nested) or `?` (chain). Answer exact integer, unbounded (`BOUND=None`).
 - **labels**: int64 columns per meta.json; always `answer`, `length` (prompt len incl. terminal), `n_tgt` (answer tokens incl. EOS).
-- **place-value embedding** (= Abacus, McLeish et al. 2024): learned embedding per digit token indexed by its place within its number; not implemented yet (D-009).
+- **place-value embedding** (= Abacus, McLeish et al. 2024): `ToyConfig(place_emb=True)` / `train.py --place_emb`. `model.place_ids(x)`: 0 for non-digits; question digits = 1 + place from the number's end (true place value); answer digits (after the terminal: '?' if present, else '=') = 1 + index from the answer's start (causal); clamp at max_places (24). Added to token embedding; row 0 zero. Reversed answers make answer index = place value.
 - **reverse_answer**: `FrozenData(reverse_answer=True)` / `train.py --reverse_answer`: answer digits served smallest-first, sign first, '#' last; files unchanged.
 - **nested_bal**: dataset with `op_digits` (leaf digit counts 1..op_digits; depth 1–2: {1,2,3}, depth 3: {1,2}, ≥4: {1}) and training balanced across feasible `ans_digits` buckets per (depth, op_digits); test cells up to 1,000 per (op_digits, ans_digits).
 - **holdout**: nested levels 1–2: 20% of distinct prompts excluded from train; test = held-out only. Overlap 0 at all levels.

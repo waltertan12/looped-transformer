@@ -21,7 +21,7 @@ its number (counted from the number's end, so place value lines up), on top of R
 **What would change our minds.** If reversed output (D-007) already fixes 3–5 digit answers,
 Abacus may be unnecessary; if big answers still fail after reversing, it's the next fix.
 
-**Recommendation.** Decide after D-007's results. **Needs Walter?** Yes. **Status.** Open.
+**Recommendation.** Decide after D-007's results. Implementation ready (off by default, `--place_emb`, tested; answer digits counted from the answer's start so nothing leaks). **Needs Walter?** Yes. **Status.** Open.
 
 ## D-008 · Balance answer sizes and add an input-size dial? (decided: c)
 
