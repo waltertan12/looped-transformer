@@ -50,6 +50,16 @@ def build_eval_sets(depths, n_per_depth, n_ops_range, device, seed=1234):
     return sets
 
 
+EVAL_CHUNK = 4096  # rows per forward pass when scoring; bounds peak memory
+
+
+def chunks(b: dict, size: int = EVAL_CHUNK):
+    """Split a batch dict along the batch dimension."""
+    n = len(b["pos"])
+    for i in range(0, n, size):
+        yield {k: v[i:i + size] for k, v in b.items()}
+
+
 def answer_loss(logits, b):
     """Cross-entropy over the answer tokens (digits + EOS) only, and per-example exact match.
 
@@ -76,10 +86,14 @@ def dump_per_example(model, eval_sets, loops_list, path):
     rows = {}
     for k in loops_list:
         for d, b in eval_sets.items():
-            with torch.autocast("cuda", dtype=torch.bfloat16):
-                logits = model(b["x"], n_loops=k)
+            correct = []
+            for c in chunks(b):
+                with torch.autocast("cuda", dtype=torch.bfloat16):
+                    logits = model(c["x"], n_loops=k)
+                correct.append(answer_loss(logits, c)[1].cpu())
+                del logits
             rows.setdefault("K", []).append(torch.full_like(b["pos"], k).cpu())
-            rows.setdefault("correct", []).append(answer_loss(logits, b)[1].cpu())
+            rows.setdefault("correct", []).append(torch.cat(correct))
             for c in ("depth", "chain_len", "n_ops", "n_ops_total", "n_tgt", "answer", "length",
                       "op_digits", "ans_digits", "n_distractors"):
                 if c in b:
@@ -95,9 +109,14 @@ def evaluate(model, eval_sets, loops_list):
     for k in loops_list:
         out[k] = {}
         for d, b in eval_sets.items():
-            with torch.autocast("cuda", dtype=torch.bfloat16):
-                logits = model(b["x"], n_loops=k)
-            out[k][d] = answer_loss(logits, b)[1].float().mean().item()
+            right, n = 0.0, 0
+            for c in chunks(b):
+                with torch.autocast("cuda", dtype=torch.bfloat16):
+                    logits = model(c["x"], n_loops=k)
+                right += answer_loss(logits, c)[1].float().sum().item()
+                n += len(c["pos"])
+                del logits
+            out[k][d] = right / max(n, 1)
     model.train()
     return out
 
@@ -140,6 +159,9 @@ def main(argv=None):
                         "With --data, 'depth' flags refer to the dataset's level (depth or chain length)")
     p.add_argument("--reverse_answer", action="store_true",
                    help="write answers smallest digit first (sign first, '#' last); needs --data")
+    p.add_argument("--mem_fraction", type=float, default=0.0,
+                   help="cap this process's GPU memory to this fraction of the card (0 = no cap); "
+                        "use when several runs share the GPU")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--compile", action="store_true")
     a = p.parse_args(argv)
@@ -147,6 +169,8 @@ def main(argv=None):
     torch.manual_seed(a.seed)
     rng = random.Random(a.seed)
     dev = "cuda"
+    if a.mem_fraction > 0:
+        torch.cuda.set_per_process_memory_fraction(a.mem_fraction)
     out_dir = ROOT / "results" / "toy" / a.name
     out_dir.mkdir(parents=True, exist_ok=True)
     ckpt_dir = ROOT / "checkpoints" / "toy"
