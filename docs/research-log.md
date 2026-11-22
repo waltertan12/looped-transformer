@@ -584,6 +584,27 @@ general effect, not loop-specific. Keep normal order (D-007).
 
 ---
 
+## 2026-11-22 — D-007 wave 3: deep 16×1. Loops match depth; weights buy arithmetic
+
+Normal order, 1-digit inputs, seed 0 (full tables: `docs/results-arith-bal.md`):
+
+| model | weights | small ans, depth 2–6 | big (3–5d), depth 2–6 | multi-digit inputs | 1-digit ans @ depth 4 / 6 / 8 / 10 / 13 |
+|---|---|---|---|---|---|
+| shallow 2×1 | 4.4M | 0.66 | 0.17 | 0.21 | 0.74 / 0.58 / 0.47 / 0.42 / 0.35 |
+| looped 2×8 | 4.4M | 0.82 | 0.20 | 0.28 | 0.90 / 0.84 / 0.74 / 0.62 / 0.44 |
+| deep 16×1 | 19.0M | 0.84 | 0.29 | 0.34 | 0.91 / 0.83 / 0.72 / 0.61 / 0.45 |
+
+**Read.** At equal compute, the looped model matches the deep one on many-step problems
+(depth curves within ±0.02 at every depth, including untrained depths 10 and 13) with 4× fewer
+weights. On big answers and multi-digit inputs, deep's extra weights help (+0.09 / +0.06 over
+looped) while loops barely do (+0.03 over shallow). Interpretation: **loops supply sequential
+depth; unique weights supply arithmetic capacity** (facts and procedures for big numbers). One
+seed; needs confirmation. Reversed order: worse on the primary metric for all three (deep
+0.22 vs 0.29), though deep-reversed is better on multi-digit inputs (0.40 vs 0.34) and depth 13
+(0.52 vs 0.45): a hint that reversal + capacity interact, worth seeing under D-011.
+
+---
+
 ## Open questions / ideas to come back to
 
 - **Number base as a difficulty dial.** Same problems written in base 2 / 10 / 16. Base 2 makes

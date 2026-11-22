@@ -6,6 +6,49 @@ the reasoning, this file holds the state.
 
 ---
 
+## 2026-11-22 18:30 EST
+
+**Aim.** Stage 2: does looping add reasoning depth? Separate "many steps" from "big numbers",
+then test whether a looped model matches a deeper one with fewer weights. Plan and decision
+rules: `docs/plan.md`.
+
+**Done** (since 14:15)
+- Grid seed 0 finished (`docs/results-arith-grid.md`): at depth 3, looped 2×8 (4.4M) 0.86 vs
+  deep 16×1 (19M) 0.88; errors dominated by answer size, not depth.
+- Built `data/nested_bal` (2.6 GB): balanced answer sizes, multi-digit inputs at depth 1–3,
+  ~1,000 test problems per (depth × input size × answer size) cell, zero overlap.
+- Workflow: decision cards (`docs/decisions.md`, D-001…D-011), plan with pre-registered rules,
+  glossary (plain + agent), pre-launch checklist; place-value embeddings implemented (off).
+- **D-007 probe set finished** (shallow / looped / deep × normal / reversed, mixed depths 1–8,
+  seed 0; `docs/results-arith-bal.md`). Normal order, 1-digit inputs:
+
+  | model | weights | small answers, depth 2–6 | big (3–5 digit), depth 2–6 | multi-digit inputs | 1-digit ans @ depth 8 / 10* / 13* |
+  |---|---|---|---|---|---|
+  | shallow 2×1 | 4.4M | 0.66 | 0.17 | 0.21 | 0.47 / 0.42 / 0.35 |
+  | looped 2×8 | 4.4M | 0.82 | 0.20 | 0.28 | 0.74 / 0.62 / 0.44 |
+  | deep 16×1 | 19.0M | 0.84 | 0.29 | 0.34 | 0.72 / 0.61 / 0.45 |
+
+  (*never trained on.) **Looping matches depth, weights buy arithmetic:** on many-step
+  problems the looped model equals the deep one with 4× fewer weights (and beats shallow by up
+  to +0.27); on big answers the deep model's extra weights help (+0.09 over looped) and loops
+  barely do (+0.03 over shallow).
+- Digit order decided: reversed worse for all three on the primary metric → keep normal (D-007).
+
+**Doing**
+- Nothing on the GPU (idle). Waiting on D-011.
+
+**Blocked / problems**
+- Big-number arithmetic is the remaining bottleneck (3–5 digit answers ≤ 0.29 for every model).
+- One seed for everything; the looped ≈ deep result needs a second seed before it's a claim.
+- Small cost from balanced data on easy cases (depth 3, 2-digit answers 0.88 vs 0.94 on grid).
+
+**Next decisions**
+1. **D-011 (needs Walter):** place-value embeddings: (a) normal on probe set, 3 runs ≈ 1.3 h;
+   (b) (a) + looped reversed, 4 runs ≈ 1.6 h (recommended); (c) both orders, 6 runs ≈ 2.5 h.
+2. Second seed of the normal-order probe set (≈ 1 h) to confirm looped ≈ deep on depth.
+
+---
+
 ## 2026-11-22 14:15 EST
 
 **Aim.** Find the smallest setting where looping clearly helps. Stage 1: can a tiny transformer
