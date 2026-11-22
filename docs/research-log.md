@@ -363,6 +363,36 @@ carry the working recipe (input injection, random K, exit) back to Qwen.
 
 ---
 
+## 2026-11-22 — New direction: tiny models from scratch, staged goals
+
+**My thinking.** Reset to the smallest problem that can answer the question, then climb:
+1. **Can I build an arithmetic model at all?** A tiny transformer (~4–20M params) trained
+   from scratch on mod-10 PEMDAS expressions, answering directly (no written-out steps).
+2. **Does looping help on long step chains?** Train on depth ≤ 8, test on depth 9–16. Does
+   a looped model match a deeper one with fewer weights, and do extra loops at test time solve
+   deeper problems?
+3. **Do "steps" give it the power to do algebra?** Middle-school algebra (e.g. solve
+   `3x+5=20`). This is a change of goal, not just more of the same: algebra needs undoing
+   operations and choosing what to do next, not only evaluating left to right. It may need a
+   new model or tokenizer (variables, `=` on both sides), but the data can still be
+   generated and checked automatically.
+
+Each stage only starts if the one before says yes. This is the step-wise path from
+"can it compute" to "does looping add reasoning power".
+
+**Why small.** It's a wind tunnel, not a plane: minutes per run, a clean ~10% → ~100%
+signal instead of ±0.03 benchmark noise, and the design rules learned (input injection,
+random loop counts, test-time extra loops) carry back to Qwen later.
+
+**Setup (stage 1–2).** Code in `src/looptf/toy/`: `data.py` (generator: exact op count and
+exact depth, minimal PEMDAS parens, answer mod 10), `model.py` (prelude / looped core with
+concat input injection / coda, RoPE, fp32 weights + bf16 compute), `train.py`. Depth, not
+length, is the controlled variable, so train and test cover the same range of lengths.
+Comparison: shallow (4 layers), looped (same 4.3M params, core run 1–8× in training), deep
+(19M params, 18 layers).
+
+---
+
 ## Open questions / ideas to come back to
 
 - Exp4: loop placement (early 4–15 / late 12–23 / small 10–15), once a recipe switches the
