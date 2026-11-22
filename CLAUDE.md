@@ -9,3 +9,14 @@ Research repo for turning pretrained Qwen models into looped (weight-shared) tra
 - transformers 5.x: Qwen3 attention uses `self_attn.layer_idx` for the KV cache. `LoopSlot` overwrites it per slot, and `apply_loop` updates `config.num_hidden_layers` and `config.layer_types`.
 - Run `pytest tests` after touching `model.py`. The identity-loop test must match the base logits exactly.
 - `results/` and `checkpoints/` are gitignored.
+
+## Working with Walter
+- Walter is newer to ML research and wants to see the key calls, not have them made silently.
+  Before any experiment or design change that alters what a result means (or spends >30 min of
+  GPU), write a decision card with the `decision-brief` skill (`docs/decisions.md`) and ask.
+  Routine execution proceeds without asking.
+- Status snapshots: `status-update` skill → `docs/status.md`. Reasoning: `docs/research-log.md`.
+- Keep `docs/glossary.md` (plain language) and `docs/glossary-agent.md` (terse) in sync when a
+  new term comes up. Explain in plain language, using glossary terms.
+- Current track: tiny from-scratch arithmetic models in `src/looptf/toy/` (the Qwen sections
+  above describe the paused retrofit track).
