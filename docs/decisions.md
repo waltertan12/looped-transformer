@@ -9,7 +9,26 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
-## D-006 · Fix the curriculum stall at depth 3 (open)
+## D-007 · Write answers smallest digit first? (open)
+
+**Question.** At depth 3, accuracy depends mostly on answer size, not depth (deep 16×1:
+1 digit 0.99, 2 digits 0.95, 3 digits 0.75, 4 digits 0.40; all models alike). Writing the
+biggest digit first means knowing every carry before emitting anything. Is output order the
+bottleneck?
+
+**Options.**
+- **Keep normal order** (`=258#`). Natural; but depth results stay entangled with
+  mental-multiplication difficulty.
+- **Reverse the digits** (`=852#`, sign first). How people do it on paper; reported in prior
+  small-transformer arithmetic work to help a lot (to verify). Reads oddly.
+- **Run both** on 2×8 looped and 16×1 deep, mixed depths 1–8 (4 runs, ~1.5 h).
+
+**What would change our minds.** If reversed is no better on 3–4 digit answers, the limit is
+the multiplication itself → wider model, or accept "depth + mental arithmetic" as the task.
+
+**Recommendation.** Run both. **Needs Walter?** Yes. **Status.** Open.
+
+## D-006 · Fix the curriculum stall at depth 3 (decided: mix all depths)
 
 **Question.** Every grid run plateaus at ~0.85–0.9 on depth-3 training problems and never
 reaches the 0.9 needed to add depth 4, so nothing is trained on depths 4–8. How should the
@@ -29,7 +48,11 @@ task/model (likely number size), not the curriculum → check answer-length brea
 **Recommendation.** A, after checking `per_example.npz` from the current grid: if depth-3
 failures are mostly big answers, the fix is about number size, not the curriculum.
 
-**Needs Walter?** Yes. **Status.** Open.
+**Needs Walter?** Yes. **Status.** Decided by Walter, 2026-11-22: **not A** (don't lower the
+bar; he'd rather raise it to 95%). Instead **mix all training depths (1–8), no curriculum
+gate**, and judge per-depth test accuracy with 95% confidence intervals. Evidence found right
+after: depth-3 failures are mostly large answers (see D-007), so the stall was number size,
+not the curriculum.
 
 ## D-005 · Let the remaining 6 grid cells finish? (open)
 
