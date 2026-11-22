@@ -16,6 +16,8 @@ Research repo for turning pretrained Qwen models into looped (weight-shared) tra
   GPU), write a decision card with the `decision-brief` skill (`docs/decisions.md`) and ask.
   Routine execution proceeds without asking.
 - Status snapshots: `status-update` skill → `docs/status.md`. Reasoning: `docs/research-log.md`.
+- Forward plan with pre-registered decision rules: `docs/plan.md`. Check results against its
+  rules; revise it (and say why) when a step finishes.
 - Keep `docs/glossary.md` (plain language) and `docs/glossary-agent.md` (terse) in sync when a
   new term comes up. Explain in plain language, using glossary terms.
 - Current track: tiny from-scratch arithmetic models in `src/looptf/toy/` (the Qwen sections
