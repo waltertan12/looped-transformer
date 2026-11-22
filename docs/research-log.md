@@ -529,6 +529,36 @@ them removes the confound rather than replacing the loop. Model is d_model 256, 
 
 ---
 
+## 2026-11-22 — D-007 wave 1: looped 2×8, normal vs reversed (balanced data, mixed depths)
+
+**Rule check (pre-registered in plan.md).** Primary metric (1-digit inputs, 3–5 digit answers,
+depths 2–6): normal 0.20, reversed 0.16 (−0.04; adopt needed ≥ +0.05). Small answers (1–2
+digits, depths 2–6): normal 0.82, reversed 0.71 (−0.11; allowed ≥ −0.03). **Keep normal order**
+for the looped model. One seed; shallow/deep pending. Contrary to Lee et al.; guess: their gain
+relied on aligned digits in simple addition, which nested expressions lack. Reversal may only
+help together with place-value embeddings (untested hypothesis).
+
+**Clean depth effect, separated from number size** (looped, normal, 1-digit inputs):
+
+| depth | 1-digit ans | 2-digit | 3-digit | 4-digit |
+|---|---|---|---|---|
+| 2 | 1.00 | 1.00 | 0.98 | |
+| 3 | 0.99 | 0.88 | 0.47 | 0.23 |
+| 4 | 0.90 | 0.66 | 0.22 | 0.05 |
+| 6 | 0.84 | 0.54 | 0.15 | 0.04 |
+| 8 | 0.74 | 0.39 | 0.12 | 0.03 |
+| 10 (untrained) | 0.62 | 0.25 | 0.09 | 0.01 |
+| 13 (untrained) | 0.44 | 0.09 | 0.03 | 0.01 |
+
+- At fixed answer size, accuracy falls steadily with depth (step-count effect now visible).
+- At fixed depth, accuracy collapses with answer size (number size still dominates).
+- Graceful extrapolation past training depth on small answers (0.62 at depth 10).
+- Like-for-like vs the grid: depth 3, 2-digit answers 0.88 vs 0.94; balanced data has fewer
+  easy examples.
+- 3-digit × 3-digit multiplication (depth 1): 0.17–0.32.
+
+---
+
 ## Open questions / ideas to come back to
 
 - **Number base as a difficulty dial.** Same problems written in base 2 / 10 / 16. Base 2 makes

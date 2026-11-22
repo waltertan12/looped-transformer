@@ -83,6 +83,7 @@ bottleneck?
 the multiplication itself → wider model, or accept "depth + mental arithmetic" as the task.
 
 **Recommendation.** Run both. **Needs Walter?** Yes. **Status.** Decided: run both, by Walter, 2026-11-22 (`scripts/arith_bal.sh`, results in `results/toy/bal/`).
+**Result (looped, seed 0):** reversed worse (primary −0.04, small answers −0.11) → keep normal order per the plan's rule; confirm on shallow/deep.
 
 ## D-006 · Fix the curriculum stall at depth 3 (decided: mix all depths)
 
