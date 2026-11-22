@@ -46,6 +46,15 @@ Plain-language definitions, each tied to this project. Terse agent-facing defini
 - **Out-of-distribution (OOD) / extrapolation.** Testing on harder problems than any in
   training (depth 9–16 when trained on ≤ 8). The "longer problems" question.
 - **Stop token (`#`, EOS).** Marks the end of the answer, so the model knows when it's done.
+- **Digit order (normal vs reversed).** Normal writes `258`; reversed writes `852` (sign
+  still first). Both are next-digit prediction, but in normal order the first digit needs
+  every carry worked out in advance (mental arithmetic, no paper); in reversed order each
+  digit needs only a small local step and the digits already written act as scratch paper
+  (like long arithmetic on paper). Decision D-007.
+- **Input size (op_digits).** How many digits the numbers in the problem have (`3+4` vs
+  `347*28`). A second difficulty dial, separate from depth.
+- **Balanced dataset.** Training/test problems sampled so each answer size gets a fair share,
+  instead of rare big answers being ~1% of the data.
 - **Exact match.** A problem counts as right only if every answer character is right.
 
 ## Training

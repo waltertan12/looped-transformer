@@ -80,7 +80,8 @@ def dump_per_example(model, eval_sets, loops_list, path):
                 logits = model(b["x"], n_loops=k)
             rows.setdefault("K", []).append(torch.full_like(b["pos"], k).cpu())
             rows.setdefault("correct", []).append(answer_loss(logits, b)[1].cpu())
-            for c in ("depth", "chain_len", "n_ops", "n_ops_total", "n_tgt", "answer", "length"):
+            for c in ("depth", "chain_len", "n_ops", "n_ops_total", "n_tgt", "answer", "length",
+                      "op_digits", "ans_digits", "n_distractors"):
                 if c in b:
                     rows.setdefault(c, []).append(b[c].cpu())
     model.train()
@@ -137,6 +138,8 @@ def main(argv=None):
     p.add_argument("--data", default=None,
                    help="frozen dataset dir (e.g. data/nested, data/chain); default: generate on the fly. "
                         "With --data, 'depth' flags refer to the dataset's level (depth or chain length)")
+    p.add_argument("--reverse_answer", action="store_true",
+                   help="write answers smallest digit first (sign first, '#' last); needs --data")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--compile", action="store_true")
     a = p.parse_args(argv)
@@ -151,7 +154,8 @@ def main(argv=None):
 
     fd = None
     if a.data:
-        fd = FrozenData(Path(a.data) if Path(a.data).is_absolute() else ROOT / a.data, device=dev)
+        fd = FrozenData(Path(a.data) if Path(a.data).is_absolute() else ROOT / a.data, device=dev,
+                        reverse_answer=a.reverse_answer)
         np_rng = np.random.default_rng(a.seed)
     max_len = max(128, fd.meta["width"]) if fd else 128
     cfg = ToyConfig(vocab_size=len(VOCAB), max_len=max_len, d_model=a.d_model, n_heads=a.n_heads, d_ff=a.d_ff,
@@ -239,7 +243,9 @@ def main(argv=None):
                   f"lr {rec['lr']:.2e}  depth<={cur}  {el:.0f}s", flush=True)
             run_loss = run_acc = 0.0
 
-    dump_per_example(model, eval_sets, eval_loops, out_dir / "per_example.npz")
+    # Final per-example dump on the FULL test set (periodic evals use the first eval_n rows).
+    final_sets = fd.test_sets(eval_depths) if fd else eval_sets
+    dump_per_example(model, final_sets, eval_loops, out_dir / "per_example.npz")
     meta["mastered_at"] = mastered_at
     (out_dir / "config.json").write_text(json.dumps(meta, indent=2))
     ckpt_path = ckpt_dir / f"{a.name}.pt"

@@ -57,3 +57,18 @@ def test_test_sets(tmp_path):
     ts = fd.test_sets([1, 3], max_per_level=10)
     assert sorted(ts) == [1, 3] and ts[3]["x"].shape[0] == 10
     assert (ts[3]["depth"] == 3).all()
+
+
+def test_reverse_answer(tmp_path):
+    _build(tmp_path)
+    fwd = FrozenData(tmp_path, device="cpu")
+    rev = FrozenData(tmp_path, device="cpu", reverse_answer=True)
+    ts_f, ts_r = fwd.test_sets([3]), rev.test_sets([3])
+    for i in range(len(ts_f[3]["x"])):
+        p, n = ts_f[3]["pos"][i].item(), ts_f[3]["n_tgt"][i].item()
+        a = decode(ts_f[3]["x"][i, p + 1: p + 1 + n].tolist())
+        b = decode(ts_r[3]["x"][i, p + 1: p + 1 + n].tolist())
+        assert a.endswith("#") and b.endswith("#")
+        sign = "-" if a.startswith("-") else ""
+        assert b == sign + a[len(sign):-1][::-1] + "#"
+        assert decode(ts_f[3]["x"][i, : p + 1].tolist()) == decode(ts_r[3]["x"][i, : p + 1].tolist())

@@ -16,6 +16,8 @@ Precise meanings as used in this repo, with code locations. Human-facing explana
 - **chain**: shuffled `v=expr;` statements, `chain_len` linked variables + 0–4 distractors, query `v?`; level = chain_len. Width 256.
 - **sequence format**: `prompt + str(answer) + "#"`; prompt ends `=` (nested) or `?` (chain). Answer exact integer, unbounded (`BOUND=None`).
 - **labels**: int64 columns per meta.json; always `answer`, `length` (prompt len incl. terminal), `n_tgt` (answer tokens incl. EOS).
+- **reverse_answer**: `FrozenData(reverse_answer=True)` / `train.py --reverse_answer`: answer digits served smallest-first, sign first, '#' last; files unchanged.
+- **nested_bal**: dataset with `op_digits` (leaf digit counts 1..op_digits; depth 1–2: {1,2,3}, depth 3: {1,2}, ≥4: {1}) and training balanced across feasible `ans_digits` buckets per (depth, op_digits); test cells up to 1,000 per (op_digits, ans_digits).
 - **holdout**: nested levels 1–2: 20% of distinct prompts excluded from train; test = held-out only. Overlap 0 at all levels.
 - **FrozenData.batch(rng, bs, (lo, hi))**: uniform over levels in range, then uniform rows.
 

@@ -23,7 +23,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from looptf.toy.data import VOCAB, PAD_ID, encode, answer_tokens
+from looptf.toy.data import VOCAB, STOI, PAD_ID, encode, answer_tokens
 
 
 def slice_paths(root: Path, split: str, level: int) -> tuple[Path, Path]:
@@ -60,9 +60,14 @@ def write_meta(root, meta: dict) -> None:
 
 
 class FrozenData:
-    """Loads a frozen dataset and serves batches shaped like `data.make_batch`."""
+    """Loads a frozen dataset and serves batches shaped like `data.make_batch`.
 
-    def __init__(self, root, device="cuda"):
+    reverse_answer: write the answer's digits smallest first (sign stays first, '#' last),
+    e.g. stored `=-258#` is served as `=-852#`. Applied on the fly; the files are unchanged.
+    """
+
+    def __init__(self, root, device="cuda", reverse_answer: bool = False):
+        self.reverse_answer = reverse_answer
         self.root = Path(root)
         self.meta = json.loads((self.root / "meta.json").read_text())
         if self.meta["vocab"] != VOCAB[: len(self.meta["vocab"])]:
@@ -80,7 +85,14 @@ class FrozenData:
         length = labels[:, self.cols["length"]]
         n_tgt = labels[:, self.cols["n_tgt"]]
         T = int((length + n_tgt).max())
-        x = torch.from_numpy(np.ascontiguousarray(tokens[:, :T]).astype(np.int64))
+        tok = np.array(tokens[:, :T], dtype=np.int64)
+        if self.reverse_answer:
+            minus = STOI["-"]
+            for i in range(len(tok)):
+                s0, e = int(length[i]), int(length[i] + n_tgt[i] - 1)  # e = index of '#'
+                s0 += int(tok[i, s0] == minus)
+                tok[i, s0:e] = tok[i, s0:e][::-1].copy()
+        x = torch.from_numpy(tok)
         b = {"x": x.to(self.device, non_blocking=True),
              "pos": torch.from_numpy(length - 1).to(self.device)}
         for c, i in self.cols.items():
