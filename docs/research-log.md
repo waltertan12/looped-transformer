@@ -275,7 +275,91 @@ scored at K = 1, 2, 4:
 (ARC-Easy 0.643, ARC-Challenge 0.373, GSM8K 0.440). "forced" will probably start out
 damaged, like exp1, so it may need more steps to recover.
 
-**Result:** _pending_
+**Result: no recipe beat the control.**
+
+| run | K | ARC-Easy | ARC-Chall.* | HellaSwag* | GSM8K |
+|---|---|---|---|---|---|
+| forced | 1 / 2 / 4 | 0.630 / 0.620 / 0.610 | 0.387 / 0.383 / 0.370 | 0.523 / 0.520 / 0.513 | 0.390 / 0.430 / 0.270 |
+| half | 1 / 2 / 4 | 0.637 / 0.640 / 0.640 | 0.387 / 0.387 / 0.387 | 0.523 / 0.523 / 0.523 | 0.470 / 0.477 / 0.480 |
+| fastdial | 1 / 2 / 4 | 0.637 / 0.637 / 0.637 | 0.377 / 0.380 / 0.380 | 0.517 / 0.513 / 0.513 | 0.453 / 0.470 / 0.470 |
+
+\*acc_norm. ±0.03 at 300 questions.
+
+- **Training closes the dials itself.** "half" started at 0.5 and ended at 0.061 / 0.013 /
+  0.006. "fastdial" ended at 0.028 / 0.007 / 0.005. Not a speed problem: the loss prefers
+  the loop off.
+- **Forced on, more passes hurt.** GSM8K 0.39 → 0.27 from K=1 to K=4.
+- Memory and speed as in exp2: weights 1.11 GB; KV cache 0.25 / 0.35 / 0.56 GB and
+  ~120 / 84 / 55 tok/s at K = 1 / 2 / 4.
+
+**Review: problems with the experiment itself.**
+1. **bf16 weights drop small updates.** Tested on a real Qwen layer: at lr 1e-4, 82% of
+   weights change; at 2e-5, only 29%. The late part of every run (exp2 included) was mostly
+   frozen. Dials are fp32, so "dials close" still holds. Fix: fp32 master weights, bf16 compute.
+2. **No input injection.** On pass 2, layers 8–19 read layer 19's output instead of layer 7's,
+   which they were never trained on. Huginn-style designs feed the prelude output into every
+   pass. This is the likely reason forced passes hurt.
+3. **No matched control.** Exp3 runs are 500 steps; the benchmarked control is 1000 steps.
+4. **fastdial was redundant.** Exp2 dials could already move ~0.01/step.
+5. **Benchmarks are too noisy** (±0.03) for these effect sizes. Held-out loss at each K is a
+   cheaper, less noisy primary metric.
+6. **Data doesn't reward thinking.** Web text; the 0.6B is already within ~0.3 KL of the 1.7B.
+
+---
+
+## 2026-11-22 — Stepping back: when does looping actually help?
+
+**My thinking (loose, captured as-is).**
+- Looping needs two things: the model needs enough reasoning ability to begin with, and
+  then the looping itself needs to work.
+- Maybe looping matters more for long-context work, because there's more to reason over.
+  Long problems, not necessarily short ones.
+- Is looping implicitly doing something like **compaction + continuation**, the way agentic
+  systems do? Each pass compresses and carries the state forward, and the output is the end
+  result of all those reasoning chains.
+- Can we mirror that to work through a longer-form problem, and have the model **know when
+  to exit early**, i.e. cut the loop?
+- Does looping help embeddings? Could you embed something better because the model
+  understands the surrounding context better?
+- Improving on Qwen is hard. Maybe Qwen is fine as a base, and I should start from the 1.7B.
+- Was yesterday more of a waste than anything?
+
+**Synthesis.**
+- **Depth, not length.** A loop gives each token more serial computation over the *same*
+  context. It doesn't add context. What it should help with is problems that need *many
+  sequential steps* (multi-hop, state tracking, arithmetic carries). Long-context tasks often
+  contain many hops, which is why the two feel linked, but the variable to test is number of
+  steps, not number of tokens. A short prompt with 10 hops should need more loops than a long
+  prompt with 1.
+- **Compaction + continuation is a good analogy.** The per-token hidden state is a fixed-size
+  scratchpad: each pass reads it, refines it and writes it back, without growing. That's
+  "latent chain of thought". The difference from agent compaction: nothing is emitted as
+  tokens, and the state never gets larger, so its capacity is fixed.
+- **Knowing when to exit is an existing research thread**: adaptive computation (ACT,
+  PonderNet), learned early exit in Ouro/LoopLM. It's a natural step 2, once a loop that
+  helps exists at all. There's nothing to exit early from yet.
+- **Embeddings: not now.** Retrieval quality comes mostly from knowledge and contrastive
+  data, so a loop has little to do there. The place where "better embeddings from more
+  passes" makes sense is Phase 2 (protein models), where structure is iterative constraint
+  satisfaction.
+- **1.7B: not yet.** The failures were about method (opt-out dials, no input injection, bf16,
+  data), not model size. A bigger model fixes none of them and makes each run ~3× slower.
+  Memory: full fine-tuning 1.7B with fp32 weights + Adam is ~27 GB before activations,
+  too tight on 32 GB. It fits with LoRA, an 8-bit optimizer, or training only the loop block.
+- **Yesterday wasn't a waste, but each lesson cost too much.** It produced a working harness,
+  showed that a loop the model can switch off gets switched off, found the bf16 bug and the
+  missing input injection, and showed that retrofits need ~1B+ tokens. But it spent hours of
+  slow benchmarks on questions a small synthetic task could answer in minutes.
+
+**Minimum problem that tests all of the above.** Train small looped models (~10M params) from
+scratch on a **multi-hop task with a controllable number of steps**, e.g. pointer chasing or
+variable tracking (`a=3; b=a+2; c=b*2; ... ; what is c?`), with 1–N hops.
+- Does a looped model match a non-looped one with the same total depth, at fewer weights?
+- Does the number of loops needed grow with the number of hops?
+- Train on ≤ 8 hops, test on 16: do more loops at test time solve longer chains?
+- Then: can it learn to exit early on easy (few-hop) problems?
+Minutes per run on the 5090, no retrofit damage, and the data rewards depth by design. Then
+carry the working recipe (input injection, random K, exit) back to Qwen.
 
 ---
 
