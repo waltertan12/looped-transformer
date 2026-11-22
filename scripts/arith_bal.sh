@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# D-007 on nested_bal: looped 2x8 vs deep 16x1, normal vs reversed answers,
-# mixed depths 1-8 (no curriculum, D-006). Two runs at a time (Walter's preference),
-# each capped at 40% of GPU memory.
-#   scripts/arith_bal.sh SEED
-# Wave 1 (looped, normal vs reversed) answers D-007 first; wave 2 repeats it for deep.
+# D-007 + D-010 probe set on nested_bal: normal vs reversed answers for
+# looped 2x8, shallow 2x1 (no-loop baseline), deep 16x1. Mixed depths 1-8, no curriculum.
+# Two runs at a time (Walter's preference), each capped at 40% of GPU memory.
+#   scripts/arith_bal.sh SEED [FIRST_WAVE]     waves: 1 looped, 2 shallow (fast), 3 deep
+# FIRST_WAVE lets a queue resume after an earlier wave already ran.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 SEED=${1:?seed}
+FIRST=${2:-1}
 mkdir -p results/toy/bal
 run() {  # name core loops [extra args]
   local name=bal/$1-s$SEED; shift; local c=$1 k=$2; shift 2
@@ -15,9 +16,18 @@ run() {  # name core loops [extra args]
     --mem_fraction 0.4 "$@" \
     > "results/toy/$name.out" 2>&1 && echo "done $name" || echo "FAILED $name"
 }
-run c2k8-normal 2 8 &
-run c2k8-rev 2 8 --reverse_answer &
-wait
-run c16k1-normal 16 1 &
-run c16k1-rev 16 1 --reverse_answer &
-wait
+if [ "$FIRST" -le 1 ]; then
+  run c2k8-normal 2 8 &
+  run c2k8-rev 2 8 --reverse_answer &
+  wait
+fi
+if [ "$FIRST" -le 2 ]; then
+  run c2k1-normal 2 1 &
+  run c2k1-rev 2 1 --reverse_answer &
+  wait
+fi
+if [ "$FIRST" -le 3 ]; then
+  run c16k1-normal 16 1 &
+  run c16k1-rev 16 1 --reverse_answer &
+  wait
+fi
