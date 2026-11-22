@@ -9,7 +9,7 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
-## D-008 · Balance answer sizes and add an input-size dial? (open)
+## D-008 · Balance answer sizes and add an input-size dial? (decided: c)
 
 **Question.** Big answers dominate errors but are rare in training (4-digit answers ≈ 1% of
 the depth ≤ 3 curriculum mix; 7+ digits ≈ 0.1% overall), and depth-1 problems can't have big
@@ -26,7 +26,7 @@ answers at all (max 81), so "many steps" and "big numbers" always arrive togethe
 **What would change our minds.** If balanced training doesn't lift 4–5 digit accuracy, it's
 not a data-quantity problem: it's the arithmetic (→ digit order D-007, or a wider model).
 
-**Recommendation.** (c), then run D-007 on it. **Needs Walter?** Yes. **Status.** Open.
+**Recommendation.** (c), then run D-007 on it. **Needs Walter?** Yes. **Status.** Decided: (c), by Walter, 2026-11-22.
 
 ## D-007 · Write answers smallest digit first? (open)
 
