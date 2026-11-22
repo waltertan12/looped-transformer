@@ -9,6 +9,25 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
+## D-008 · Balance answer sizes and add an input-size dial? (open)
+
+**Question.** Big answers dominate errors but are rare in training (4-digit answers ≈ 1% of
+the depth ≤ 3 curriculum mix; 7+ digits ≈ 0.1% overall), and depth-1 problems can't have big
+answers at all (max 81), so "many steps" and "big numbers" always arrive together.
+
+**Options.**
+- **(a) Balanced test sets only:** 1,000 test problems per (depth × answer-digit) cell that
+  can exist (±3% each). Better measurement, same training.
+- **(b) (a) + balanced training:** each answer size gets a fair share within a depth. Tests
+  "was it just too few examples?"
+- **(c) (b) + input-size dial:** depth 1–2 problems with 2–4 digit inputs (`347*28`), which
+  measures big-number arithmetic separately from step count.
+
+**What would change our minds.** If balanced training doesn't lift 4–5 digit accuracy, it's
+not a data-quantity problem: it's the arithmetic (→ digit order D-007, or a wider model).
+
+**Recommendation.** (c), then run D-007 on it. **Needs Walter?** Yes. **Status.** Open.
+
 ## D-007 · Write answers smallest digit first? (open)
 
 **Question.** At depth 3, accuracy depends mostly on answer size, not depth (deep 16×1:
@@ -54,7 +73,7 @@ gate**, and judge per-depth test accuracy with 95% confidence intervals. Evidenc
 after: depth-3 failures are mostly large answers (see D-007), so the stall was number size,
 not the curriculum.
 
-## D-005 · Let the remaining 6 grid cells finish? (open)
+## D-005 · Let the remaining 6 grid cells finish? (decided: ran them)
 
 **Question.** Seed 0's other 6 cells (2×4, 4×2, 8×1, 2×2, 4×1, 2×1) will also stall at depth
 3. Run them (~1.5 h) or stop and fix the curriculum first?
