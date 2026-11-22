@@ -8,9 +8,14 @@ strings (eval / ast for nested, a small reference resolver for chain). Checks, p
   everything after                is PAD
   answer                          equals the exact value of the prompt
 
+For nested_bal it additionally checks op_digits (max leaf digit count, re-derived from the AST,
+must be in 1..op_digits column and the column must be allowed for the depth), ans_digits (recomputed
+from the answer), and recounts the per-cell test counts against meta, then prints the per-cell table.
+
 Examples:
   .venv/bin/python scripts/verify_data.py --root data/nested --sample 20000
   .venv/bin/python scripts/verify_data.py --root data/chain --sample 0
+  .venv/bin/python scripts/verify_data.py --root data/nested_bal --sample 20000
 """
 from __future__ import annotations
 
@@ -82,6 +87,29 @@ def check_nested(prompt: str, answer: int, n_ops: int, depth: int, length: int, 
     if len(prompt) != length:
         errs.append(f"length {length} != {len(prompt)}")
     check_answer_text(answer, n_tgt, errs)
+
+
+def check_bal(prompt: str, answer: int, op_digits: int, ans_digits: int, depth: int,
+              allowed: dict, errs: list[str]) -> None:
+    """nested_bal extras. The leaves are re-read from the expression text; the op_digits column is an
+    upper bound on the digit count of every leaf, and must be one of the depth's allowed values."""
+    expr = prompt[:-1]
+    try:
+        tree = ast.parse(expr, mode="eval").body
+    except SyntaxError as e:
+        errs.append(f"cannot parse {expr!r}: {e}")
+        return
+    leaves = [n.value for n in ast.walk(tree) if isinstance(n, ast.Constant)]
+    if not leaves or any(not isinstance(v, int) or v < 0 for v in leaves):
+        errs.append(f"non-integer or negative leaf in {expr!r}")
+        return
+    max_digits = max(len(str(v)) for v in leaves)
+    if not (1 <= max_digits <= op_digits):
+        errs.append(f"op_digits column {op_digits} but max leaf digits {max_digits} in {expr!r}")
+    if op_digits not in allowed.get(str(depth), []):
+        errs.append(f"op_digits {op_digits} not allowed at depth {depth}")
+    if ans_digits != len(str(abs(answer))):
+        errs.append(f"ans_digits {ans_digits} != {len(str(abs(answer)))} for answer {answer}")
 
 
 def check_chain(prompt: str, answer: int, chain_len: int, n_dist: int, n_ops_total: int,
@@ -157,7 +185,8 @@ def check_chain(prompt: str, answer: int, chain_len: int, n_dist: int, n_ops_tot
 # ---------------------------------------------------------------------------
 
 def check_slice(root: Path, name: str, split: str, level: int, expected_rows: int, sample: int,
-                is_nested: bool, width: int, cols: dict) -> tuple[np.ndarray, np.ndarray] | None:
+                is_nested: bool, width: int, cols: dict, allowed: dict | None = None
+                ) -> tuple[np.ndarray, np.ndarray] | None:
     tp, mp_ = slice_paths(root, split, level)
     tag = f"{name} {split} level {level}"
     if not tp.exists() or not mp_.exists():
@@ -243,6 +272,9 @@ def check_slice(root: Path, name: str, split: str, level: int, expected_rows: in
                          ln, n_tgt_all[i].item(), errs)
             if int(labels[cols["depth"]]) != level:
                 errs.append(f"depth {int(labels[cols['depth']])} != file level {level}")
+            if allowed is not None:
+                check_bal(prompt, answer, int(labels[cols["op_digits"]]), int(labels[cols["ans_digits"]]),
+                          int(labels[cols["depth"]]), allowed, errs)
         else:
             check_chain(prompt, answer, int(labels[cols["chain_len"]]),
                         int(labels[cols["n_distractors"]]), int(labels[cols["n_ops_total"]]),
@@ -255,6 +287,32 @@ def check_slice(root: Path, name: str, split: str, level: int, expected_rows: in
     if n_err > 5:
         fail(f"{tag}: {n_err} rows failed semantic checks in total (first 5 listed)")
     return tok, lab
+
+
+def bal_level_report(level: int, sl: dict, tr_lab, te_lab, cols, fail_fn, name: str) -> list[str]:
+    """Recount test cells from the op_digits / ans_digits columns, compare with meta, and describe
+    the train answer-digit shares for the level."""
+    out = []
+    op_c, ad_c = cols["op_digits"], cols["ans_digits"]
+    te_ops = np.asarray(te_lab[:, op_c]).astype(np.int64)
+    te_ad = np.asarray(te_lab[:, ad_c]).astype(np.int64)
+    counted = {}
+    for o, a in zip(te_ops.tolist(), te_ad.tolist()):
+        counted[f"op{o}_ans{a}"] = counted.get(f"op{o}_ans{a}", 0) + 1
+    meta_cells = sl.get("test_cells", {})
+    for k in set(meta_cells) | set(counted):
+        if meta_cells.get(k, 0) != counted.get(k, 0):
+            fail_fn(f"{name} level {level}: test cell {k} meta {meta_cells.get(k, 0)} != rows {counted.get(k, 0)}")
+    if sum(counted.values()) != sl["test"]:
+        fail_fn(f"{name} level {level}: test cell total {sum(counted.values())} != {sl['test']}")
+    cells = " ".join(f"{k}={counted.get(k, 0)}" for k in sorted(meta_cells, key=lambda k: (int(k.split('_')[0][2:]), int(k.split('ans')[1]))))
+    out.append(f"  lvl {level:>2} test: {cells}")
+    if tr_lab.shape[0]:
+        tr_ad = np.asarray(tr_lab[:, ad_c]).astype(np.int64)
+        share = np.bincount(tr_ad, minlength=13)[1:13] / tr_ad.size
+        out.append(f"  lvl {level:>2} train ans_digits share 1..12: "
+                   + " ".join(f"{x * 100:.1f}" for x in share) + "  (% of train rows)")
+    return out
 
 
 def key_set(tok, lab, length_col: int) -> list[bytes]:
@@ -285,7 +343,8 @@ def main() -> None:
         sys.exit(1)
     meta = json.loads(meta_path.read_text())
     name = meta.get("name", root.name)
-    is_nested = name == "nested"
+    is_nested = name in ("nested", "nested_bal")
+    is_bal = name == "nested_bal"
     cols = {c: i for i, c in enumerate(meta["columns"])}
     width = meta["width"]
 
@@ -297,6 +356,10 @@ def main() -> None:
         fail(f"meta bound {meta.get('bound')!r} != looptf.toy.data.BOUND {BOUND!r}")
     if "mod" in meta:
         fail("meta still has a 'mod' key (obsolete mod-7 format)")
+    if is_bal:
+        for need in ("op_digits", "ans_digits"):
+            if need not in cols:
+                fail(f"nested_bal meta columns must include {need!r}")
     for need in ("answer", "length", "n_tgt", meta["level_column"]):
         if need not in cols:
             fail(f"meta columns must include {need!r}")
@@ -311,14 +374,18 @@ def main() -> None:
     print(hdr)
     print("-" * len(hdr))
 
+    allowed = meta.get("op_digits_allowed") if is_bal else None
+    bal_lines: list[str] = []
     for level in levels:
         sl = meta["slices"][str(level)]
-        train = check_slice(root, name, "train", level, sl["train"], args.sample, is_nested, width, cols)
-        test = check_slice(root, name, "test", level, sl["test"], args.sample, is_nested, width, cols)
+        train = check_slice(root, name, "train", level, sl["train"], args.sample, is_nested, width, cols, allowed)
+        test = check_slice(root, name, "test", level, sl["test"], args.sample, is_nested, width, cols, allowed)
         if train is None or test is None:
             continue
         tr_tok, tr_lab = train
         te_tok, te_lab = test
+        if is_bal:
+            bal_lines.extend(bal_level_report(level, sl, tr_lab, te_lab, cols, fail, name))
         lk = cols["length"]
         if tr_lab.shape[0] > 0:
             tr_len = np.asarray(tr_lab[:, lk]).astype(np.int64)
@@ -342,6 +409,11 @@ def main() -> None:
                   f"{mn:>12,d} {md:>10,d} {mx:>12,d} {chr_mean:>7.2f} {neg:>6.3f}  {overlap:>8.4f}")
         else:
             print(f"{level:>3} {'test':>5} {0:>9,d}")
+
+    if is_bal and bal_lines:
+        print()
+        print("nested_bal per-level cells (op_digits x ans_digits; test counts recounted from the rows)")
+        print("\n".join(bal_lines))
 
     print()
     if fails:

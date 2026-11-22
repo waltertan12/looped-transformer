@@ -15,6 +15,7 @@ from looptf.toy.data import (
     encode,
     gen_expr,
     make_batch,
+    num_digits,
     render,
     sample_example,
     tree_max_abs,
@@ -195,3 +196,77 @@ def test_bound_none_leaves_values_unbounded():
     assert data.BOUND is None
     rng = random.Random(3)
     assert any(abs(sample_example(rng, (10, 16), (4, 16))[1]) > 1000 for _ in range(200))
+
+
+def test_gen_expr_op_digits_1_matches_pre_change_outputs():
+    # Captured before op_digits existed: rng seeded 0, combos (1,1),(2,2),(5,3),(9,4),(16,8),(16,16),(12,5).
+    rng = random.Random(0)
+    got = [gen_expr(n, d, rng) for n, d in [(1, 1), (2, 2), (5, 3), (9, 4), (16, 8), (16, 16), (12, 5)]]
+    assert got == [
+        ("7-1", 6),
+        ("5-(8-6)", 3),
+        ("(5-9)*3*(5+2*2)", -108),
+        ("(2+7-(1+8))*6*(4*6-(2-4)-4)", 0),
+        ("4*(3-1)*(5-((8+2-2)*(3+3)+1*2*(9*7+9*5))+9)+4", -1996),
+        ("9+2*(1-2*(4+(2-(7+(2-(6+2+1+1)-4)*3*2+8))*4))", -949),
+        ("(2+7-4*5)*(6*8+3*4)*1*(3+3*(6-9))", 3960),
+    ]
+
+
+def test_gen_expr_op_digits_1_is_default():
+    a = gen_expr(9, 4, random.Random(5))
+    b = gen_expr(9, 4, random.Random(5), op_digits=1)
+    assert a == b
+
+
+@pytest.mark.parametrize("op_digits", [2, 3])
+def test_gen_expr_op_digits_leaves_in_range_never_zero(op_digits):
+    rng = random.Random(op_digits)
+    hi = 10**op_digits - 1
+    seen_multi = False
+    for n, d in [(1, 1), (3, 2), (7, 3), (12, 5), (16, 16)] * 40:
+        expr, ans = gen_expr(n, d, rng, op_digits=op_digits)
+        assert sum(expr.count(c) for c in "+-*") == n
+        assert _ast_depth(_parse(expr)) == d, expr
+        assert ans == eval(expr), expr
+        for node in ast.walk(_parse(expr)):
+            if isinstance(node, ast.Constant):
+                assert isinstance(node.value, int)
+                assert 1 <= node.value <= hi, (expr, node.value)
+                seen_multi |= node.value >= 10
+    assert seen_multi
+
+
+def test_gen_expr_op_digits_3_produces_all_digit_counts():
+    rng = random.Random(11)
+    counts = {1: 0, 2: 0, 3: 0}
+    for _ in range(300):
+        expr, _ = gen_expr(8, 4, rng, op_digits=3)
+        for node in ast.walk(_parse(expr)):
+            if isinstance(node, ast.Constant):
+                counts[len(str(node.value))] += 1
+    assert all(c > 0 for c in counts.values()), counts
+
+
+def test_gen_expr_op_digits_rejects_nonpositive():
+    with pytest.raises(ValueError):
+        gen_expr(3, 2, random.Random(0), op_digits=0)
+
+
+def test_num_digits():
+    assert num_digits(0) == 1
+    assert num_digits(7) == 1
+    assert num_digits(-7) == 1
+    assert num_digits(10) == 2
+    assert num_digits(-305) == 3
+    assert num_digits(10**12 - 1) == 12
+
+
+def test_sample_example_and_make_batch_accept_op_digits():
+    rng = random.Random(4)
+    for _ in range(100):
+        expr, ans, n, d = sample_example(rng, (2, 10), (1, 4), op_digits=3)
+        assert ans == eval(expr)
+        assert sum(expr.count(c) for c in "+-*") == n
+    batch = make_batch(16, random.Random(9), (1, 8), (1, 4), op_digits=2)
+    assert batch["x"].shape[0] == 16

@@ -9,6 +9,20 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
+## D-009 · Add Abacus-style digit-position embeddings? (open, after D-007)
+
+**Question.** McLeish et al. (NeurIPS 2024) found transformers fail at multi-digit arithmetic
+mainly because they lose track of each digit's place within its number; an extra embedding for
+"place within this number" fixed it, and they used looped transformers with input injection.
+
+**Options.** (a) No change. (b) Add a learned embedding per digit token for its position within
+its number (counted from the number's end, so place value lines up), on top of RoPE.
+
+**What would change our minds.** If reversed output (D-007) already fixes 3–5 digit answers,
+Abacus may be unnecessary; if big answers still fail after reversing, it's the next fix.
+
+**Recommendation.** Decide after D-007's results. **Needs Walter?** Yes. **Status.** Open.
+
 ## D-008 · Balance answer sizes and add an input-size dial? (decided: c)
 
 **Question.** Big answers dominate errors but are rare in training (4-digit answers ≈ 1% of

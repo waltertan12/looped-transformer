@@ -492,6 +492,43 @@ mixed-depth training (D-006).
 
 ---
 
+## 2026-11-22 — Separating "big numbers" from "many steps"
+
+**Problem.** The grid showed errors are driven by answer size more than depth. In this data
+big answers only appear with depth (depth 1 maxes out at 81), and were rare in training
+(4-digit ≈ 1% of the depth ≤ 3 mix). So the loop's effect on depth is hidden behind a
+number-size problem.
+
+**Decisions.**
+- D-006 (Walter): no curriculum gate. Train on depths 1–8 mixed; judge per-depth test accuracy
+  with 95% confidence intervals.
+- D-008 (Walter): new dataset `data/nested_bal`: balanced answer sizes, multi-digit inputs at
+  depth 1–3 (`347*28`) as a separate difficulty dial, test cells of up to 1,000 per
+  (input size × answer size).
+- D-007 (open): answers written normal (`258`) or reversed (`852`). Both are next-digit
+  prediction, but in normal order the first digit needs every carry worked out in advance
+  (mental arithmetic, no paper); reversed lets each digit be a small local step, with written
+  digits acting as scratch paper. Plan: run both.
+
+**Related work (checked 2026-11-22).**
+- Lee et al., *Teaching Arithmetic to Small Transformers* (ICLR 2024,
+  https://arxiv.org/abs/2307.03381): reversed output significantly improves small-transformer
+  arithmetic, because normal order makes the model emit the most significant digit before the
+  sum is known.
+- McLeish et al., *Transformers Can Do Arithmetic with the Right Embeddings* (NeurIPS 2024,
+  https://arxiv.org/abs/2405.17399): arithmetic failures stem largely from losing track of each
+  digit's position within a long number. "Abacus" embeddings (a digit's place within its
+  number) let 20-digit training generalize to 120 digits. They used **looped transformers with
+  input injection** (our design); adding those raised out-of-distribution accuracy from 92.9%
+  to 99.1%.
+- Large math LLMs (Qwen-Math, DeepSeekMath) solve arithmetic by writing their working as text
+  and calling tools, the visible-token alternative to looping; not the question here.
+
+**Read.** These fixes target number representation; the loop targets step count. Borrowing
+them removes the confound rather than replacing the loop. Model is d_model 256, 4 heads × 64.
+
+---
+
 ## Open questions / ideas to come back to
 
 - **Side quest: look at the embedding / hidden-state space of these models, including per loop

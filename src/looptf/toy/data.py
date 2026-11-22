@@ -135,19 +135,38 @@ def _build(n_ops: int, depth: int, rng: random.Random):
     return root
 
 
-def _freeze(node, rng: random.Random):
-    if node is None:
+def _leaf(rng: random.Random, op_digits: int) -> int:
+    """One leaf. op_digits=1 is the classic 1-9 draw (identical RNG use to before). For op_digits>1
+    the leaf gets a digit count k uniform in 1..op_digits; k=1 gives 1-9, k>=2 gives [10**(k-1), 10**k-1]."""
+    if op_digits == 1:
         return rng.randint(LEAF_LO, LEAF_HI)
-    return (node[0], _freeze(node[1], rng), _freeze(node[2], rng))
+    k = rng.randint(1, op_digits)
+    if k == 1:
+        return rng.randint(LEAF_LO, LEAF_HI)
+    return rng.randint(10 ** (k - 1), 10**k - 1)
+
+
+def _freeze(node, rng: random.Random, op_digits: int = 1):
+    if node is None:
+        return _leaf(rng, op_digits)
+    return (node[0], _freeze(node[1], rng, op_digits), _freeze(node[2], rng, op_digits))
+
+
+def num_digits(n: int) -> int:
+    """Number of decimal digits of abs(n); 0 has one digit."""
+    return len(str(abs(n)))
 
 
 # ---------------------------------------------------------------------------
 # Public generators
 # ---------------------------------------------------------------------------
 
-def gen_expr(n_ops: int, depth: int, rng: random.Random) -> tuple[str, int]:
+def gen_expr(n_ops: int, depth: int, rng: random.Random, op_digits: int = 1) -> tuple[str, int]:
     """Random expression with EXACTLY n_ops binary operators (each from + - *)
     and EXACTLY the given depth. Leaves are digits LEAF_LO..LEAF_HI (intermediates bounded only if BOUND is set).
+
+    op_digits=k>1: each leaf independently has 1..k digits (uniform digit count, then uniform value
+    with that many digits; never 0). op_digits=1 (default) is the classic 1-9 leaves.
 
     Requires 1 <= depth <= n_ops <= 2**depth - 1, else ValueError.
     Returns (expr_string, answer) with answer = the exact integer value.
@@ -156,15 +175,18 @@ def gen_expr(n_ops: int, depth: int, rng: random.Random) -> tuple[str, int]:
         raise ValueError(
             f"infeasible: need 1 <= depth <= n_ops <= 2**depth-1, got n_ops={n_ops}, depth={depth}"
         )
+    if op_digits < 1:
+        raise ValueError(f"op_digits must be >= 1, got {op_digits}")
     while True:
         shape = _build(n_ops, depth, rng)
         for _ in range(50):  # resample digits; rebuild the shape if they keep overflowing
-            tree = _freeze(shape, rng)
+            tree = _freeze(shape, rng, op_digits)
             if BOUND is None or tree_max_abs(tree) <= BOUND:
                 return render(tree), tree_value(tree)
 
 
-def sample_example(rng, n_ops_range: tuple[int, int], depth_range: tuple[int, int]) -> tuple[str, int, int, int]:
+def sample_example(rng, n_ops_range: tuple[int, int], depth_range: tuple[int, int],
+                   op_digits: int = 1) -> tuple[str, int, int, int]:
     """Pick depth uniformly in depth_range (inclusive), then n_ops uniformly in
     [max(depth, n_ops_lo), min(n_ops_hi, 2**depth-1)]; retry if that is empty.
     Returns (expr, answer, n_ops, depth)."""
@@ -183,11 +205,12 @@ def sample_example(rng, n_ops_range: tuple[int, int], depth_range: tuple[int, in
         if d < 1 or lo > hi:
             continue  # retry another depth
         n = rng.randint(lo, hi)
-        expr, ans = gen_expr(n, d, rng)
+        expr, ans = gen_expr(n, d, rng, op_digits)
         return expr, ans, n, d
 
 
-def make_batch(batch_size: int, rng, n_ops_range, depth_range, max_len: int = 128, device="cpu"):
+def make_batch(batch_size: int, rng, n_ops_range, depth_range, max_len: int = 128, device="cpu",
+               op_digits: int = 1):
     """Batch of ``expr=<answer>#`` sequences, right-padded with PAD_ID.
 
     Returns dict with:
@@ -196,7 +219,7 @@ def make_batch(batch_size: int, rng, n_ops_range, depth_range, max_len: int = 12
       n_tgt: LongTensor [B] number of answer tokens including EOS
       answer, n_ops, depth: LongTensor [B]
     """
-    items = [sample_example(rng, n_ops_range, depth_range) for _ in range(batch_size)]
+    items = [sample_example(rng, n_ops_range, depth_range, op_digits) for _ in range(batch_size)]
     seqs = [encode(expr + "=" + answer_tokens(ans)) for expr, ans, _, _ in items]
     T = max(len(s) for s in seqs)
     assert T <= max_len, f"batch needs {T} tokens > max_len={max_len}"
