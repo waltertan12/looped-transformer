@@ -9,7 +9,7 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
-## D-010 · How much of the grid does each new fix get tested on? (open)
+## D-010 · How much of the grid does each new fix get tested on? (decided: probe set)
 
 **Question.** Walter: shouldn't digit order and place-value embeddings also be tested on the
 shallow/medium models, i.e. isn't every test a grid? Without the no-loop baseline we can't tell
@@ -28,7 +28,9 @@ arithmetic fix and the grid adds little.
 
 **Recommendation.** Probe set (3 corners) for each fix; full grid for the final recipe. Add
 shallow normal + reversed to the current D-007 queue now (~15 min). **Needs Walter?** Yes.
-**Status.** Open.
+**Status.** Decided by Walter, 2026-11-22: probe set (shallow 2×1, looped 2×8, deep 16×1) per
+fix; full grid once the recipe is settled. Shallow normal + reversed queued after the deep pair
+(`scripts/arith_bal_shallow.sh`).
 
 ## D-009 · Add place-value embeddings ("Abacus")? (open, after D-007)
 
