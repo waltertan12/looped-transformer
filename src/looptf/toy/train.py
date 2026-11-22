@@ -242,8 +242,9 @@ def main(argv=None):
     dump_per_example(model, eval_sets, eval_loops, out_dir / "per_example.npz")
     meta["mastered_at"] = mastered_at
     (out_dir / "config.json").write_text(json.dumps(meta, indent=2))
-    torch.save({"cfg": cfg.__dict__, "state_dict": model.state_dict(), "args": vars(a)},
-               ckpt_dir / f"{a.name}.pt")
+    ckpt_path = ckpt_dir / f"{a.name}.pt"
+    ckpt_path.parent.mkdir(parents=True, exist_ok=True)  # run names may contain '/'
+    torch.save({"cfg": cfg.__dict__, "state_dict": model.state_dict(), "args": vars(a)}, ckpt_path)
     print(f"[{a.name}] done in {time.time()-t0:.0f}s", flush=True)
 
 
