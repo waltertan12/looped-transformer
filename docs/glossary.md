@@ -46,6 +46,14 @@ Plain-language definitions, each tied to this project. Terse agent-facing defini
 - **Out-of-distribution (OOD) / extrapolation.** Testing on harder problems than any in
   training (depth 9–16 when trained on ≤ 8). The "longer problems" question.
 - **Stop token (`#`, EOS).** Marks the end of the answer, so the model knows when it's done.
+- **Place-value embedding** (the paper calls it "Abacus embedding"). An extra learned
+  embedding that tells each digit its place within its number (ones, tens, hundreds…), so the
+  model doesn't have to work out place values by counting. Different from RoPE, which encodes
+  position in the whole sequence. Pairs naturally with reversed output: the first digit
+  written is always the ones place. Decision D-009.
+- **Number base.** Writing numbers in base 2, 10, 16… A difficulty dial: smaller bases mean
+  more digits and longer carry chains (many easy steps), larger bases fewer digits but harder
+  per-digit work.
 - **Digit order (normal vs reversed).** Normal writes `258`; reversed writes `852` (sign
   still first). Both are next-digit prediction, but in normal order the first digit needs
   every carry worked out in advance (mental arithmetic, no paper); in reversed order each

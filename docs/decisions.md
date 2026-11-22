@@ -9,7 +9,7 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
-## D-009 · Add Abacus-style digit-position embeddings? (open, after D-007)
+## D-009 · Add place-value embeddings ("Abacus")? (open, after D-007)
 
 **Question.** McLeish et al. (NeurIPS 2024) found transformers fail at multi-digit arithmetic
 mainly because they lose track of each digit's place within its number; an extra embedding for

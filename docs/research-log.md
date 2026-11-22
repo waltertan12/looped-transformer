@@ -531,6 +531,11 @@ them removes the confound rather than replacing the loop. Model is d_model 256, 
 
 ## Open questions / ideas to come back to
 
+- **Number base as a difficulty dial.** Same problems written in base 2 / 10 / 16. Base 2 makes
+  every digit step trivial but numbers ~3.3× longer with long carry chains (many easy steps in
+  sequence); base 16 the opposite. Question: does looping help more for "many easy steps" than
+  "few hard steps"? Needs place-value embeddings (base-agnostic) and a renderer change.
+
 - **Loop placement (which blocks recur).** Intuition: early blocks read, middle blocks think,
   late blocks write, so loop the middle (prelude / core / coda, as Huginn does). Test at fixed
   4 unique blocks and fixed compute: 0+4+0 (loop everything, Universal-Transformer style),
