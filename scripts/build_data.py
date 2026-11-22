@@ -130,6 +130,31 @@ def gen_test(pool, name, level, test_n, train_set, seed):
     return test_items, attempts - 1, shortfall
 
 
+def gen_holdout(pool, name, level, train_n, test_n, frac, seed):
+    """For levels with only a few distinct problems (nested depth 1-2), every test prompt would
+    also be in train. Instead: enumerate the distinct prompts, hold out `frac` of them (seeded),
+    train only on the rest, and test only on the held-out ones (each once, up to test_n).
+    Returns (train_items, test_items, n_distinct)."""
+    distinct: dict[str, tuple] = {}
+    for chunk_items in pool.map(gen_chunk, [(name, "enum", level, i, CHUNK, seed) for i in range(20)]):
+        for p_, row in chunk_items:
+            distinct.setdefault(p_, row)
+    keys = sorted(distinct)
+    rng = random.Random(seed_for(seed, name, "holdout", level, 0))
+    rng.shuffle(keys)
+    held = set(keys[: max(1, int(round(frac * len(keys))))])
+    test_items = [(k, distinct[k]) for k in sorted(held)]
+    random.Random(seed_for(seed, name, "holdout-order", level, 0)).shuffle(test_items)
+    test_items = test_items[:test_n]
+    train_items, chunk = [], 0
+    while len(train_items) < train_n:
+        for it in gen_chunk((name, "train", level, chunk, CHUNK, seed)):
+            if it[0] not in held:
+                train_items.append(it)
+        chunk += 1
+    return train_items[:train_n], test_items, len(keys)
+
+
 def to_arrays(items, width: int, n_cols: int) -> tuple[np.ndarray, np.ndarray]:
     seqs = [full_sequence(p, row[0]) for p, row in items]
     tokens = encode_rows(seqs, width)
@@ -148,9 +173,16 @@ def build_dataset(pool, name: str, root: Path, args) -> None:
           f"train {train_n}/level, test {args.test_n}/level -> {root}", flush=True)
     for level in levels:
         t0 = time.time()
-        tr = gen_train(pool, name, level, train_n, args.seed)
-        train_set = {p for p, _ in tr}
-        te, refills, shortfall = gen_test(pool, name, level, args.test_n, train_set, args.seed)
+        holdout = name == "nested" and level in args.holdout_levels
+        if holdout:
+            tr, te, n_distinct = gen_holdout(pool, name, level, train_n, args.test_n,
+                                             args.holdout_frac, args.seed)
+            train_set = {p for p, _ in tr}
+            refills, shortfall = 0, 0
+        else:
+            tr = gen_train(pool, name, level, train_n, args.seed)
+            train_set = {p for p, _ in tr}
+            te, refills, shortfall = gen_test(pool, name, level, args.test_n, train_set, args.seed)
         overlap = sum(p in train_set for p, _ in te) / len(te) if te else 0.0
 
         tr_tok, tr_lab = to_arrays(tr, spec["width"], n_cols)
@@ -159,6 +191,9 @@ def build_dataset(pool, name: str, root: Path, args) -> None:
         write_slice(root, "test", level, te_tok, te_lab)
         slices[str(level)] = {"train": len(tr), "test": len(te),
                               "test_overlap_with_train": float(overlap)}
+        if holdout:
+            slices[str(level)].update({"holdout": True, "distinct_prompts": n_distinct,
+                                       "holdout_frac": args.holdout_frac})
         print(f"  level {level:2d}: train {len(tr):>9,d}  test {len(te):>5d}  "
               f"overlap {overlap:.4f}  refills {refills}  shortfall {shortfall}  "
               f"{time.time() - t0:6.1f}s", flush=True)
@@ -193,7 +228,12 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=20)
     ap.add_argument("--scale", type=float, default=1.0, help="multiplies train sizes")
     ap.add_argument("--test_n", type=int, default=1000, help="test prompts per level")
+    ap.add_argument("--holdout_levels", default="1,2",
+                    help="nested levels with few distinct problems: hold out a fraction of the "
+                         "distinct prompts from train and test only on those")
+    ap.add_argument("--holdout_frac", type=float, default=0.2)
     args = ap.parse_args()
+    args.holdout_levels = {int(v) for v in args.holdout_levels.split(",") if v.strip()}
 
     names = [w.strip() for w in args.which.split(",") if w.strip()]
     for n in names:

@@ -69,6 +69,25 @@ def answer_loss(logits, b):
 
 
 @torch.no_grad()
+def dump_per_example(model, eval_sets, loops_list, path):
+    """Save per-example correctness with labels, so accuracy can be sliced later
+    (e.g. by answer length, to separate 'too many steps' from 'numbers too big')."""
+    model.eval()
+    rows = {}
+    for k in loops_list:
+        for d, b in eval_sets.items():
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                logits = model(b["x"], n_loops=k)
+            rows.setdefault("K", []).append(torch.full_like(b["pos"], k).cpu())
+            rows.setdefault("correct", []).append(answer_loss(logits, b)[1].cpu())
+            for c in ("depth", "chain_len", "n_ops", "n_ops_total", "n_tgt", "answer", "length"):
+                if c in b:
+                    rows.setdefault(c, []).append(b[c].cpu())
+    model.train()
+    np.savez_compressed(path, **{c: torch.cat(v).numpy() for c, v in rows.items()})
+
+
+@torch.no_grad()
 def evaluate(model, eval_sets, loops_list):
     model.eval()
     out = {}
@@ -109,7 +128,7 @@ def main(argv=None):
     p.add_argument("--eval_every", type=int, default=2000)
     p.add_argument("--eval_depths", default="1-16")
     p.add_argument("--eval_loops", default="1,2,4,8,12,16")
-    p.add_argument("--eval_n", type=int, default=512)
+    p.add_argument("--eval_n", type=int, default=1000)
     p.add_argument("--curriculum", action="store_true",
                    help="start at depth 1..2, add a level when the current top depth is mastered")
     p.add_argument("--cur_start", type=int, default=2)
@@ -220,6 +239,7 @@ def main(argv=None):
                   f"lr {rec['lr']:.2e}  depth<={cur}  {el:.0f}s", flush=True)
             run_loss = run_acc = 0.0
 
+    dump_per_example(model, eval_sets, eval_loops, out_dir / "per_example.npz")
     meta["mastered_at"] = mastered_at
     (out_dir / "config.json").write_text(json.dumps(meta, indent=2))
     torch.save({"cfg": cfg.__dict__, "state_dict": model.state_dict(), "args": vars(a)},

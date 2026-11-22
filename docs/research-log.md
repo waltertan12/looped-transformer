@@ -435,6 +435,33 @@ without mod 7 and zeros, shortcuts are rare. Train all models at lr 3e-4 on the 
 
 ---
 
+## 2026-11-22 — Review fixes and learning-rate sweep, before the grid
+
+**Review fixes.** (1) Depth 1–2 test problems all appeared in training (only 243 distinct
+depth-1 problems). Now 20% of the distinct depth-1/2 problems are held out of training and the
+test set uses only those: depth 1 tests 49 unseen problems, depth 2 tests 1,000; overlap is 0
+at every depth. (2) Scoring uses all 1,000 test problems per depth. (3) Every test problem's
+result is saved (`per_example.npz`) so accuracy can be split by answer length ("too many
+steps" vs "numbers too big"). (4) Checked: hidden state stays stable over 16 passes at init;
+all depth-16 cells (2×8, 4×4, 8×2, 16×1) cost ~31 ms/step, so the diagonal is compute-matched.
+
+**LR sweep** (10k steps, curriculum, test accuracy on unseen depth-3 problems):
+
+| model | 1e-4 | 3e-4 | 1e-3 |
+|---|---|---|---|
+| 2×1 shallow (4.4M) | 0.32 | **0.35** | 0.30 |
+| 2×8 looped (4.4M) | 0.37 | **0.57** | 0.62 |
+| 16×1 deep (19M) | 0.48 | **0.61** | 0.51 |
+
+3e-4 is best or near-best everywhere, so the grid uses 3e-4 for all. Early hint (one seed,
+short): the looped 4.4M model matches the 19M deep one at depth 3, and both beat shallow.
+
+**Grid launched** (seed 0): core ∈ {2,4,8,16} × fixed loops (effective depth ≤ 16), plus
+random-K runs 2×(1–8) and 4×(1–4). 40k steps, lr 3e-4, `data/nested`. Script:
+`scripts/arith_grid.sh`; report: `scripts/arith_report.py` → `docs/results-arith-grid.md`.
+
+---
+
 ## Open questions / ideas to come back to
 
 - **Side quest: look at the embedding / hidden-state space of these models, including per loop
