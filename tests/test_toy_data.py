@@ -45,7 +45,9 @@ def _combos():
 
 def test_vocab_and_codec():
     assert VOCAB[0] == "_" and STOI["_"] == PAD_ID == 0
-    assert VOCAB == ["_", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "-", "*", "(", ")", "="]
+    assert VOCAB[:17] == ["_", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "-", "*", "(", ")", "="]
+    assert VOCAB[17:] == [chr(c) for c in range(ord("a"), ord("z") + 1)] + [";", "?"]
+    assert len(set(VOCAB)) == len(VOCAB) == 45
     ids = encode("3+4*(2-5)=")
     assert decode(ids + [PAD_ID, PAD_ID]) == "3+4*(2-5)="
 

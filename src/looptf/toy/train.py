@@ -20,7 +20,10 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
+import numpy as np
+
 from looptf.toy.data import make_batch, VOCAB
+from looptf.toy.dataset import FrozenData
 from looptf.toy.model import ToyConfig, ToyLM
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -90,6 +93,14 @@ def main(argv=None):
     p.add_argument("--eval_depths", default="1-16")
     p.add_argument("--eval_loops", default="1,2,4,8,12,16")
     p.add_argument("--eval_n", type=int, default=512)
+    p.add_argument("--curriculum", action="store_true",
+                   help="start at depth 1..2, add a level when the current top depth is mastered")
+    p.add_argument("--cur_start", type=int, default=2)
+    p.add_argument("--cur_every", type=int, default=250)
+    p.add_argument("--cur_threshold", type=float, default=0.9)
+    p.add_argument("--data", default=None,
+                   help="frozen dataset dir (e.g. data/nested, data/chain); default: generate on the fly. "
+                        "With --data, 'depth' flags refer to the dataset's level (depth or chain length)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--compile", action="store_true")
     a = p.parse_args(argv)
@@ -102,7 +113,12 @@ def main(argv=None):
     ckpt_dir = ROOT / "checkpoints" / "toy"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
-    cfg = ToyConfig(vocab_size=len(VOCAB), d_model=a.d_model, n_heads=a.n_heads, d_ff=a.d_ff,
+    fd = None
+    if a.data:
+        fd = FrozenData(Path(a.data) if Path(a.data).is_absolute() else ROOT / a.data, device=dev)
+        np_rng = np.random.default_rng(a.seed)
+    max_len = max(128, fd.meta["width"]) if fd else 128
+    cfg = ToyConfig(vocab_size=len(VOCAB), max_len=max_len, d_model=a.d_model, n_heads=a.n_heads, d_ff=a.d_ff,
                     n_prelude=a.n_prelude, n_core=a.n_core, n_coda=a.n_coda, inject=a.inject)
     model = ToyLM(cfg).to(dev)  # fp32 weights; bf16 compute via autocast (exp3 lesson)
     fwd = torch.compile(model) if a.compile else model
@@ -112,7 +128,20 @@ def main(argv=None):
     eval_depths = list(range(d_lo, d_hi + 1))
     # Non-looped baselines (trained at K=1) are scored at K=1 only; looped models at every K.
     eval_loops = [1] if loops_hi == 1 else sorted(set(parse_list(a.eval_loops)) | {loops_hi})
-    eval_sets = build_eval_sets(eval_depths, a.eval_n, nops_rng, dev)
+    if fd:
+        eval_sets = fd.test_sets(eval_depths, a.eval_n)
+        eval_depths = sorted(eval_sets)
+    else:
+        eval_sets = build_eval_sets(eval_depths, a.eval_n, nops_rng, dev)
+    # Curriculum: train on depths [lo, cur]; when accuracy at depth `cur` (at the largest
+    # training loop count) reaches the threshold, raise cur by one, up to the configured max.
+    cur = min(a.cur_start, depth_rng[1]) if a.curriculum else depth_rng[1]
+    if fd:  # curriculum checks use held-in training rows, never the test set
+        cur_sets = {lv: fd.batch(np.random.default_rng(999 + lv), 256, (lv, lv))
+                    for lv in range(depth_rng[0], depth_rng[1] + 1)}
+    else:
+        cur_sets = build_eval_sets(range(depth_rng[0], depth_rng[1] + 1), 256, nops_rng, dev, seed=999)
+    mastered_at = {}
 
     decay = [p_ for n, p_ in model.named_parameters() if p_.dim() >= 2]
     no_decay = [p_ for n, p_ in model.named_parameters() if p_.dim() < 2]
@@ -144,7 +173,18 @@ def main(argv=None):
         for g in opt.param_groups:
             g["lr"] = lr_at(step)
         k = rng.randint(loops_lo, loops_hi)
-        b = make_batch(a.bs, rng, nops_rng, depth_rng, device=dev)
+        if a.curriculum and step % a.cur_every == 0 and step > 0 and cur not in mastered_at:
+            acc_top = evaluate(model, {cur: cur_sets[cur]}, [loops_hi])[loops_hi][cur]
+            if acc_top >= a.cur_threshold:
+                mastered_at[cur] = step
+                log.write(json.dumps({"step": step, "mastered_depth": cur, "acc": acc_top}) + "\n")
+                print(f"*** step {step}: mastered depth {cur} (acc {acc_top:.2f})", flush=True)
+                if cur < depth_rng[1]:
+                    cur += 1
+        if fd:
+            b = fd.batch(np_rng, a.bs, (depth_rng[0], cur))
+        else:
+            b = make_batch(a.bs, rng, nops_rng, (depth_rng[0], cur), device=dev)
         with torch.autocast("cuda", dtype=torch.bfloat16):
             logits = fwd(b["x"], n_loops=k)
         logits = logits[torch.arange(a.bs, device=dev), b["pos"]].float()
@@ -157,13 +197,15 @@ def main(argv=None):
         run_acc += (logits.argmax(-1) == b["y"]).float().mean().item()
         if (step + 1) % 200 == 0:
             el = time.time() - t0
-            rec = {"step": step + 1, "loss": run_loss / 200, "train_acc": run_acc / 200,
+            rec = {"step": step + 1, "cur_depth": cur, "loss": run_loss / 200, "train_acc": run_acc / 200,
                    "lr": lr_at(step), "elapsed_s": round(el, 1)}
             log.write(json.dumps(rec) + "\n"); log.flush()
             print(f"step {step+1:6d}  loss {rec['loss']:.4f}  acc {rec['train_acc']:.3f}  "
-                  f"lr {rec['lr']:.2e}  {el:.0f}s", flush=True)
+                  f"lr {rec['lr']:.2e}  depth<={cur}  {el:.0f}s", flush=True)
             run_loss = run_acc = 0.0
 
+    meta["mastered_at"] = mastered_at
+    (out_dir / "config.json").write_text(json.dumps(meta, indent=2))
     torch.save({"cfg": cfg.__dict__, "state_dict": model.state_dict(), "args": vars(a)},
                ckpt_dir / f"{a.name}.pt")
     print(f"[{a.name}] done in {time.time()-t0:.0f}s", flush=True)

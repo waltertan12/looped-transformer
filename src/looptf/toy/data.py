@@ -25,7 +25,10 @@ import random
 
 import torch
 
-VOCAB: list[str] = ["_", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "-", "*", "(", ")", "="]
+# Shared by every arithmetic dataset. Append only: existing ids must never change.
+# 0-16: nested expressions. 17-44: intermediate-values (chain) task: variable names, ';', '?'.
+VOCAB: list[str] = (["_", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "-", "*", "(", ")", "="]
+                    + [chr(c) for c in range(ord("a"), ord("z") + 1)] + [";", "?"])
 PAD_ID: int = 0
 STOI: dict[str, int] = {t: i for i, t in enumerate(VOCAB)}
 ITOS: dict[int, str] = {i: t for i, t in enumerate(VOCAB)}
