@@ -531,6 +531,20 @@ them removes the confound rather than replacing the loop. Model is d_model 256, 
 
 ## Open questions / ideas to come back to
 
+- **Loop placement (which blocks recur).** Intuition: early blocks read, middle blocks think,
+  late blocks write, so loop the middle (prelude / core / coda, as Huginn does). Test at fixed
+  4 unique blocks and fixed compute: 0+4+0 (loop everything, Universal-Transformer style),
+  1+2+1 (current), 2+1+1, 1+1+2, 3+1+0. Cheap: `--n_prelude/--n_core/--n_coda` already exist.
+  (Playbook's original exp4.) Priority 1 of the future-architecture ideas.
+- **Adaptive depth / early exit.** Learn when to stop looping per problem or per token (ACT,
+  PonderNet, Ouro's learned exit; Mixture-of-Recursions for per-token loop counts). Priority 2,
+  once looping clearly helps.
+- **Routing / branching.** Skip blocks per token (Mixture-of-Depths), route to experts (MoE),
+  or build a per-problem network shaped like the expression tree (Neural Module Networks).
+  Looped transformers ≈ iterated message passing (cf. recurrent GNNs in neural algorithmic
+  reasoning / CLRS). Likely problem-specific (arithmetic has a clean tree); bigger build.
+  Priority 3.
+
 - **Side quest: look at the embedding / hidden-state space of these models, including per loop
   pass.** Curiosity, not on the critical path; unclear what it will teach. Possible angles: PCA /
   UMAP of the hidden state at the '=' token, coloured by answer, depth or loop pass; whether
