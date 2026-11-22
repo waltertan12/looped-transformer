@@ -42,7 +42,7 @@ not a data-quantity problem: it's the arithmetic (→ digit order D-007, or a wi
 
 **Recommendation.** (c), then run D-007 on it. **Needs Walter?** Yes. **Status.** Decided: (c), by Walter, 2026-11-22.
 
-## D-007 · Write answers smallest digit first? (open)
+## D-007 · Write answers smallest digit first? (decided: run both)
 
 **Question.** At depth 3, accuracy depends mostly on answer size, not depth (deep 16×1:
 1 digit 0.99, 2 digits 0.95, 3 digits 0.75, 4 digits 0.40; all models alike). Writing the
@@ -59,7 +59,7 @@ bottleneck?
 **What would change our minds.** If reversed is no better on 3–4 digit answers, the limit is
 the multiplication itself → wider model, or accept "depth + mental arithmetic" as the task.
 
-**Recommendation.** Run both. **Needs Walter?** Yes. **Status.** Open.
+**Recommendation.** Run both. **Needs Walter?** Yes. **Status.** Decided: run both, by Walter, 2026-11-22 (`scripts/arith_bal.sh`, results in `results/toy/bal/`).
 
 ## D-006 · Fix the curriculum stall at depth 3 (decided: mix all depths)
 
