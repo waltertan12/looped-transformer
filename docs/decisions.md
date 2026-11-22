@@ -9,6 +9,27 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
+## D-010 · How much of the grid does each new fix get tested on? (open)
+
+**Question.** Walter: shouldn't digit order and place-value embeddings also be tested on the
+shallow/medium models, i.e. isn't every test a grid? Without the no-loop baseline we can't tell
+"this fix helps looping" from "this fix helps every model". The D-007 runs lack shallow.
+
+**Options.**
+- **Full grid per fix:** 10 cells × each condition. Order × place-value (4 conditions) = 40
+  runs ≈ 11 GPU-hours per seed.
+- **Probe set per fix, full grid for the final recipe:** shallow 2×1, looped 2×8, deep 16×1
+  for every condition (12 runs ≈ 2.5 h per seed), then one full grid with the best recipe.
+- **Looped + deep only** (current D-007 runs): cheapest, but no no-loop baseline.
+
+**What would change our minds.** If the probe set shows a fix helps looped *more* than shallow
+or deep, it's worth confirming on the full grid; if it helps all three equally, it's a general
+arithmetic fix and the grid adds little.
+
+**Recommendation.** Probe set (3 corners) for each fix; full grid for the final recipe. Add
+shallow normal + reversed to the current D-007 queue now (~15 min). **Needs Walter?** Yes.
+**Status.** Open.
+
 ## D-009 · Add place-value embeddings ("Abacus")? (open, after D-007)
 
 **Question.** McLeish et al. (NeurIPS 2024) found transformers fail at multi-digit arithmetic
