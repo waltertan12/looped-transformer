@@ -462,6 +462,36 @@ random-K runs 2×(1–8) and 4×(1–4). 40k steps, lr 3e-4, `data/nested`. Scri
 
 ---
 
+## 2026-11-22 — Grid results, seed 0 (curriculum, real-valued nested data)
+
+Full tables: `docs/results-arith-grid.md`. Depth-3 test accuracy (unseen problems, 1,000 per
+depth, ±0.02 at 95%), at each run's training loop count:
+
+| core \ loops | ×1 | ×2 | ×4 | ×8 |
+|---|---|---|---|---|
+| 2 (4.4M) | 0.80 | 0.84 | 0.86 | 0.86 |
+| 4 (6.4M) | 0.83 | 0.86 | 0.88 | |
+| 8 (10.6M) | 0.81 | 0.88 | | |
+| 16 (19.0M) | 0.88 | | | |
+
+- **Same weights, more loops helps:** 2-core 0.80 → 0.86, saturating after ~4 loops.
+- **Same compute, fewer weights is about as good:** effective depth 16: 2×8 0.86 vs 4×4 / 8×2 /
+  16×1 0.88. Looped gets within ~0.02 of deep with 4× fewer weights. One seed.
+- **Number size dominates errors:** depth 3, deep model: 1-digit answers 0.99, 2-digit 0.95,
+  3-digit 0.75, 4-digit 0.40. The curriculum "stall at depth 3" was mostly big answers, which
+  were only ~1% of training at depth ≤ 3.
+- **Random loop counts hurt at this scale:** 2×(1–8) 0.83, 4×(1–4) 0.79; slower to master
+  depth 2 (~7.5k vs ~5k steps). Fixed-K models only work at their training K.
+- **Depth 4+ uninterpretable:** most runs reached depth 4 only in the last ~5k steps.
+- Bug: checkpoints for these 12 runs weren't saved (subdirectory not created); fixed.
+
+**Read.** First positive looping result: looping buys depth without weights, but the gain is
+small because this task's bottleneck is mental arithmetic on big numbers, not step count.
+Next: separate the two (D-007 digit order, D-008 balanced answer sizes + input-size dial),
+mixed-depth training (D-006).
+
+---
+
 ## Open questions / ideas to come back to
 
 - **Side quest: look at the embedding / hidden-state space of these models, including per loop
