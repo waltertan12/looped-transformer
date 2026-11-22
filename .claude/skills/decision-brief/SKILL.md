@@ -38,6 +38,20 @@ the line of work. (This is the pre-registration.)
 **Status.** Open | Decided: <option>, by <who>, <date>.
 ```
 
+## Pre-launch checklist (every experiment card must pass all of these)
+1. **Baseline included.** Every comparison has the no-change condition: the no-loop model
+   (shallow 2×1) and the current default setting. A fix is only interesting if it helps the
+   looped model *more* than the baseline. (Missed in D-007; caught by Walter → D-010.)
+2. **Probe set.** New fixes run on shallow 2×1, looped 2×8, deep 16×1 at minimum; the full grid
+   is for the final recipe (D-010, once decided).
+3. **One question, stated.** The card names the single question the runs answer and the result
+   that would change our minds.
+4. **Confounds named.** What else could explain the outcome (number size vs depth, training
+   length, seed noise), and how the design or the breakdown separates it.
+5. **Measurement can detect the effect.** Enough test problems per cell (≈1,000 → ±3%);
+   seeds if the expected effect is near the seed-to-seed spread.
+6. **Cost stated.** Runs × time, at 2 runs at a time on the GPU.
+
 ## How to present it
 - In chat: the question, the options in plain language (use `docs/glossary.md` terms; add new
   terms to both glossary files), your recommendation, then ask. One decision per question
