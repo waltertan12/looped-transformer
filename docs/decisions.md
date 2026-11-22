@@ -9,6 +9,27 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
+## D-011 · Place-value embeddings: which runs? (open)
+
+**Question.** Plan step 2. Looping doesn't fix big answers (+0.03), so number representation
+is the next target. The plan says test place-value embeddings with the winning order (normal).
+But place-value is expected to pair with reversed order (in reversed order the answer's first
+digit is the ones place, so tags line up), so reversed may only have lost because it lacked them.
+
+**Options.**
+- **(a) Normal + place-value on the probe set** (shallow, looped, deep): 3 runs, ≈ 1.3 h. The
+  plan's rule as written.
+- **(b) (a) + looped reversed + place-value:** 4 runs, ≈ 1.6 h. Also tests the pairing
+  hypothesis on the model we care most about.
+- **(c) Both orders on the full probe set:** 6 runs, ≈ 2.5 h.
+
+**What would change our minds.** If place-value lifts 3–5 digit answers by ≥ 0.05 → adopt
+(plan rule). If reversed + place-value beats normal + place-value by ≥ 0.05 → revisit D-007.
+If place-value doesn't help either order → number size needs width/training length instead.
+
+**Recommendation.** (b). **Needs Walter?** Yes. **Status.** Open; would queue after the deep
+pair (~18:30).
+
 ## D-010 · How much of the grid does each new fix get tested on? (decided: probe set)
 
 **Question.** Walter: shouldn't digit order and place-value embeddings also be tested on the
@@ -65,7 +86,7 @@ not a data-quantity problem: it's the arithmetic (→ digit order D-007, or a wi
 
 **Recommendation.** (c), then run D-007 on it. **Needs Walter?** Yes. **Status.** Decided: (c), by Walter, 2026-11-22.
 
-## D-007 · Write answers smallest digit first? (decided: run both)
+## D-007 · Write answers smallest digit first? (decided: normal order)
 
 **Question.** At depth 3, accuracy depends mostly on answer size, not depth (deep 16×1:
 1 digit 0.99, 2 digits 0.95, 3 digits 0.75, 4 digits 0.40; all models alike). Writing the
@@ -83,7 +104,7 @@ bottleneck?
 the multiplication itself → wider model, or accept "depth + mental arithmetic" as the task.
 
 **Recommendation.** Run both. **Needs Walter?** Yes. **Status.** Decided: run both, by Walter, 2026-11-22 (`scripts/arith_bal.sh`, results in `results/toy/bal/`).
-**Result (looped, seed 0):** reversed worse (primary −0.04, small answers −0.11) → keep normal order per the plan's rule; confirm on shallow/deep.
+**Result (seed 0):** reversed worse for looped (primary −0.04, small −0.11) and shallow (−0.04, −0.08) → **keep normal order** per the plan's rule. Deep pending, but the decision doesn't depend on it.
 
 ## D-006 · Fix the curriculum stall at depth 3 (decided: mix all depths)
 

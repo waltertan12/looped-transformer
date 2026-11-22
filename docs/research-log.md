@@ -559,6 +559,31 @@ help together with place-value embeddings (untested hypothesis).
 
 ---
 
+## 2026-11-22 — D-007 wave 2: shallow baseline. Looping buys depth, not arithmetic
+
+Same 4.4M weights, normal order, 1-digit inputs (seed 0):
+
+| answer size | depth | shallow 2×1 | looped 2×8 | loop gain |
+|---|---|---|---|---|
+| 1 digit | 4 | 0.74 | 0.90 | +0.16 |
+| 1 digit | 6 | 0.58 | 0.84 | +0.26 |
+| 1 digit | 8 | 0.47 | 0.74 | +0.27 |
+| 1 digit | 10 (untrained) | 0.42 | 0.62 | +0.20 |
+| 2 digits | 6 | 0.25 | 0.54 | +0.29 |
+| 2 digits | 8 | 0.14 | 0.39 | +0.25 |
+| 3–5 digits (depths 2–6) | | 0.17 | 0.20 | +0.03 |
+
+**Read.** The clearest looping result so far: with the same weights, 8 passes add 16–29 points
+on problems that need many steps but have small answers; the gain grows with depth to ~8 and
+carries past the training depth. On big answers looping adds ~3 points. Loops buy sequential
+depth, not arithmetic capacity: the project's hypothesis, visible now that the balanced data
+separates the two. One seed; deep 16×1 (same compute, 4× weights) pending.
+
+**Digit order settled:** reversed also hurts shallow (primary −0.04, small −0.08), so it is a
+general effect, not loop-specific. Keep normal order (D-007).
+
+---
+
 ## Open questions / ideas to come back to
 
 - **Number base as a difficulty dial.** Same problems written in base 2 / 10 / 16. Base 2 makes
