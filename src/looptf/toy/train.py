@@ -157,6 +157,8 @@ def main(argv=None):
     p.add_argument("--data", default=None,
                    help="frozen dataset dir (e.g. data/nested, data/chain); default: generate on the fly. "
                         "With --data, 'depth' flags refer to the dataset's level (depth or chain length)")
+    p.add_argument("--place_emb", action="store_true",
+                   help="add place-value ('Abacus') embeddings for digit tokens (D-009)")
     p.add_argument("--reverse_answer", action="store_true",
                    help="write answers smallest digit first (sign first, '#' last); needs --data")
     p.add_argument("--mem_fraction", type=float, default=0.0,
@@ -183,7 +185,8 @@ def main(argv=None):
         np_rng = np.random.default_rng(a.seed)
     max_len = max(128, fd.meta["width"]) if fd else 128
     cfg = ToyConfig(vocab_size=len(VOCAB), max_len=max_len, d_model=a.d_model, n_heads=a.n_heads, d_ff=a.d_ff,
-                    n_prelude=a.n_prelude, n_core=a.n_core, n_coda=a.n_coda, inject=a.inject)
+                    n_prelude=a.n_prelude, n_core=a.n_core, n_coda=a.n_coda, inject=a.inject,
+                    place_emb=a.place_emb)
     model = ToyLM(cfg).to(dev)  # fp32 weights; bf16 compute via autocast (exp3 lesson)
     fwd = torch.compile(model) if a.compile else model
     loops_lo, loops_hi = parse_range(a.train_loops)

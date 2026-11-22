@@ -27,6 +27,40 @@ import torch.nn.functional as F
 
 _INJECT_MODES = ("concat", "add", "none")
 
+# Token ids from looptf.toy.data.VOCAB (kept literal so the model has no data dependency;
+# tests check they match): '0'..'9' -> 1..10, '=' -> 16, '?' -> 44.
+_DIGIT_LO, _DIGIT_HI, _EQ_ID, _Q_ID = 1, 10, 16, 44
+
+
+def _run_index(is_digit: torch.Tensor) -> torch.Tensor:
+    """For each position, how many digits precede it within the same run of digits."""
+    B, T = is_digit.shape
+    t = torch.arange(T, device=is_digit.device).expand(B, T)
+    last_non = torch.where(is_digit, torch.full_like(t, -1), t).cummax(dim=1).values
+    return t - last_non - 1
+
+
+def place_ids(x: torch.Tensor, max_places: int) -> torch.Tensor:
+    """Place index per token: 0 for non-digits, else 1 + place.
+
+    Question digits (before the terminal '=' / '?'): place counted from the END of the number,
+    i.e. true place value (ones = 0, tens = 1, ...); the question is given in full, so this
+    uses no hidden information. Answer digits (after the terminal): counted from the START of
+    the answer, so the tag never reveals how long the answer will be (causal). With reversed
+    answers, counting from the start equals place value, so question and answer line up.
+    """
+    is_digit = (x >= _DIGIT_LO) & (x <= _DIGIT_HI)
+    from_start = _run_index(is_digit)
+    from_end = _run_index(is_digit.flip(1)).flip(1)
+    # terminal: '?' if the sequence has one (chain task, where '=' appears inside statements),
+    # else '='; answer region = strictly after its first occurrence
+    has_q = (x == _Q_ID).any(dim=1, keepdim=True)
+    is_term = torch.where(has_q, x == _Q_ID, x == _EQ_ID)
+    c = is_term.long().cumsum(dim=1)
+    after = (c - is_term.long()) > 0
+    place = torch.where(after, from_start, from_end).clamp(max=max_places - 1)
+    return torch.where(is_digit, place + 1, torch.zeros_like(place))
+
 
 @dataclass
 class ToyConfig:
@@ -40,6 +74,10 @@ class ToyConfig:
     n_coda: int = 1  # unique layers after the core
     inject: str = "concat"  # "concat" | "add" | "none"
     dropout: float = 0.0
+    # Place-value embeddings (McLeish et al. 2024 call them "Abacus"): each digit token gets an
+    # extra learned embedding for its place within its number. Off by default.
+    place_emb: bool = False
+    max_places: int = 24
 
 
 class RMSNorm(nn.Module):
@@ -134,6 +172,7 @@ class ToyLM(nn.Module):
 
         self.cfg = cfg
         self.embed = nn.Embedding(cfg.vocab_size, cfg.d_model)
+        self.place = nn.Embedding(cfg.max_places + 1, cfg.d_model, padding_idx=0) if cfg.place_emb else None
         self.prelude = nn.ModuleList([Block(cfg) for _ in range(cfg.n_prelude)])
         self.core = nn.ModuleList([Block(cfg) for _ in range(cfg.n_core)])
         self.coda = nn.ModuleList([Block(cfg) for _ in range(cfg.n_coda)])
@@ -163,6 +202,9 @@ class ToyLM(nn.Module):
             # Fan-in scaling so the concatenated input (two streams) maps to
             # roughly the same per-feature magnitude as h, not 0.02-shrunk.
             nn.init.normal_(self.adapter.weight, mean=0.0, std=1.0 / math.sqrt(2 * cfg.d_model))
+        if self.place is not None:
+            with torch.no_grad():
+                self.place.weight[0].zero_()  # non-digit tokens get no place signal
 
     def forward(self, x: torch.Tensor, n_loops: int = 1) -> torch.Tensor:
         if n_loops < 0:
@@ -174,6 +216,8 @@ class ToyLM(nn.Module):
         sin = self.rope_sin[:T]
 
         e = self.embed(x)
+        if self.place is not None:
+            e = e + self.place(place_ids(x, self.cfg.max_places))
         for blk in self.prelude:
             e = blk(e, cos, sin)
 
