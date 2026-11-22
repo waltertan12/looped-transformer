@@ -2,10 +2,10 @@ import random
 
 import numpy as np
 
-from looptf.toy.data import VOCAB, MOD, ITOS, decode, gen_expr
-from looptf.toy.dataset import FrozenData, encode_rows, write_meta, write_slice
+from looptf.toy.data import VOCAB, ITOS, decode, gen_expr, answer_tokens
+from looptf.toy.dataset import FrozenData, encode_rows, full_sequence, write_meta, write_slice
 
-COLS = ["answer", "n_ops", "depth", "length"]
+COLS = ["answer", "n_ops", "depth", "length", "n_tgt"]
 
 
 def _build(root, levels=(1, 2, 3), n=50):
@@ -13,16 +13,25 @@ def _build(root, levels=(1, 2, 3), n=50):
     slices = {}
     for split in ("train", "test"):
         for d in levels:
-            prompts, labels = [], []
+            seqs, labels = [], []
             for _ in range(n):
                 k = rng.randint(d, min(16, 2**d - 1))
                 expr, ans = gen_expr(k, d, rng)
-                prompts.append(expr + "=")
-                labels.append([ans, k, d, len(expr) + 1])
-            write_slice(root, split, d, encode_rows(prompts, 64), np.array(labels, dtype=np.int16))
+                prompt = expr + "="
+                seqs.append(full_sequence(prompt, ans))
+                labels.append([ans, k, d, len(prompt), len(answer_tokens(ans))])
+            write_slice(root, split, d, encode_rows(seqs, 64), np.array(labels, dtype=np.int64))
             slices.setdefault(str(d), {})[split] = n
     write_meta(root, {"name": "nested", "vocab": VOCAB, "width": 64, "columns": COLS,
-                      "level_column": "depth", "mod": MOD, "seed": 0, "slices": slices})
+                      "level_column": "depth", "seed": 0, "slices": slices})
+
+
+def test_full_sequence_and_encoding_roundtrip():
+    assert full_sequence("1+2=", -3) == "1+2=-3#"
+    tok = encode_rows([full_sequence("1+2=", -3)], 16)
+    assert tok.dtype == np.uint8 and tok.shape == (1, 16)
+    assert decode(tok[0].tolist()) == "1+2=-3#"
+    assert (tok[0, 7:] == 0).all()
 
 
 def test_roundtrip_batch(tmp_path):
@@ -30,12 +39,16 @@ def test_roundtrip_batch(tmp_path):
     fd = FrozenData(tmp_path, device="cpu")
     b = fd.batch(np.random.default_rng(0), 64, (2, 3))
     assert set(b["depth"].tolist()) <= {2, 3}
+    assert set(["answer", "n_ops", "depth", "length", "n_tgt", "x", "pos"]) <= set(b)
     for i in range(64):
         p = b["pos"][i].item()
+        n_tgt = b["n_tgt"][i].item()
         assert ITOS[b["x"][i, p].item()] == "="
-        expr = decode(b["x"][i, :p].tolist())
-        assert eval(expr) % MOD == int(ITOS[b["y"][i].item()])
-        assert (b["x"][i, p + 1:] == 0).all()
+        prompt = decode(b["x"][i, : p + 1].tolist())
+        assert eval(prompt[:-1]) == b["answer"][i].item()
+        assert decode(b["x"][i, p + 1 : p + 1 + n_tgt].tolist()) == answer_tokens(b["answer"][i].item())
+        assert n_tgt == len(answer_tokens(b["answer"][i].item()))
+        assert (b["x"][i, p + 1 + n_tgt :] == 0).all()
 
 
 def test_test_sets(tmp_path):

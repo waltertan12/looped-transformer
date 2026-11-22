@@ -3,8 +3,9 @@ import re
 
 import pytest
 
+import looptf.toy.chain as chain
 from looptf.toy.chain import gen_chain
-from looptf.toy.data import MOD, STOI, VOCAB, encode
+from looptf.toy.data import STOI, answer_tokens, encode
 
 
 def parse(prompt):
@@ -20,20 +21,24 @@ def parse(prompt):
     return defs, query
 
 
-def evaluate(defs, query, forced=None):
-    """Independent evaluator: substitutes variable values into the expression string and
-    uses Python eval. ``forced=(name, value)`` overrides one variable's value."""
+def evaluate_all(defs):
+    """Independent evaluator: substitutes each variable's already-computed value into its
+    expression string and uses Python eval (no modulus). Returns name -> exact value."""
     cache = {}
 
     def val(v):
-        if forced is not None and v == forced[0]:
-            return forced[1]
         if v not in cache:
-            sub = re.sub(r"[a-z]", lambda m: str(val(m.group(0))), defs[v])
-            cache[v] = eval(sub) % MOD
+            sub = re.sub(r"[a-z]", lambda m: f"({val(m.group(0))})", defs[v])
+            cache[v] = eval(sub)
         return cache[v]
 
-    return val(query)
+    for v in defs:
+        val(v)
+    return cache
+
+
+def evaluate(defs, query):
+    return evaluate_all(defs)[query]
 
 
 def chain_path(defs, query):
@@ -65,19 +70,7 @@ def test_answer_matches_independent_eval():
             prompt, ans, meta = gen_chain(L, D, rng)
             defs, q = parse(prompt)
             assert isinstance(ans, int)
-            assert 0 <= ans < MOD
             assert evaluate(defs, q) == ans, prompt
-
-
-def test_answer_depends_on_v1():
-    rng = random.Random(1)
-    for L, D in SWEEP:
-        for _ in range(20):
-            prompt, _, _ = gen_chain(L, D, rng)
-            defs, q = parse(prompt)
-            v1 = chain_path(defs, q)[-1]
-            answers = {evaluate(defs, q, forced=(v1, x)) for x in range(MOD)}
-            assert len(answers) > 1, prompt
 
 
 def test_chain_has_stated_length_and_distractors_unreachable():
@@ -136,6 +129,15 @@ def test_length_bound_max_case():
     assert max(lengths) <= 256
 
 
+def test_prompt_plus_answer_fits_width_256():
+    rng = random.Random(9)
+    longest = 0
+    for _ in range(500):
+        prompt, ans, _ = gen_chain(16, 6, rng)
+        longest = max(longest, len(encode(prompt + answer_tokens(ans))))
+    assert longest <= 256
+
+
 def test_statement_order_is_shuffled():
     rng = random.Random(6)
     not_last = 0
@@ -154,6 +156,28 @@ def test_determinism_with_seed():
     out_a = [gen_chain(1 + i % 16, i % 7, a) for i in range(50)]
     out_b = [gen_chain(1 + i % 16, i % 7, b) for i in range(50)]
     assert out_a == out_b
+
+
+def test_answers_unbounded_and_negative_occur():
+    rng = random.Random(10)
+    answers = [gen_chain(rng.randint(1, 16), rng.randint(0, 6), rng)[1] for _ in range(1000)]
+    assert min(answers) < 0 < max(answers)
+    assert max(abs(a) for a in answers) > 10**4
+
+
+@pytest.mark.parametrize("seed", [0, 1])
+def test_bound_keeps_every_statement_within_1000(monkeypatch, seed):
+    import looptf.toy.data as data
+    monkeypatch.setattr(data, "BOUND", 1000)
+    monkeypatch.setattr(chain, "BOUND", 1000)
+    rng = random.Random(seed)
+    for L, D in SWEEP:
+        for _ in range(10):
+            prompt, ans, _ = gen_chain(L, D, rng)
+            defs, q = parse(prompt)
+            values = evaluate_all(defs)  # every statement, chain and distractors
+            assert all(abs(v) <= 1000 for v in values.values()), prompt
+            assert values[q] == ans
 
 
 @pytest.mark.parametrize("chain_len, n_distractors", [

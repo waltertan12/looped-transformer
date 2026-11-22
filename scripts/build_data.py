@@ -2,8 +2,11 @@
 """Pre-generate the frozen toy datasets (nested expressions, intermediate-value chains).
 
 Writes <out>/nested and <out>/chain in the layout described in looptf/toy/dataset.py.
+Tokens are the full sequence ``prompt + answer digits + '#'``; labels are int64 columns.
 Output is bit-identical across reruns with the same arguments: every chunk gets its own
 random.Random seeded from sha256(seed, dataset, split, level, chunk).
+
+Test/train de-overlap is judged on the PROMPT (the part before the answer).
 
 Examples:
   .venv/bin/python scripts/build_data.py --out data
@@ -21,8 +24,8 @@ from pathlib import Path
 import numpy as np
 
 from looptf.toy.chain import gen_chain
-from looptf.toy.data import MOD, VOCAB, gen_expr
-from looptf.toy.dataset import encode_rows, write_meta, write_slice
+from looptf.toy.data import BOUND, EOS, VOCAB, answer_tokens, gen_expr
+from looptf.toy.dataset import encode_rows, full_sequence, write_meta, write_slice
 
 REPO = Path(__file__).resolve().parent.parent
 CHUNK = 50_000          # examples per worker task
@@ -30,16 +33,18 @@ MAX_REFILL = 50         # extra test-generation attempts after the first one
 
 SPECS = {
     "nested": dict(
-        width=64, train_n=1_250_000, level_column="depth",
-        columns=["answer", "n_ops", "depth", "length"],
+        width=80, train_n=1_250_000, level_column="depth",
+        columns=["answer", "n_ops", "depth", "length", "n_tgt"],
         generator=("nested: random PEMDAS expression trees with n_ops in [depth, min(16, 2**depth-1)] "
-                   "operators at exactly the given depth, leaves 1-6, answer = value mod 7; prompt ends '='"),
+                   "operators at exactly the given depth, leaves 1-9, answer = exact integer value "
+                   "(unbounded); prompt ends '=', answer digits then '#'"),
     ),
     "chain": dict(
         width=256, train_n=440_000, level_column="chain_len",
-        columns=["answer", "chain_len", "n_distractors", "n_ops_total", "length"],
+        columns=["answer", "chain_len", "n_distractors", "n_ops_total", "length", "n_tgt"],
         generator=("chain: shuffled 'name=expr' statements with chain_len linked variables and 0-4 "
-                   "distractors; answer = value of the query variable mod 7; prompt ends '?'"),
+                   "distractors; answer = exact integer value of the query variable (unbounded); "
+                   "prompt ends '?', answer digits then '#'"),
     ),
 }
 
@@ -50,24 +55,25 @@ def seed_for(seed: int, name: str, split: str, level: int, chunk: int) -> int:
 
 
 def gen_chunk(task):
-    """Worker: returns (prompts, label rows) for one chunk. Deterministic in the task."""
+    """Worker: returns [(prompt, row)] for one chunk. Deterministic in the task.
+
+    row[0] is the answer (the full token sequence is full_sequence(prompt, row[0]))."""
     name, split, level, chunk, n, seed = task
     rng = random.Random(seed_for(seed, name, split, level, chunk))
-    prompts, rows = [], []
+    items = []
     if name == "nested":
         for _ in range(n):
             n_ops = rng.randint(level, min(16, 2**level - 1))
             expr, ans = gen_expr(n_ops, level, rng)
             p = expr + "="
-            prompts.append(p)
-            rows.append((ans, n_ops, level, len(p)))
+            items.append((p, (ans, n_ops, level, len(p), len(answer_tokens(ans)))))
     else:
         for _ in range(n):
             nd = rng.randint(0, 4)
             p, ans, m = gen_chain(level, nd, rng)
-            prompts.append(p)
-            rows.append((ans, m["chain_len"], m["n_distractors"], m["n_ops_total"], m["length"]))
-    return prompts, rows
+            items.append((p, (ans, m["chain_len"], m["n_distractors"], m["n_ops_total"],
+                              m["length"], len(answer_tokens(ans)))))
+    return items
 
 
 def chunk_sizes(total: int) -> list[int]:
@@ -79,58 +85,62 @@ def chunk_sizes(total: int) -> list[int]:
 
 def gen_train(pool, name, level, n, seed):
     tasks = [(name, "train", level, i, size, seed) for i, size in enumerate(chunk_sizes(n))]
-    prompts, rows = [], []
-    for p, r in pool.map(gen_chunk, tasks, chunksize=1):
-        prompts.extend(p)
-        rows.extend(r)
-    return prompts, rows
+    items = []
+    for chunk_items in pool.map(gen_chunk, tasks, chunksize=1):
+        items.extend(chunk_items)
+    return items
 
 
 def gen_test(pool, name, level, test_n, train_set, seed):
-    """Unique, train-free test prompts; tops up with more chunks, then falls back to overlap.
+    """Unique, train-free test items (judged on prompt); tops up with more chunks, then falls
+    back to overlap.
 
-    Returns (prompts, rows, n_refill_attempts, shortfall) where shortfall is the number of
-    rows that could not be filled with overlap-free unique prompts.
+    Returns (items, n_refill_attempts, shortfall) where shortfall is the number of items that
+    could not be filled with overlap-free unique prompts.
     """
     cand_size = min(CHUNK, max(2000, 2 * test_n))
     test_seen: set[str] = set()
-    test_p: list[str] = []
-    test_r: list = []
+    test_items: list = []
     overlap_seen: set[str] = set()
-    overlap_p: list[str] = []
-    overlap_r: list = []
+    overlap_items: list = []
     attempts = 0
-    while len(test_p) < test_n and attempts <= MAX_REFILL:
+    while len(test_items) < test_n and attempts <= MAX_REFILL:
         task = (name, "test", level, attempts, cand_size, seed)
-        prompts, rows = pool.apply(gen_chunk, (task,))
+        items = pool.apply(gen_chunk, (task,))
         attempts += 1
-        for p, r in zip(prompts, rows):
+        for it in items:
+            p = it[0]
             if p in train_set:
                 if p not in overlap_seen:
                     overlap_seen.add(p)
-                    overlap_p.append(p)
-                    overlap_r.append(r)
+                    overlap_items.append(it)
             elif p not in test_seen:
                 test_seen.add(p)
-                test_p.append(p)
-                test_r.append(r)
-                if len(test_p) >= test_n:
+                test_items.append(it)
+                if len(test_items) >= test_n:
                     break
-    shortfall = test_n - len(test_p)
+    shortfall = test_n - len(test_items)
     if shortfall > 0:
         # Fill with overlapping prompts: unique ones first, duplicates only if unavoidable.
-        pool_p, pool_r = (overlap_p, overlap_r) if overlap_p else (test_p, test_r)
-        if not pool_p:
+        pool_items = overlap_items if overlap_items else test_items
+        if not pool_items:
             raise RuntimeError(f"{name} level {level}: no candidate prompts at all")
         for i in range(shortfall):
-            test_p.append(pool_p[i % len(pool_p)])
-            test_r.append(pool_r[i % len(pool_r)])
-    return test_p, test_r, attempts - 1, shortfall
+            test_items.append(pool_items[i % len(pool_items)])
+    return test_items, attempts - 1, shortfall
+
+
+def to_arrays(items, width: int, n_cols: int) -> tuple[np.ndarray, np.ndarray]:
+    seqs = [full_sequence(p, row[0]) for p, row in items]
+    tokens = encode_rows(seqs, width)
+    labels = np.array([row for _, row in items], dtype=np.int64).reshape(len(items), n_cols)
+    return tokens, labels
 
 
 def build_dataset(pool, name: str, root: Path, args) -> None:
     spec = SPECS[name]
     levels = list(range(1, 17))
+    n_cols = len(spec["columns"])
     train_n = max(1, int(round(spec["train_n"] * args.scale)))
     t_start = time.time()
     slices = {}
@@ -138,21 +148,21 @@ def build_dataset(pool, name: str, root: Path, args) -> None:
           f"train {train_n}/level, test {args.test_n}/level -> {root}", flush=True)
     for level in levels:
         t0 = time.time()
-        tr_p, tr_r = gen_train(pool, name, level, train_n, args.seed)
-        train_set = set(tr_p)
-        te_p, te_r, refills, shortfall = gen_test(pool, name, level, args.test_n, train_set, args.seed)
-        overlap = sum(p in train_set for p in te_p) / len(te_p) if te_p else 0.0
+        tr = gen_train(pool, name, level, train_n, args.seed)
+        train_set = {p for p, _ in tr}
+        te, refills, shortfall = gen_test(pool, name, level, args.test_n, train_set, args.seed)
+        overlap = sum(p in train_set for p, _ in te) / len(te) if te else 0.0
 
-        write_slice(root, "train", level, encode_rows(tr_p, spec["width"]),
-                    np.array(tr_r, dtype=np.int16).reshape(len(tr_r), len(spec["columns"])))
-        write_slice(root, "test", level, encode_rows(te_p, spec["width"]),
-                    np.array(te_r, dtype=np.int16).reshape(len(te_r), len(spec["columns"])))
-        slices[str(level)] = {"train": len(tr_p), "test": len(te_p),
+        tr_tok, tr_lab = to_arrays(tr, spec["width"], n_cols)
+        te_tok, te_lab = to_arrays(te, spec["width"], n_cols)
+        write_slice(root, "train", level, tr_tok, tr_lab)
+        write_slice(root, "test", level, te_tok, te_lab)
+        slices[str(level)] = {"train": len(tr), "test": len(te),
                               "test_overlap_with_train": float(overlap)}
-        print(f"  level {level:2d}: train {len(tr_p):>9,d}  test {len(te_p):>5d}  "
+        print(f"  level {level:2d}: train {len(tr):>9,d}  test {len(te):>5d}  "
               f"overlap {overlap:.4f}  refills {refills}  shortfall {shortfall}  "
               f"{time.time() - t0:6.1f}s", flush=True)
-        del tr_p, tr_r, train_set, te_p, te_r
+        del tr, tr_tok, tr_lab, train_set, te, te_tok, te_lab
 
     build_seconds = time.time() - t_start
     meta = {
@@ -161,7 +171,8 @@ def build_dataset(pool, name: str, root: Path, args) -> None:
         "width": spec["width"],
         "columns": spec["columns"],
         "level_column": spec["level_column"],
-        "mod": MOD,
+        "bound": BOUND,
+        "eos": EOS,
         "seed": args.seed,
         "scale": args.scale,
         "slices": slices,

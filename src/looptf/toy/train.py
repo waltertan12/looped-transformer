@@ -1,7 +1,7 @@
 """Train and evaluate a tiny (looped) transformer on mod-10 PEMDAS arithmetic.
 
-The model reads `expr=` and must predict the answer digit at the '=' position, with no
-written-out working. Difficulty is tree depth (serial steps). Train on shallow depths, test
+The model reads `expr=` and must write the answer's digits then the stop token '#'
+(e.g. `(8-3)*(4-6)+7=-3#`), with no written-out working. Exact match on the whole answer. Difficulty is tree depth (serial steps). Train on shallow depths, test
 on deeper ones, at several loop counts.
 
     python -m looptf.toy.train --name looped --n_core 2 --train_loops 1-8
@@ -50,6 +50,24 @@ def build_eval_sets(depths, n_per_depth, n_ops_range, device, seed=1234):
     return sets
 
 
+def answer_loss(logits, b):
+    """Cross-entropy over the answer tokens (digits + EOS) only, and per-example exact match.
+
+    Logits at position t predict token t+1; the answer is predicted from positions
+    pos .. pos + n_tgt - 1 (pos = the '=' / '?' token). Exact match under teacher forcing
+    equals exact match under greedy decoding.
+    """
+    B, T, V = logits.shape
+    t = torch.arange(T - 1, device=logits.device)
+    mask = (t[None] >= b["pos"][:, None]) & (t[None] < (b["pos"] + b["n_tgt"])[:, None])
+    tgt = b["x"][:, 1:]
+    lg = logits[:, :-1][mask].float()
+    loss = F.cross_entropy(lg, tgt[mask])
+    right = torch.ones(B, T - 1, dtype=torch.bool, device=logits.device)
+    right[mask] = lg.argmax(-1) == tgt[mask]
+    return loss, right.all(dim=1)
+
+
 @torch.no_grad()
 def evaluate(model, eval_sets, loops_list):
     model.eval()
@@ -59,8 +77,7 @@ def evaluate(model, eval_sets, loops_list):
         for d, b in eval_sets.items():
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 logits = model(b["x"], n_loops=k)
-            pred = logits[torch.arange(len(b["pos"])), b["pos"]].argmax(-1)
-            out[k][d] = (pred == b["y"]).float().mean().item()
+            out[k][d] = answer_loss(logits, b)[1].float().mean().item()
     model.train()
     return out
 
@@ -187,14 +204,13 @@ def main(argv=None):
             b = make_batch(a.bs, rng, nops_rng, (depth_rng[0], cur), device=dev)
         with torch.autocast("cuda", dtype=torch.bfloat16):
             logits = fwd(b["x"], n_loops=k)
-        logits = logits[torch.arange(a.bs, device=dev), b["pos"]].float()
-        loss = F.cross_entropy(logits, b["y"])
+        loss, exact = answer_loss(logits, b)
         opt.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
         run_loss += loss.item()
-        run_acc += (logits.argmax(-1) == b["y"]).float().mean().item()
+        run_acc += exact.float().mean().item()
         if (step + 1) % 200 == 0:
             el = time.time() - t0
             rec = {"step": step + 1, "cur_depth": cur, "loss": run_loss / 200, "train_acc": run_acc / 200,

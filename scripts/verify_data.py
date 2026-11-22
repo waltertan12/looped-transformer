@@ -2,7 +2,11 @@
 """Independently re-verify a frozen dataset written by scripts/build_data.py.
 
 Does not import the generators: answers and labels are recomputed from the stored prompt
-strings (eval / ast for nested, a small reference resolver for chain).
+strings (eval / ast for nested, a small reference resolver for chain). Checks, per row:
+  tokens[:length]                 is the prompt, ending in '=' (nested) or '?' (chain)
+  tokens[length:length+n_tgt]     is the answer digits followed by '#'
+  everything after                is PAD
+  answer                          equals the exact value of the prompt
 
 Examples:
   .venv/bin/python scripts/verify_data.py --root data/nested --sample 20000
@@ -19,14 +23,15 @@ from pathlib import Path
 
 import numpy as np
 
-from looptf.toy.data import MOD, VOCAB, decode
+from looptf.toy.data import BOUND, EOS, PAD_ID, VOCAB, answer_tokens, decode
 from looptf.toy.dataset import slice_paths
 
 REPO = Path(__file__).resolve().parent.parent
 BATCH = 200_000
 OPS = "+-*"
-NESTED_EOS = VOCAB.index("=")
-CHAIN_EOS = VOCAB.index("?")
+NESTED_TERMINAL = VOCAB.index("=")   # last prompt token, nested
+CHAIN_TERMINAL = VOCAB.index("?")    # last prompt token, chain
+EOS_ID = VOCAB.index(EOS)
 
 fails: list[str] = []
 
@@ -49,13 +54,19 @@ def _bin_depth(node) -> int:
     raise ValueError(f"unexpected node {type(node).__name__}")
 
 
-def check_nested(prompt: str, answer: int, n_ops: int, depth: int, length: int, errs: list[str]) -> None:
+def check_answer_text(answer: int, n_tgt: int, errs: list[str]) -> None:
+    if n_tgt != len(answer_tokens(answer)):
+        errs.append(f"n_tgt {n_tgt} != {len(answer_tokens(answer))} for answer {answer}")
+
+
+def check_nested(prompt: str, answer: int, n_ops: int, depth: int, length: int, n_tgt: int,
+                 errs: list[str]) -> None:
     if not prompt.endswith("="):
         errs.append("prompt does not end with '='")
         return
     expr = prompt[:-1]
     try:
-        value = eval(expr, {"__builtins__": {}}) % MOD
+        value = eval(expr, {"__builtins__": {}})
         tree = ast.parse(expr, mode="eval").body
         true_depth = _bin_depth(tree)
     except Exception as e:  # noqa: BLE001
@@ -70,10 +81,11 @@ def check_nested(prompt: str, answer: int, n_ops: int, depth: int, length: int, 
         errs.append(f"depth {depth} != AST depth {true_depth} for {expr!r}")
     if len(prompt) != length:
         errs.append(f"length {length} != {len(prompt)}")
+    check_answer_text(answer, n_tgt, errs)
 
 
 def check_chain(prompt: str, answer: int, chain_len: int, n_dist: int, n_ops_total: int,
-                length: int, level: int, errs: list[str]) -> None:
+                length: int, n_tgt: int, level: int, errs: list[str]) -> None:
     if not prompt.endswith("?"):
         errs.append("prompt does not end with '?'")
         return
@@ -115,7 +127,7 @@ def check_chain(prompt: str, answer: int, chain_len: int, n_dist: int, n_ops_tot
     if true_ops != n_ops_total:
         errs.append(f"n_ops_total {n_ops_total} != {true_ops}")
 
-    # Value: substitute already-reduced variable values into each expression, memoized.
+    # Value: substitute already-reduced variable values into each expression, memoized, no modulus.
     memo: dict[str, int] = {}
 
     def value(name: str, stack: tuple = ()) -> int:
@@ -124,7 +136,7 @@ def check_chain(prompt: str, answer: int, chain_len: int, n_dist: int, n_ops_tot
         if name in stack:
             raise ValueError("cycle")
         sub = re.sub("[a-z]", lambda m: f"({value(m.group(0), stack + (name,))})", defs[name])
-        v = eval(sub, {"__builtins__": {}}) % MOD
+        v = eval(sub, {"__builtins__": {}})
         memo[name] = v
         return v
 
@@ -137,14 +149,15 @@ def check_chain(prompt: str, answer: int, chain_len: int, n_dist: int, n_ops_tot
         errs.append(f"answer {answer} != recomputed {got}")
     if len(prompt) != length:
         errs.append(f"length {length} != {len(prompt)}")
+    check_answer_text(answer, n_tgt, errs)
 
 
 # ---------------------------------------------------------------------------
 # Per-slice checks
 # ---------------------------------------------------------------------------
 
-def check_slice(root: Path, name: str, split: str, level: int, meta: dict, expected_rows: int,
-                sample: int, is_nested: bool, width: int, cols: dict) -> tuple[np.ndarray, np.ndarray] | None:
+def check_slice(root: Path, name: str, split: str, level: int, expected_rows: int, sample: int,
+                is_nested: bool, width: int, cols: dict) -> tuple[np.ndarray, np.ndarray] | None:
     tp, mp_ = slice_paths(root, split, level)
     tag = f"{name} {split} level {level}"
     if not tp.exists() or not mp_.exists():
@@ -154,8 +167,8 @@ def check_slice(root: Path, name: str, split: str, level: int, meta: dict, expec
     lab = np.load(mp_, mmap_mode="r")
     if tok.dtype != np.uint8 or tok.ndim != 2 or tok.shape[1] != width:
         fail(f"{tag}: tokens dtype/shape {tok.dtype} {tok.shape}, expected uint8 [N, {width}]")
-    if lab.dtype != np.int16 or lab.ndim != 2 or lab.shape[1] != len(cols):
-        fail(f"{tag}: labels dtype/shape {lab.dtype} {lab.shape}, expected int16 [N, {len(cols)}]")
+    if lab.dtype != np.int64 or lab.ndim != 2 or lab.shape[1] != len(cols):
+        fail(f"{tag}: labels dtype/shape {lab.dtype} {lab.shape}, expected int64 [N, {len(cols)}]")
     if tok.shape[0] != lab.shape[0]:
         fail(f"{tag}: token rows {tok.shape[0]} != label rows {lab.shape[0]}")
     N = tok.shape[0]
@@ -164,37 +177,49 @@ def check_slice(root: Path, name: str, split: str, level: int, meta: dict, expec
     if N == 0:
         return tok, lab
 
-    eos = NESTED_EOS if is_nested else CHAIN_EOS
+    terminal = NESTED_TERMINAL if is_nested else CHAIN_TERMINAL
     length_all = np.asarray(lab[:, cols["length"]]).astype(np.int64)
-    if length_all.min() < 1 or length_all.max() > width:
-        fail(f"{tag}: length out of range [{length_all.min()}, {length_all.max()}]")
-    ans = np.asarray(lab[:, cols["answer"]]).astype(np.int64)
-    if ans.min() < 0 or ans.max() >= MOD:
-        fail(f"{tag}: answer out of range [0, {MOD})")
+    n_tgt_all = np.asarray(lab[:, cols["n_tgt"]]).astype(np.int64)
+    end_all = length_all + n_tgt_all  # index one past the answer's EOS
+    if length_all.min() < 1 or end_all.max() > width:
+        fail(f"{tag}: prompt+answer out of range (length [{length_all.min()}, {length_all.max()}], "
+             f"end max {end_all.max()}, width {width})")
+    if n_tgt_all.min() < 2:
+        fail(f"{tag}: n_tgt below 2 (answer needs at least one digit and EOS)")
 
-    # Vectorised structural checks over every row: PAD tail, non-PAD body, terminal token.
-    bad_tail = bad_body = bad_eos = 0
+    # Vectorised structural checks over every row.
+    bad_tail = bad_prompt = bad_answer = bad_eos = 0
     first_bad = None
     pos = np.arange(width)[None, :]
     for s in range(0, N, BATCH):
         tok_b = np.asarray(tok[s:s + BATCH])
         ln = length_all[s:s + BATCH]
-        inside = pos < ln[:, None]
-        row_tail = ((tok_b != 0) & ~inside).any(axis=1)      # non-PAD after length
-        row_body = ((tok_b == 0) & inside).any(axis=1)       # PAD inside the prompt
-        last = tok_b[np.arange(len(tok_b)), np.clip(ln - 1, 0, width - 1)]
-        row_eos = last != eos                                # wrong terminal token
+        en = end_all[s:s + BATCH]
+        in_prompt = pos < ln[:, None]
+        in_answer = (pos >= ln[:, None]) & (pos < en[:, None])
+        row_tail = ((tok_b != PAD_ID) & (pos >= en[:, None])).any(axis=1)   # non-PAD after the answer
+        row_prompt = ((tok_b == PAD_ID) & in_prompt).any(axis=1)            # PAD inside the prompt
+        row_answer = ((tok_b == PAD_ID) & in_answer).any(axis=1)            # PAD inside the answer
+        last_prompt = tok_b[np.arange(len(tok_b)), np.clip(ln - 1, 0, width - 1)]
+        row_term = last_prompt != terminal                                  # prompt must end '=' / '?'
+        last_ans = tok_b[np.arange(len(tok_b)), np.clip(en - 1, 0, width - 1)]
+        row_eos = last_ans != EOS_ID                                        # answer must end '#'
         bad_tail += int(row_tail.sum())
-        bad_body += int(row_body.sum())
+        bad_prompt += int((row_prompt | row_term).sum())
+        bad_answer += int(row_answer.sum())
         bad_eos += int(row_eos.sum())
-        any_bad = row_tail | row_body | row_eos
+        any_bad = row_tail | row_prompt | row_answer | row_term | row_eos
         if first_bad is None and any_bad.any():
             first_bad = s + int(np.argmax(any_bad))
-    if bad_tail or bad_body:
-        fail(f"{tag}: {bad_tail} rows with non-PAD after length, {bad_body} rows with PAD inside length "
-             f"(first bad row {first_bad})")
+    if bad_tail:
+        fail(f"{tag}: {bad_tail} rows with non-PAD after the answer (first bad row {first_bad})")
+    if bad_prompt:
+        fail(f"{tag}: {bad_prompt} rows with PAD inside the prompt or wrong terminal "
+             f"'{VOCAB[terminal]}' (first bad row {first_bad})")
+    if bad_answer:
+        fail(f"{tag}: {bad_answer} rows with PAD inside the answer span")
     if bad_eos:
-        fail(f"{tag}: {bad_eos} rows whose token at length-1 is not '{VOCAB[eos]}'")
+        fail(f"{tag}: {bad_eos} rows whose last answer token is not '{EOS}'")
 
     # Per-row semantic checks on a sample (or all rows).
     if sample and sample < N:
@@ -205,18 +230,23 @@ def check_slice(root: Path, name: str, split: str, level: int, meta: dict, expec
     for i in idx:
         i = int(i)
         ln = int(length_all[i])
+        en = int(end_all[i])
         prompt = decode(np.asarray(tok[i, :ln]).tolist())
+        answer_txt = decode(np.asarray(tok[i, ln:en]).tolist())
         labels = np.asarray(lab[i]).astype(np.int64)
+        answer = int(labels[cols["answer"]])
         errs: list[str] = []
+        if answer_txt != answer_tokens(answer):
+            errs.append(f"answer tokens {answer_txt!r} != {answer_tokens(answer)!r}")
         if is_nested:
-            check_nested(prompt, int(labels[cols["answer"]]), int(labels[cols["n_ops"]]),
-                         int(labels[cols["depth"]]), ln, errs)
+            check_nested(prompt, answer, int(labels[cols["n_ops"]]), int(labels[cols["depth"]]),
+                         ln, n_tgt_all[i].item(), errs)
             if int(labels[cols["depth"]]) != level:
                 errs.append(f"depth {int(labels[cols['depth']])} != file level {level}")
         else:
-            check_chain(prompt, int(labels[cols["answer"]]), int(labels[cols["chain_len"]]),
+            check_chain(prompt, answer, int(labels[cols["chain_len"]]),
                         int(labels[cols["n_distractors"]]), int(labels[cols["n_ops_total"]]),
-                        ln, level, errs)
+                        ln, n_tgt_all[i].item(), level, errs)
         if errs:
             n_err += 1
             if n_err <= 5:
@@ -228,8 +258,16 @@ def check_slice(root: Path, name: str, split: str, level: int, meta: dict, expec
 
 
 def key_set(tok, lab, length_col: int) -> list[bytes]:
+    """Prompt keys (tokens[:length]); overlap is judged on the prompt, not the answer."""
     ln = np.asarray(lab[:, length_col]).astype(np.int64)
     return [np.asarray(tok[i, :ln[i]]).tobytes() for i in range(len(ln))]
+
+
+def answer_stats(lab, cols) -> tuple:
+    ans = np.asarray(lab[:, cols["answer"]]).astype(np.int64)
+    n_tgt = np.asarray(lab[:, cols["n_tgt"]]).astype(np.int64)
+    return (int(ans.min()), int(np.median(ans)), int(ans.max()),
+            float((n_tgt - 1).mean()), float((ans < 0).mean()))
 
 
 def main() -> None:
@@ -253,10 +291,15 @@ def main() -> None:
 
     if meta["vocab"] != VOCAB[: len(meta["vocab"])]:
         fail("meta vocab is not a prefix of looptf.toy.data.VOCAB")
-    if meta["mod"] != MOD:
-        fail(f"meta mod {meta['mod']} != {MOD}")
-    if "answer" not in cols or "length" not in cols or meta["level_column"] not in cols:
-        fail("meta columns must include answer, length and level_column")
+    if meta.get("eos") != EOS:
+        fail(f"meta eos {meta.get('eos')!r} != {EOS!r}")
+    if meta.get("bound") != BOUND:
+        fail(f"meta bound {meta.get('bound')!r} != looptf.toy.data.BOUND {BOUND!r}")
+    if "mod" in meta:
+        fail("meta still has a 'mod' key (obsolete mod-7 format)")
+    for need in ("answer", "length", "n_tgt", meta["level_column"]):
+        if need not in cols:
+            fail(f"meta columns must include {need!r}")
     if meta["columns"][0] != "answer":
         fail("meta columns must start with 'answer'")
 
@@ -264,16 +307,14 @@ def main() -> None:
     print(f"Verifying {root} ({name}): {len(levels)} levels, width {width}, "
           f"sample {args.sample or 'all'} rows per (split, level)")
     hdr = (f"{'lvl':>3} {'split':>5} {'rows':>9} {'len_mean':>8} {'len_max':>7}  "
-           + " ".join(f"{'a' + str(k):>6}" for k in range(MOD)) + f"  {'overlap':>8}")
+           f"{'ans_min':>12} {'ans_med':>10} {'ans_max':>12} {'ans_chr':>7} {'neg':>6}  {'overlap':>8}")
     print(hdr)
     print("-" * len(hdr))
 
     for level in levels:
         sl = meta["slices"][str(level)]
-        train = check_slice(root, name, "train", level, meta, sl["train"], args.sample,
-                            is_nested, width, cols)
-        test = check_slice(root, name, "test", level, meta, sl["test"], args.sample,
-                           is_nested, width, cols)
+        train = check_slice(root, name, "train", level, sl["train"], args.sample, is_nested, width, cols)
+        test = check_slice(root, name, "test", level, sl["test"], args.sample, is_nested, width, cols)
         if train is None or test is None:
             continue
         tr_tok, tr_lab = train
@@ -281,14 +322,13 @@ def main() -> None:
         lk = cols["length"]
         if tr_lab.shape[0] > 0:
             tr_len = np.asarray(tr_lab[:, lk]).astype(np.int64)
-            dist = np.bincount(np.asarray(tr_lab[:, cols["answer"]]).astype(np.int64),
-                               minlength=MOD) / tr_lab.shape[0]
             lvl_col = np.asarray(tr_lab[:, cols[meta["level_column"]]]).astype(np.int64)
             if np.any(lvl_col != level):
                 fail(f"{name} train level {level}: {int(np.sum(lvl_col != level))} rows with "
                      f"{meta['level_column']} != file level")
+            mn, md, mx, chr_mean, neg = answer_stats(tr_lab, cols)
             print(f"{level:>3} {'train':>5} {tr_lab.shape[0]:>9,d} {tr_len.mean():>8.2f} {tr_len.max():>7d}  "
-                  + " ".join(f"{d:>6.3f}" for d in dist) + f"  {'':>8}")
+                  f"{mn:>12,d} {md:>10,d} {mx:>12,d} {chr_mean:>7.2f} {neg:>6.3f}  {'':>8}")
         if te_lab.shape[0] > 0:
             te_len = np.asarray(te_lab[:, lk]).astype(np.int64)
             tr_keys = set(key_set(tr_tok, tr_lab, lk))
@@ -297,10 +337,9 @@ def main() -> None:
             if abs(overlap - sl["test_overlap_with_train"]) > 1e-9:
                 fail(f"{name} level {level}: recomputed test overlap {overlap:.6f} != meta "
                      f"{sl['test_overlap_with_train']:.6f}")
+            mn, md, mx, chr_mean, neg = answer_stats(te_lab, cols)
             print(f"{level:>3} {'test':>5} {te_lab.shape[0]:>9,d} {te_len.mean():>8.2f} {te_len.max():>7d}  "
-                  + " ".join(f"{d:>6.3f}" for d in np.bincount(np.asarray(te_lab[:, cols['answer']]).astype(np.int64),
-                                                                 minlength=MOD) / te_lab.shape[0])
-                  + f"  {overlap:>8.4f}")
+                  f"{mn:>12,d} {md:>10,d} {mx:>12,d} {chr_mean:>7.2f} {neg:>6.3f}  {overlap:>8.4f}")
         else:
             print(f"{level:>3} {'test':>5} {0:>9,d}")
 

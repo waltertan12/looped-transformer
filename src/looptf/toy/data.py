@@ -1,9 +1,8 @@
-"""Synthetic arithmetic expressions with PEMDAS precedence, answer mod MOD (7).
+"""Synthetic arithmetic expressions with PEMDAS precedence and their real integer value.
 
-Why mod 7 with leaves 1-6: with mod 10 and leaves 0-9, multiplying by 0 (or 5 by an even
-number) makes the deepest part of the tree irrelevant; only ~29% of depth-16 examples
-depended on their deepest step. 7 is prime (no zero divisors) and leaves exclude 0, so
-~90-100% do.
+Leaves are digits 1-9 (no 0). Values are unbounded by default (answers up to ~10 chars);
+if BOUND is set, samples whose working leaves [-BOUND, BOUND] are regenerated. The answer is written digit by digit
+after '=' and ends with the stop token EOS, e.g. ``(8-3)*(4-6)+7=-3#``.
 
 Difficulty knobs: ``n_ops`` (total binary operators) and ``depth`` (operators on
 the longest root-to-leaf path of the expression tree), set independently.
@@ -26,16 +25,17 @@ import random
 import torch
 
 # Shared by every arithmetic dataset. Append only: existing ids must never change.
-# 0-16: nested expressions. 17-44: intermediate-values (chain) task: variable names, ';', '?'.
+# 0-16: nested expressions. 17-44: chain task (variable names, ';', '?'). 45: '#' = EOS.
 VOCAB: list[str] = (["_", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "-", "*", "(", ")", "="]
-                    + [chr(c) for c in range(ord("a"), ord("z") + 1)] + [";", "?"])
+                    + [chr(c) for c in range(ord("a"), ord("z") + 1)] + [";", "?", "#"])
 PAD_ID: int = 0
 STOI: dict[str, int] = {t: i for i, t in enumerate(VOCAB)}
 ITOS: dict[int, str] = {i: t for i, t in enumerate(VOCAB)}
 
 _OPS = ("+", "-", "*")
-MOD: int = 7
-LEAF_LO, LEAF_HI = 1, 6
+LEAF_LO, LEAF_HI = 1, 9
+BOUND: int | None = None  # None = no bound (real values). Else every intermediate stays in [-BOUND, BOUND]
+EOS: str = "#"
 
 
 def encode(s: str) -> list[int]:
@@ -77,6 +77,18 @@ def tree_value(t) -> int:
     if op == "-":
         return a - b
     return a * b
+
+
+def tree_max_abs(t) -> int:
+    """Largest |value| over every node (leaves and all intermediate results)."""
+    if isinstance(t, int):
+        return abs(t)
+    return max(abs(tree_value(t)), tree_max_abs(t[1]), tree_max_abs(t[2]))
+
+
+def answer_tokens(answer: int) -> str:
+    """How an answer is written after '=' / '?': its digits (with '-') then EOS."""
+    return f"{answer}{EOS}"
 
 
 def tree_depth(t) -> int:
@@ -135,17 +147,21 @@ def _freeze(node, rng: random.Random):
 
 def gen_expr(n_ops: int, depth: int, rng: random.Random) -> tuple[str, int]:
     """Random expression with EXACTLY n_ops binary operators (each from + - *)
-    and EXACTLY the given depth. Leaves are digits LEAF_LO..LEAF_HI.
+    and EXACTLY the given depth. Leaves are digits LEAF_LO..LEAF_HI (intermediates bounded only if BOUND is set).
 
     Requires 1 <= depth <= n_ops <= 2**depth - 1, else ValueError.
-    Returns (expr_string, answer) with answer = value % MOD (Python %).
+    Returns (expr_string, answer) with answer = the exact integer value.
     """
     if not (1 <= depth <= n_ops <= 2**depth - 1):
         raise ValueError(
             f"infeasible: need 1 <= depth <= n_ops <= 2**depth-1, got n_ops={n_ops}, depth={depth}"
         )
-    tree = _freeze(_build(n_ops, depth, rng), rng)
-    return render(tree), tree_value(tree) % MOD
+    while True:
+        shape = _build(n_ops, depth, rng)
+        for _ in range(50):  # resample digits; rebuild the shape if they keep overflowing
+            tree = _freeze(shape, rng)
+            if BOUND is None or tree_max_abs(tree) <= BOUND:
+                return render(tree), tree_value(tree)
 
 
 def sample_example(rng, n_ops_range: tuple[int, int], depth_range: tuple[int, int]) -> tuple[str, int, int, int]:
@@ -172,25 +188,27 @@ def sample_example(rng, n_ops_range: tuple[int, int], depth_range: tuple[int, in
 
 
 def make_batch(batch_size: int, rng, n_ops_range, depth_range, max_len: int = 128, device="cpu"):
-    """Batch of prompts ``expr=`` right-padded with PAD_ID.
+    """Batch of ``expr=<answer>#`` sequences, right-padded with PAD_ID.
 
     Returns dict with:
-      x: LongTensor [B, T] (T = longest in batch, asserted <= max_len)
-      pos: LongTensor [B] index of the '=' token
-      y: LongTensor [B] token id of the answer digit
-      n_ops, depth: LongTensor [B]
+      x: LongTensor [B, T] full sequence (prompt, answer digits, EOS), T = longest in batch
+      pos: LongTensor [B] index of the '=' token (prediction of the answer starts there)
+      n_tgt: LongTensor [B] number of answer tokens including EOS
+      answer, n_ops, depth: LongTensor [B]
     """
     items = [sample_example(rng, n_ops_range, depth_range) for _ in range(batch_size)]
-    seqs = [encode(expr + "=") for expr, _, _, _ in items]
+    seqs = [encode(expr + "=" + answer_tokens(ans)) for expr, ans, _, _ in items]
     T = max(len(s) for s in seqs)
     assert T <= max_len, f"batch needs {T} tokens > max_len={max_len}"
     x = torch.full((batch_size, T), PAD_ID, dtype=torch.long)
     for b, s in enumerate(seqs):
         x[b, : len(s)] = torch.tensor(s, dtype=torch.long)
+    t = lambda vals: torch.tensor(vals, dtype=torch.long, device=device)
     return {
         "x": x.to(device),
-        "pos": torch.tensor([len(s) - 1 for s in seqs], dtype=torch.long, device=device),
-        "y": torch.tensor([STOI[str(ans)] for _, ans, _, _ in items], dtype=torch.long, device=device),
-        "n_ops": torch.tensor([n for _, _, n, _ in items], dtype=torch.long, device=device),
-        "depth": torch.tensor([d for _, _, _, d in items], dtype=torch.long, device=device),
+        "pos": t([len(expr) for expr, _, _, _ in items]),
+        "n_tgt": t([len(answer_tokens(ans)) for _, ans, _, _ in items]),
+        "answer": t([ans for _, ans, _, _ in items]),
+        "n_ops": t([n for _, _, n, _ in items]),
+        "depth": t([d for _, _, _, d in items]),
     }

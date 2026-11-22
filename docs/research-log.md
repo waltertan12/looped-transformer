@@ -393,7 +393,56 @@ Comparison: shallow (4 layers), looped (same 4.3M params, core run 1–8× in tr
 
 ---
 
+## 2026-11-22 — Arithmetic stage, first runs (mod 7, generated on the fly)
+
+**Setup.** Mod-7 PEMDAS (digits 1–6, answer 0–6, chance ≈ 0.14), single answer token read at
+'='. Shallow = 4 layers (4.3M); looped = same weights, core run 1–8×; deep18 = 18 layers (19M).
+
+**Without a curriculum, nothing learns past depth 2.** 20k steps on depths 1–8 mixed:
+shallow 1.00 / 0.69 / chance from depth 3; looped 1.00 / 0.22 / chance. Most of each batch was
+unlearnable, so no foothold.
+
+**With a depth curriculum** (start at depth ≤ 2, add a level at 90% on the top depth):
+
+| run (lr) | depth 2 mastered | depth 3 mastered | stopped at |
+|---|---|---|---|
+| shallow (1e-3) | 6,000 | never (0.61 at 40k) | 40k |
+| looped 1–8 (1e-3) | 5,000 | never (0.29 at 31k; same at every K) | 40k |
+| deep18 (1e-3) | not by 14.4k | — | stopped |
+| looped fixed K=4 (1e-3) | 6,250 | not by 16k | stopped |
+| **looped 1–8 (3e-4)** | **3,500** | **12,250** | stopped at 15k, on depth 4 |
+
+**Read.** The learning rate was likely the main blocker, not depth: at 1e-3 even the 18-layer
+deep model could not master depth 2, a classic sign of lr too high for a deep net (a looped
+model at K=8 is ~20 layers deep). One seed, so to be confirmed. At lr 1e-3, the looped model
+scored identically at every K, i.e. it was not using its extra passes.
+
+**Why stopped.** Switched away from mod 7: answers that aren't normal arithmetic are hard to
+read and reason about. Next datasets use real values.
+
+## 2026-11-22 — Switch to real values
+
+**My thinking.** Mod 7 is weird. Just use the real result: we're training the model to
+actually do math, so large answers are fair. (Considered a ±1000 bound; decided against it.)
+
+**Design.** Exact integer answers, no bound and no modulus. Leaves 1–9 (no 0). Measured answer
+sizes: nested median 4 chars, max 10; chain-16 median 6, max 12. Answers are written digit by
+digit with a stop token (`(8-3)*(4-6)+7=-3#`), so the output layer stays the vocabulary size
+(46) rather than one class per number. Scored by exact match on the whole answer
+(teacher-forced argmax at every answer position, which equals greedy decoding). Chance is ~0,
+so the signal is cleaner than mod 7's 1/7 floor. Dropped the "deepest step must matter" check:
+without mod 7 and zeros, shortcuts are rare. Train all models at lr 3e-4 on the frozen data.
+
+---
+
 ## Open questions / ideas to come back to
+
+- **Side quest: look at the embedding / hidden-state space of these models, including per loop
+  pass.** Curiosity, not on the critical path; unclear what it will teach. Possible angles: PCA /
+  UMAP of the hidden state at the '=' token, coloured by answer, depth or loop pass; whether
+  states converge to a fixed point as K grows; a "logit lens" (decode the answer from each
+  pass's state) to see at which pass the answer appears, and whether harder problems need more
+  passes before it does; how the digit embeddings arrange themselves (a number line?).
 
 - Exp4: loop placement (early 4–15 / late 12–23 / small 10–15), once a recipe switches the
   loop on.

@@ -3,17 +3,17 @@
 Layout (one directory per dataset, e.g. data/nested, data/chain)::
 
     <root>/meta.json
-    <root>/<split>/<level:02d>.tokens.npy   uint8 [N, width]  prompt token ids, PAD (0) padded
-    <root>/<split>/<level:02d>.meta.npy     int16 [N, F]      label columns, see meta.json
+    <root>/<split>/<level:02d>.tokens.npy   uint8 [N, width]  full sequence, PAD (0) padded
+    <root>/<split>/<level:02d>.meta.npy     int64 [N, F]      label columns, see meta.json
 
-`split` is "train" or "test". `level` is the difficulty slice: depth for the nested set,
-chain length for the chain set. The prompt includes its terminal token ('=' or '?'); the
-model reads its answer at position length-1. The answer is NOT in the tokens.
+Each row's tokens are ``prompt + answer digits + EOS``, e.g. ``(8-3)*(4-6)+7=-3#``; the prompt
+ends with '=' (nested) or '?' (chain). `split` is "train" or "test"; `level` is the difficulty
+slice (depth for nested, chain length for chain).
 
-meta.json keys: name, vocab, width, columns (label column names; always starts with
-"answer" and contains "length"), level_column, mod, seed, slices
-({level: {"train": n, "test": n, "test_overlap_with_train": fraction}}), plus anything the
-builder adds.
+meta.json keys: name, vocab, width, columns (label column names; always contains "answer",
+"length" = prompt length including its terminal token, and "n_tgt" = answer tokens including
+EOS), level_column, seed, slices ({level: {"train": n, "test": n,
+"test_overlap_with_train": fraction}}), plus anything the builder adds.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from looptf.toy.data import VOCAB, STOI, PAD_ID, encode
+from looptf.toy.data import VOCAB, PAD_ID, encode, answer_tokens
 
 
 def slice_paths(root: Path, split: str, level: int) -> tuple[Path, Path]:
@@ -31,12 +31,17 @@ def slice_paths(root: Path, split: str, level: int) -> tuple[Path, Path]:
     return d / f"{level:02d}.tokens.npy", d / f"{level:02d}.meta.npy"
 
 
-def encode_rows(prompts: list[str], width: int) -> np.ndarray:
-    out = np.full((len(prompts), width), PAD_ID, dtype=np.uint8)
-    for i, p in enumerate(prompts):
+def full_sequence(prompt: str, answer: int) -> str:
+    return prompt + answer_tokens(answer)
+
+
+def encode_rows(seqs: list[str], width: int) -> np.ndarray:
+    """Encode full sequences (prompt + answer + EOS) into a PAD-padded uint8 array."""
+    out = np.full((len(seqs), width), PAD_ID, dtype=np.uint8)
+    for i, p in enumerate(seqs):
         ids = encode(p)
         if len(ids) > width:
-            raise ValueError(f"prompt of {len(ids)} tokens exceeds width {width}: {p!r}")
+            raise ValueError(f"sequence of {len(ids)} tokens exceeds width {width}: {p!r}")
         out[i, : len(ids)] = ids
     return out
 
@@ -44,7 +49,7 @@ def encode_rows(prompts: list[str], width: int) -> np.ndarray:
 def write_slice(root, split: str, level: int, tokens: np.ndarray, labels: np.ndarray) -> None:
     tp, mp = slice_paths(root, split, level)
     tp.parent.mkdir(parents=True, exist_ok=True)
-    assert tokens.dtype == np.uint8 and labels.dtype == np.int16 and len(tokens) == len(labels)
+    assert tokens.dtype == np.uint8 and labels.dtype == np.int64 and len(tokens) == len(labels)
     np.save(tp, tokens)
     np.save(mp, labels)
 
@@ -72,18 +77,14 @@ class FrozenData:
                 self._train[lv] = (np.load(tp, mmap_mode="r"), np.load(mp, mmap_mode="r"))
 
     def _to_batch(self, tokens: np.ndarray, labels: np.ndarray) -> dict:
-        length = labels[:, self.cols["length"]].astype(np.int64)
-        T = int(length.max())
+        length = labels[:, self.cols["length"]]
+        n_tgt = labels[:, self.cols["n_tgt"]]
+        T = int((length + n_tgt).max())
         x = torch.from_numpy(np.ascontiguousarray(tokens[:, :T]).astype(np.int64))
-        b = {
-            "x": x.to(self.device, non_blocking=True),
-            "pos": torch.from_numpy(length - 1).to(self.device),
-            "y": torch.tensor([STOI[str(int(a))] for a in labels[:, self.cols["answer"]]],
-                              dtype=torch.long, device=self.device),
-        }
+        b = {"x": x.to(self.device, non_blocking=True),
+             "pos": torch.from_numpy(length - 1).to(self.device)}
         for c, i in self.cols.items():
-            if c != "answer":
-                b[c] = torch.from_numpy(labels[:, i].astype(np.int64)).to(self.device)
+            b[c] = torch.from_numpy(np.ascontiguousarray(labels[:, i])).to(self.device)
         return b
 
     def batch(self, rng: np.random.Generator, batch_size: int, level_range: tuple[int, int]) -> dict:
