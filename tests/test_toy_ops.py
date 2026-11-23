@@ -100,3 +100,81 @@ def test_verify_accepts_ops_build(tmp_path):
     r = subprocess.run([sys.executable, str(REPO / "scripts/verify_data.py"), "--root", str(tmp_path / "nested_add")],
                        capture_output=True, text=True, cwd=REPO)
     assert "ALL CHECKS PASSED" in r.stdout, r.stdout[-2000:]
+
+
+# ---- Task 3: checkpoint scorer ----
+import torch
+
+
+def test_load_checkpoint_roundtrip(tmp_path):
+    from eval_ckpt import load_checkpoint, train_k
+    from looptf.toy.model import ToyConfig, ToyLM
+
+    torch.manual_seed(0)
+    cfg = ToyConfig(vocab_size=46, d_model=32, n_heads=2, d_ff=64, max_len=128, place_emb=True)
+    m = ToyLM(cfg)
+    p = tmp_path / "m.pt"
+    torch.save({"cfg": cfg.__dict__, "state_dict": m.state_dict(),
+                "args": {"train_loops": "8", "reverse_answer": True}}, p)
+    m2, args = load_checkpoint(p, "cpu")
+    x = torch.randint(1, 17, (3, 20))
+    m.eval()
+    assert torch.allclose(m(x, n_loops=2), m2(x, n_loops=2))
+    assert not m2.training
+    assert train_k(args) == 8
+    assert args["reverse_answer"] is True
+
+
+def test_train_k_rejects_range():
+    from eval_ckpt import train_k
+
+    with pytest.raises(ValueError):
+        train_k({"train_loops": "1-8"})
+
+
+def test_dump_per_example_keeps_in_digits():
+    import inspect
+    from looptf.toy import train
+
+    assert '"in_digits"' in inspect.getsource(train.dump_per_example)
+
+
+# ---- Task 4: operator labels ----
+import numpy as np
+
+
+def _rows(seqs):
+    from looptf.toy.dataset import encode_rows
+    tok = encode_rows(seqs, 80)
+    length = np.array([s.index("=") + 1 for s in seqs])
+    return tok, length
+
+
+def test_operator_counts():
+    from ops_labels import operator_counts
+
+    tok, length = _rows(["(1+2)*3-4=5#", "7*8=56#", "2-9=-7#"])
+    c = operator_counts(tok, length)
+    assert c["n_mul"].tolist() == [1, 1, 0]
+    assert c["n_add"].tolist() == [1, 0, 0]
+    assert c["n_sub"].tolist() == [1, 0, 1]  # the answer's '-' is not counted
+    assert c["n_paren"].tolist() == [1, 0, 0]
+    assert np.allclose(c["mul_frac"], [1 / 3, 1.0, 0.0])
+
+
+def test_labels_join_asserts(tmp_path):
+    from build_ops import build_ops
+    from ops_labels import labels_for_run
+
+    build_ops("sub", tmp_path, n_per_cell=10, max_depth=2)
+    from looptf.toy.dataset import FrozenData
+    sets = FrozenData(tmp_path, device="cpu").test_sets()
+    ans = np.concatenate([b["answer"].numpy() for b in sets.values()])
+    dep = np.concatenate([b["depth"].numpy() for b in sets.values()])
+    pe = {"K": np.concatenate([np.full(len(ans), 1), np.full(len(ans), 8)]),
+          "answer": np.concatenate([ans, ans]), "depth": np.concatenate([dep, dep])}
+    lab = labels_for_run(tmp_path, pe)
+    assert len(lab["n_sub"]) == 2 * len(ans) and (lab["n_mul"] == 0).all()
+    bad = dict(pe, answer=pe["answer"][::-1].copy())
+    with pytest.raises(AssertionError):
+        labels_for_run(tmp_path, bad)
