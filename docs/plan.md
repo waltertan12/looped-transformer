@@ -53,7 +53,7 @@ on both seeds.
 
 ## Medium term (this week)
 
-### 3b. Long probe set (D-012): the checkpoint — running (launched 21:40, ~6 h)
+### 3b. Long probe set (D-012): the checkpoint — running (normal arm 21:40 → ~02:50; reversed arm → ~08:15)
 Shallow / looped / deep × 2 seeds, 120k steps, recipe from the D-011 screen by D-012's rule.
 ≈ 6 h. A good stopping point: the arithmetic result is then checked on 2 seeds with fully
 trained models. Then update the visual report.

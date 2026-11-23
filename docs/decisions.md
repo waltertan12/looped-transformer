@@ -9,7 +9,7 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
-## D-012 · Long probe set: the checkpoint run (running: tags on, normal order)
+## D-012 · Long probe set: the checkpoint run (running: tags on, normal + reversed arms)
 
 **Question.** Does the looping result hold with fully trained models and on a second seed?
 All D-007 models were still improving at 40k steps, and everything so far is one seed.
@@ -36,6 +36,13 @@ pause, or go on to test-time loops (plan step 5).
 **Recipe (by the rule):** `--place_emb`, normal order (reversed: +0.033 on multi-digit inputs,
 −0.110 on 1-digit inputs; fails both halves). **Status.** Launched 2026-11-22 21:40, ~6 h;
 results in `results/toy/long/`.
+**Extended by Walter, 2026-11-22 22:20:** add a reversed-order arm (tags + `--reverse_answer`),
+same 6 runs at 120k, part of this experiment (`scripts/arith_long_arm.sh ... rev`, names
+`long/<model>-rev-s<seed>`, queue log `results/toy/long-rev.queue.log`; starts when the normal
+arm finishes, ~02:50; done ~08:15). **Rule (written before results):** on each model, reversed
+wins if it beats normal by ≥ 0.05 on multi-digit-input problems (depths 1–3) **and** costs
+≤ 0.03 on 1-digit-input problems, on **both seeds**. Report per model; the 40k screen said
+reversed loses with more steps, so the question is whether longer training changes that.
 
 ## D-011 · Place-value embeddings: which runs? (done: tags on, normal order)
 

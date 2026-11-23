@@ -38,6 +38,10 @@ Shallow 2×1 (4.4M), looped 2×8 (same 4.4M, 8 passes), deep 16×1 (19M, same co
   120k steps, `--place_emb`, normal order. Results `results/toy/long/`; queue log
   `results/toy/long.queue.log` (6 "done" lines = finished; order shallow → looped → deep,
   2 at a time). Shallow ~40 min, looped and deep ~2.5 h each → done ~03:30–04:00.
+- **D-012 reversed arm** (Walter, 22:20): same 6 runs with `--place_emb --reverse_answer`,
+  queued behind the normal arm (`scripts/arith_long_arm.sh`, WAIT_PID on the normal queue),
+  names `long/<model>-rev-s<seed>`, queue log `results/toy/long-rev.queue.log`; starts ~02:50,
+  done ~08:15. Rule on the D-012 card.
 - Shallow pair done (21:55): 120k ≫ 40k (+0.08…+0.26), seeds agree within 0.03. Shallow at
   120k ≈ looped at 40k, so the looped 120k pair decides whether the loop gap is real (research log).
 - D-011 screen is finished: **tags on (looped big answers +0.055), normal order** (reversed
@@ -45,7 +49,7 @@ Shallow 2×1 (4.4M), looped 2×8 (same 4.4M, 8 passes), deep 16×1 (19M, same co
   Re-run the comparison: `.venv/bin/python scripts/d011_compare.py`.
 
 ## Next actions, in order
-1. When D-012 finishes: report with `scripts/arith_report.py --runs results/toy/long --out
+1. When both D-012 arms finish (12 runs): compare normal vs reversed by the D-012 card rule; report with `scripts/arith_report.py --runs results/toy/long --out
    docs/results-arith-long.md`, plus seed-to-seed spread (seed 0 vs 1) on every headline
    number. Log in research log and on the D-012 card. Check whether 120k beats 40k (vs
    `results/toy/place/` and `results/toy/bal/`).
