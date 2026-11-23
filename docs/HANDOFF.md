@@ -14,6 +14,9 @@ Current track: **tiny transformers trained from scratch on synthetic PEMDAS arit
 | what | file |
 |---|---|
 | Forward plan, with decision rules written **before** results | `docs/plan.md` |
+| Hypotheses (status + Walter's ranking) | `docs/hypotheses.md` |
+| Idea backlog (short / medium / long) | `docs/ideas.md` |
+| Closest papers, compared with ours | `docs/related-work.md` |
 | Every decision (cards D-001…D-012), who made it, outcome | `docs/decisions.md` |
 | Reasoning and results, chronological | `docs/research-log.md` |
 | State snapshots (newest first) | `docs/status.md` |
