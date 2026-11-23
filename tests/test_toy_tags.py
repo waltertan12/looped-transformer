@@ -64,3 +64,14 @@ def test_sep_tags_uses_answer_table_for_answer_digits():
 def test_old_checkpoint_config_loads():
     cfg = ToyConfig(**{k: v for k, v in _cfg().__dict__.items() if k not in ("tag_offset", "sep_tags")})
     assert cfg.tag_offset == 0 and cfg.sep_tags is False
+
+
+def test_h18_verdict():
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    from tags_report import h18_verdict
+    assert h18_verdict(exact4=0.62, within5=0.95, inrange_deltas=[-0.01, 0.02]) == "pass"
+    assert h18_verdict(exact4=0.62, within5=0.95, inrange_deltas=[-0.05, 0.0]) == "fail: hurts trained sizes"
+    assert h18_verdict(exact4=0.20, within5=0.85, inrange_deltas=[0.0, 0.0]) == "approximate only"
+    assert h18_verdict(exact4=0.20, within5=0.30, inrange_deltas=[0.0, 0.0]) == "fail"
