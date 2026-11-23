@@ -605,6 +605,34 @@ seed; needs confirmation. Reversed order: worse on the primary metric for all th
 
 ---
 
+## 2026-11-22 — D-011 screen, shallow pair: place-value tags
+
+**Pre-registered rule (1-digit-input problems):** tags vs no tags (normal order): big answers
+−0.01, small +0.02 → no clear effect, don't adopt. **Metric mistake (Claude):** with 1-digit
+inputs every input digit is a "ones" digit, so the tags carry almost no information there; the
+rule could not detect the effect it was testing. Should have used multi-digit inputs.
+
+**Exploratory (found after the rule said no; needs a second seed):**
+
+| shallow 2×1 | no tags, normal | no tags, rev | tags, normal | tags, rev |
+|---|---|---|---|---|
+| depth 1, 3-digit inputs (all) | 0.14 | 0.26 | 0.18 | **0.43** |
+| … 3-digit answers | 0.38 | 0.28 | 0.42 | **0.89** |
+| … 4-digit answers | 0.16 | 0.15 | 0.17 | **0.69** |
+| depth 2, 2-digit inputs | 0.35 | 0.30 | **0.43** | 0.33 |
+| depth 3, 2-digit inputs | 0.16 | 0.13 | 0.17 | 0.14 |
+
+- Tags + reversed together nearly solve a single big multiplication (neither alone does): the
+  pairing reported in the literature.
+- Only for one step: at depth ≥ 2 reversed loses again; tags + normal is best at depth 2.
+- Read: shallow can use tags on big inputs only for short problems; carrying big-number work
+  through several steps is where the looped model should help (looped pair running).
+
+**Rule amended before the looped results:** for D-011, multi-digit-input problems (depths 1–3,
+by input size) are a co-primary metric with the same ≥ 0.05 bar.
+
+---
+
 ## Open questions / ideas to come back to
 
 - **Number base as a difficulty dial.** Same problems written in base 2 / 10 / 16. Base 2 makes

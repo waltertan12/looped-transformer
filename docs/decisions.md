@@ -33,6 +33,11 @@ reversed (4 runs, 40k steps, seed 0; `scripts/arith_place.sh`, results in `resul
 No-tag baselines reused from D-007. Rules: tags help if big answers (3–5 digits, depths 2–6)
 rise ≥ 0.05 and small answers drop ≤ 0.03; reversed + tags worth it if ≥ 0.05 over normal +
 tags. Winners then go to longer training on the full matrix, with a second seed to confirm.
+**Shallow result:** fails the rule as written (big −0.01, small +0.02), but the rule's metric
+used 1-digit inputs, where tags carry ~no information (Claude's design mistake). Exploratory:
+tags + reversed lifts depth-1 3-digit-input problems 0.14 → 0.43 (3-digit answers 0.38 → 0.89);
+tags + normal best at depth 2 (0.35 → 0.43). **Amended before the looped results:** multi-digit-
+input problems are a co-primary metric (≥ 0.05 bar).
 
 ## D-010 · How much of the grid does each new fix get tested on? (decided: probe set)
 
