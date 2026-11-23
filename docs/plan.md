@@ -53,6 +53,11 @@ on both seeds.
 
 ## Medium term (this week)
 
+### 3b. Long probe set (D-012): the checkpoint
+Shallow / looped / deep × 2 seeds, 120k steps, recipe from the D-011 screen by D-012's rule.
+≈ 6 h. A good stopping point: the arithmetic result is then checked on 2 seeds with fully
+trained models. Then update the visual report.
+
 ### 4. The recipe on the full grid, trained longer
 All D-007 models were still improving at 40k steps (loss falling steadily; train ≈ test
 accuracy, i.e. undertrained), so the full-matrix runs use more steps (≈ 3×).

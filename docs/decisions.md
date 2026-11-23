@@ -9,6 +9,32 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
+## D-012 · Long probe set: the checkpoint run (decided, recipe pending the D-011 screen)
+
+**Question.** Does the looping result hold with fully trained models and on a second seed?
+All D-007 models were still improving at 40k steps, and everything so far is one seed.
+
+**Runs.** Shallow 2×1, looped 2×8, deep 16×1 × seeds 0 and 1 = 6 runs, **120k steps** (3×),
+`data/nested_bal`, lr 3e-4, mixed depths 1–8. Two at a time, paired by model (both seeds
+together): shallow ≈ 45 min, looped ≈ 2.5 h, deep ≈ 2.5 h → **≈ 6 h** total.
+
+**Recipe rule (written before the looped D-011 results):**
+- Place-value tags **on** (they help on multi-digit inputs for shallow; no cost elsewhere).
+- Answer order: **reversed** if looped + tags + reversed beats looped + tags + normal by
+  ≥ 0.05 on multi-digit-input problems (depths 1–3) **and** is no more than 0.03 worse on
+  1-digit-input problems (big and small answers); otherwise **normal** (simpler, and better on
+  multi-step problems so far).
+
+**What would change our minds.** If shallow catches up with looped at 120k steps, the loop's
+advantage was speed of learning, not capacity. If the two seeds differ by more than the
+looped − shallow gap, the gap isn't a result yet.
+
+**Stopping point.** After this, the arithmetic question has a checked answer: write it up and
+pause, or go on to test-time loops (plan step 5).
+
+**Needs Walter?** Decided by Walter, 2026-11-22 ("do the probe set long, then update the HTML").
+Recipe chosen by the rule above. **Status.** Launches after the D-011 screen (~21:35).
+
 ## D-011 · Place-value embeddings: which runs? (decided: screen on shallow + looped)
 
 **Question.** Plan step 2. Looping doesn't fix big answers (+0.03), so number representation
