@@ -43,6 +43,10 @@ arm finishes, ~02:50; done ~08:15). **Rule (written before results):** on each m
 wins if it beats normal by ≥ 0.05 on multi-digit-input problems (depths 1–3) **and** costs
 ≤ 0.03 on 1-digit-input problems, on **both seeds**. Report per model; the 40k screen said
 reversed loses with more steps, so the question is whether longer training changes that.
+**Outcome (2026-11-23):** reversed fails the rule on all three models → **normal order stays.**
+Multi-digit-input gain: shallow +0.01/+0.03, looped +0.04/+0.06, deep +0.03/−0.01. But the
+cost/benefit flips with capacity: big answers shallow −0.07/−0.08, looped −0.03/−0.03, deep
++0.13/+0.10 (research log 08:15).
 
 ## D-011 · Place-value embeddings: which runs? (done: tags on, normal order)
 

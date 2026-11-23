@@ -745,6 +745,21 @@ Looped 2×8, tags, 120k, reversed − normal, seeds 0 / 1:
 - Read: for the looped model, order is close to a wash, a slight edge to reversed on big
   inputs. Not a reason to switch the default; noted as "order matters less with loops".
 
+## 2026-11-23 08:15 — D-012 reversed arm, deep pair: rule says normal, but the trend flips with capacity
+
+Deep 16×1, tags, 120k, reversed − normal, seeds 0 / 1:
+- **Rule:** multi-digit inputs (depths 1–3) +0.025 / −0.006 (needs ≥ +0.05) → **fails; keep
+  normal order** (all three models now fail the rule).
+- But reversed **helps** deep elsewhere: 1-digit inputs depths 1–3 +0.02 / +0.02; big answers
+  (3–5 digits, depths 2–6) **+0.13 / +0.10**; small answers +0.05 / +0.05; depth-8 1-digit
+  answers +0.06 / +0.04. Odd one out: depth 1 with 3-digit inputs −0.08 / −0.14 (opposite of
+  shallow, where reversed won that cell by +0.12…+0.15).
+- **Pattern across the probe set (reversed − normal, big answers):** shallow −0.07/−0.08,
+  looped −0.03/−0.03, deep +0.13/+0.10. On 1-digit inputs: −0.10, −0.01, +0.02. Reversed order
+  pays off only with enough capacity; it costs the small models. Not covered by the rule's
+  metric, so noted as a finding, not a recipe change. Possible follow-up: does looped catch up
+  with more training?
+
 ---
 
 ## Open questions / ideas to come back to

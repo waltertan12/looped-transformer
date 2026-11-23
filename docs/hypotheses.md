@@ -13,7 +13,7 @@ Evidence is seed 0 / seed 1 at 120k steps (D-012 normal arm) unless noted.
 | H3 | Loops don't buy number size; unique weights do | **Supported** | deep − looped +0.05…+0.15 on big answers / big inputs. Open: is it lookup (times tables) or number size per se? → I-S3 |
 | H4 | Looped generalizes past training depth (trained ≤ 8) | **Supported** | depth 13: looped 0.62/0.60 vs shallow 0.42/0.43, ≈ deep |
 | H5 | A model trained at K loops works at other K | **Rejected** | ≤ 0.11 at other K (40k grid) |
-| H6 | Reversed answer order helps | **Rejected for multi-step** | shallow 120k: −0.10 on 1-digit inputs; looped 120k: near-tie (fails rule narrowly); helps one big multiplication (+0.12…+0.15). Deep pending |
+| H6 | Reversed answer order helps | **Rejected by the rule; depends on capacity** | fails the rule on all 3 models. Big answers: shallow −0.07, looped −0.03, deep +0.13/+0.10. Helps shallow on one big multiplication (+0.12…+0.15) |
 | H7 | Place-value tags help | **Weakly supported** | looped 40k: big answers +0.055; shallow: no effect. Only one seed of tags-vs-no-tags |
 | H8 | The 40k models were undertrained | **Supported** | 120k lifts everything +0.08…+0.26; train acc still 0.42–0.54 at 120k |
 
