@@ -25,8 +25,8 @@ Related hypotheses in `hypotheses.md`.
 - **I-M2 Random offset on place tags** (McLeish, β ~ U[0, max]) + train inputs ≤ 2 digits, test
   3–4 digits. Tests H18.
 - **I-M3 Attention changes** (Walter: "PEMDAS attention"). Options, from least to most hand-coded:
-  (a) look first: plot attention maps per head per loop pass: do heads already focus on the
-  sub-expression being computed? (b) prefix attention: question tokens see the whole question
+  (a) look first (now H19 in `hypotheses.md`): plot attention maps per head per loop pass: do heads
+  already focus on the sub-expression being computed? (b) prefix attention: question tokens see the whole question
   (only answer tokens stay causal). Today `3+4*5`: the `+` can't see the `*` after it. Generic,
   fair. (c) more / smaller heads. (d) tree-masked attention (each token sees only its own
   sub-expression): likely helps, but it hand-codes the algorithm, so a win says little about

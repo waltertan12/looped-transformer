@@ -3,8 +3,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
 <style>
-/* Layout: one reading column. Summary first (what we learned / didn't), then one section per finding
-   (claim, chart or table, how to read it), then every run, then the roadmap. */
+/* Layout: one reading column. Three-line answer, then setup for newcomers, then one section per
+   finding (what / why / result / meaning), then every run, trust, roadmap. */
 :root {
   --plane: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
   --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
@@ -13,6 +13,7 @@
   --good: #006300; --warn: #8a5a00; --bad: #a32020;
   --f-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --plane: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
@@ -33,15 +34,14 @@ main { max-width: 880px; margin: 0 auto; padding-block: 32px 72px; display: grid
 h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.2; }
 h1 { font-size: 2rem; font-weight: 600; }
 h2 { font-size: 1.35rem; font-weight: 600; }
-h3 { font-size: 1rem; font-weight: 600; }
+h3 { font-size: 1.02rem; font-weight: 600; }
 p { margin: 0; max-width: 68ch; }
 .eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .lede { font-size: 1.08rem; color: var(--ink-2); }
 section { display: grid; gap: 14px; min-width: 0; }
-.claim { font-weight: 600; }
 .read { color: var(--ink-2); font-size: 0.92rem; }
+.note { font-size: 0.85rem; color: var(--muted); }
 .panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 16px; min-width: 0; display: grid; gap: 10px; align-content: start; }
-.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
 .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
 svg { display: block; width: 100%; height: auto; overflow: visible; }
 svg text { fill: var(--ink-2); font: 11px var(--f-body); font-variant-numeric: tabular-nums; }
@@ -56,83 +56,88 @@ th:first-child, td:first-child { text-align: left; }
 td.l, th.l { text-align: left; }
 th { color: var(--muted); font-weight: 600; }
 .scroll { overflow-x: auto; }
+code, .ex, .tokens { font-family: var(--f-mono); }
+code { font-size: 0.88em; }
 .tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--ring);
   border-radius: 8px; padding: 6px 9px; font-size: 0.8rem; box-shadow: 0 4px 14px rgba(0,0,0,0.12); max-width: 240px; z-index: 20; }
-.ledger { display: grid; gap: 8px; }
-.row { display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--grid); }
+.answer { display: grid; gap: 6px; padding: 14px 16px; border-left: 3px solid var(--s-looped); background: var(--surface); border-radius: 0 10px 10px 0; }
+.answer p { font-family: var(--f-display); font-size: 1.12rem; font-weight: 500; }
+.ledger { display: grid; }
+.row { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--grid); }
 .row:last-child { border-bottom: 0; }
 .row p { font-size: 0.93rem; }
-.row .ev { color: var(--ink-2); font-size: 0.85rem; margin-top: 2px; }
 .pill { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; border: 1px solid currentColor; text-align: center; justify-self: start; white-space: nowrap; }
 .pill.yes { color: var(--good); } .pill.no { color: var(--bad); } .pill.open { color: var(--warn); } .pill.mixed { color: var(--ink-2); }
-.mcard .name { font-family: var(--f-display); font-size: 1.1rem; font-weight: 600; }
+.primer { display: grid; gap: 18px; }
+.term { display: grid; gap: 8px; }
+.ex { font-size: 0.88rem; background: var(--plane); border: 1px solid var(--grid); border-radius: 6px; padding: 8px 10px; overflow-x: auto; white-space: pre; }
+.tokens { display: flex; flex-wrap: wrap; gap: 3px; font-size: 0.95rem; }
+.tk { display: grid; justify-items: center; min-width: 22px; padding: 3px 4px; border: 1px solid var(--grid); border-radius: 5px; background: var(--plane); }
+.tk small { font-size: 0.66rem; color: var(--s-looped); font-family: var(--f-body); font-weight: 600; min-height: 1em; }
+.tk.ans { border-color: var(--s-shallow); }
+.mcard .name { font-family: var(--f-display); font-size: 1.1rem; font-weight: 600; color: var(--ink); }
 .blocks { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; min-height: 24px; }
 .blk { height: 20px; min-width: 11px; padding: 0 4px; border-radius: 4px; font-size: 0.66rem; display: inline-flex; align-items: center; justify-content: center; color: var(--ink-2); border: 1px solid var(--axis); background: var(--plane); }
 .blk.core { border-color: currentColor; }
 .loopbadge { font-size: 0.72rem; font-weight: 600; padding: 1px 6px; border-radius: 999px; border: 1.5px dashed currentColor; }
-.facts { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 0.85rem; font-variant-numeric: tabular-nums; margin: 0; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 0.85rem; font-variant-numeric: tabular-nums; margin: 0; color: var(--ink); }
 .facts dt { color: var(--muted); } .facts dd { margin: 0; }
+.wwr { display: grid; gap: 10px; }
+.wwr > div { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: baseline; }
+.wwr > div > b { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.wwr > div > div { display: grid; gap: 10px; min-width: 0; }
 .pos { color: var(--div-pos); font-weight: 600; } .neg { color: var(--div-neg); font-weight: 600; }
-.road { display: grid; gap: 12px; }
-.stage { display: grid; grid-template-columns: 112px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--grid); }
+.stage { display: grid; grid-template-columns: 96px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--grid); }
 .stage h3 { margin-bottom: 4px; }
 .stage .when { font-family: var(--f-display); font-weight: 600; color: var(--ink-2); }
 .stage ul { font-size: 0.93rem; }
-.note { font-size: 0.85rem; color: var(--muted); }
-.wwr { display: grid; gap: 10px; }
-.wwr > div { display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: baseline; }
-.wwr > div > b { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-.wwr > div > div { display: grid; gap: 10px; min-width: 0; }
-.primer { display: grid; gap: 16px; }
-.term { display: grid; gap: 6px; }
-.term h3 { font-size: 1.02rem; }
-.tokens { display: flex; flex-wrap: wrap; gap: 3px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.95rem; }
-.tk { display: grid; justify-items: center; min-width: 22px; padding: 3px 4px; border: 1px solid var(--grid); border-radius: 5px; background: var(--plane); }
-.tk small { font-size: 0.66rem; color: var(--s-looped); font-family: var(--f-body); font-weight: 600; min-height: 1em; }
-.tk.ans { border-color: var(--s-shallow); }
-.ex { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9rem; background: var(--plane); border: 1px solid var(--grid); border-radius: 6px; padding: 8px 10px; overflow-x: auto; white-space: pre; }
-@media (max-width: 520px) { .wwr > div { grid-template-columns: 1fr; gap: 2px; } }
+.tag { font-size: 0.7rem; color: var(--muted); font-weight: 600; margin-left: 6px; }
 details summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
 details[open] summary { margin-bottom: 8px; }
-code { font-size: 0.88em; }
 :focus-visible { outline: 2px solid var(--s-shallow); outline-offset: 2px; }
-@media (max-width: 520px) { h1 { font-size: 1.6rem; } .row, .stage { grid-template-columns: 1fr; gap: 4px; } }
+@media (max-width: 520px) { h1 { font-size: 1.6rem; } .row, .stage, .wwr > div { grid-template-columns: 1fr; gap: 4px; } }
 </style>
 
 <main>
-<header style="display:grid; gap:10px">
-  <div class="eyebrow">Looped transformers · PEMDAS arithmetic · as of 23 Nov 2026</div>
+<header style="display:grid; gap:12px">
+  <div class="eyebrow">Looped transformers · arithmetic · 23 Nov 2026</div>
   <h1>Do loops add reasoning depth?</h1>
-  <p class="lede">Tiny transformers trained from scratch on nested arithmetic like <code>(8-3)*(4-6)+7=-3</code>. Same weights run several times (looped) versus no repeats (shallow) versus more distinct layers (deep). 34 training runs and 28 scoring runs so far; the headline numbers below are 120k-step models on two seeds. If you're new, the first section explains every term used later.</p>
+  <div class="answer">
+    <p>Loops buy steps. Weights buy number size. Longer numbers are broken.</p>
+  </div>
+  <p class="lede">Tiny transformers learn nested arithmetic like <code>(8-3)*(4-6)+7=-3</code>. We compare a small model, the same model run 8 times in a row, and a model with 8× more layers. New here? The setup section explains every term.</p>
 </header>
 
-<section aria-labelledby="primer">
-  <div class="eyebrow">New here? Start with this</div>
-  <h2 id="primer">What this project is testing</h2>
+<section aria-labelledby="setup">
+  <div class="eyebrow">Setup</div>
+  <h2 id="setup">What this project tests</h2>
   <div class="panel primer">
     <div class="term"><h3>The question</h3>
-      <p>A transformer normally passes its input through a stack of distinct layers once. A <b>looped transformer</b> reuses the same few layers several times in a row, so it can "think longer" without having more weights. The question: does that extra thinking let it solve problems that need more steps, and can a small looped model do what a much bigger one does?</p></div>
-    <div class="term"><h3>The test bed: nested arithmetic</h3>
-      <p>Tiny models are trained from scratch to answer problems like these, one character at a time:</p>
+      <p>A transformer normally passes its input through a stack of distinct layers once. A <b>looped transformer</b> runs the same few layers several times in a row. It can think longer without more weights.</p>
+      <p>Does that extra thinking let it solve problems with more steps? And can a small looped model do what a much bigger one does?</p></div>
+
+    <div class="term"><h3>The task</h3>
+      <p>Tiny models are trained from scratch to answer problems like these:</p>
       <div class="ex">7*8=56
 (8-3)*(4-6)+7=-3
 352+47=399</div>
-      <p>Arithmetic is useful because we control difficulty exactly and every answer can be checked. Two dials matter:</p>
+      <p>Arithmetic lets us set difficulty exactly and check every answer. Two dials set the difficulty.</p>
       <ul>
-        <li><b>Depth (number of steps):</b> how many operations must happen in sequence. <code>(8-3)*(4-6)+7</code> has depth 3: work out both brackets, multiply, then add. More depth means more sequential reasoning.</li>
-        <li><b>Number size:</b> how many digits the inputs and the answer have. <code>9071+6268</code> is one step but needs careful digit work and carrying.</li>
+        <li><b>Depth:</b> steps that must happen in sequence (examples below).</li>
+        <li><b>Number size:</b> digits in the inputs and the answer. <code>9071+6268</code> is one step but needs careful carrying.</li>
       </ul>
-      <p>Separating the two dials is what lets us say which one loops help with.</p></div>
+      <p>Keeping the two apart tells us which one loops help with.</p></div>
+
     <div class="term"><h3>What depth looks like</h3>
-      <p><b>Depth counts steps that must wait for each other, not operators.</b> Operations that don't depend on each other happen in the same step. Take <code>(8-3)*(4-6)+7</code>:</p>
-      <div class="ex">step 1   8-3 = 5   and   4-6 = -2     (independent, same step)
-step 2   5 * -2 = -10                 (needs both results)
-step 3   -10 + 7 = -3                 (needs step 2)
-         depth 3, with 4 operators</div>
-      <p>Two problems with 3 operators each show the difference:</p>
+      <p>Depth counts steps that wait for each other, not operators. Independent operations share a step.</p>
+      <div class="ex">(8-3)*(4-6)+7
+step 1   8-3 = 5   and   4-6 = -2     independent, same step
+step 2   5 * -2 = -10                 needs both
+step 3   -10 + 7 = -3                 needs step 2
+         depth 3, 4 operators</div>
       <div class="ex">7*7-4*6   = 25    depth 2   both multiplications at once, then subtract
-6+5+2+9   = 22    depth 3   each addition waits for the one before it</div>
-      <p>Real test problems by depth (1-digit inputs, small answers, so only depth varies):</p>
+6+5+2+9   = 22    depth 3   each addition waits for the one before</div>
+      <p>Real test problems, with 1-digit inputs and small answers so only depth changes:</p>
       <div class="scroll"><table>
         <thead><tr><th>depth</th><th class="l">example</th><th>operators</th></tr></thead>
         <tbody>
@@ -144,59 +149,66 @@ step 3   -10 + 7 = -3                 (needs step 2)
           <tr><td>8</td><td class="l"><code>(1-1*(9+6*(5-(6-(1-6)))))*2=56</code></td><td>8</td></tr>
           <tr><td>12</td><td class="l"><code>5-(8+5*(9*1+8-4+8)+4-8-7)-6+9=-94</code></td><td>12</td></tr>
         </tbody></table></div>
-      <p class="read">Models train on depths 1–8 and are tested up to 13, so depths 9–13 check whether the skill extends beyond anything seen in training. A model with a fixed stack of layers has a limited number of steps it can chain; the hypothesis is that each loop pass adds room for more.</p></div>
+      <p class="read">Training covers depths 1–8. Tests go to 13, to check whether the skill reaches past anything seen in training.</p></div>
+
+    <div class="term"><h3>How the model reads a problem</h3>
+      <p>One character is one token. The vocabulary has 46 tokens: the digits, <code>+ - * ( ) =</code>, a stop sign <code>#</code> after each answer, and a few letters saved for later tasks. So <code>352</code> is three tokens. There are no word pieces as in chat models.</p>
+      <p>The model writes the answer one token at a time, reading only what came before.</p></div>
+
     <div class="term"><h3>The three models</h3>
-      <p>Every model has an input layer, a "core" and an output layer. Only the core changes:</p></div>
+      <p>Each has an input layer, a core and an output layer. Only the core changes.</p></div>
     <div class="grid3" id="mcards"></div>
-    <p class="read">Looped and shallow have identical weights; looped and deep do the same amount of computation. So looped vs shallow isolates "does repeating help?", and looped vs deep isolates "is repeating as good as having more distinct layers?".</p>
+    <p class="read">Looped and shallow have the same weights. Looped and deep do the same amount of work per answer. So looped vs shallow asks "does repeating help?" and looped vs deep asks "is repeating as good as more layers?".</p>
+
     <div class="term"><h3>Place-value tags</h3>
-      <p>The model sees each digit as a separate token, but on its own a token doesn't say whether a <code>3</code> means three, thirty or three hundred. <b>Place-value tags</b> attach a small label to every digit saying which place it is in: ones = 1, tens = 2, hundreds = 3, counted from the right of each number. Answer digits are labelled by position in the answer instead. The idea comes from McLeish et al. (NeurIPS 2024), who called them "Abacus embeddings".</p>
+      <p>The token <code>3</code> looks the same in 3, 30 and 300. <b>Place-value tags</b> add a label to each digit for its place, counted from the right: ones = 1, tens = 2, hundreds = 3. Answer digits are labelled by their position in the answer.</p>
       <div class="tokens" aria-label="352+47=399 with place tags">
         <span class="tk">3<small>3</small></span><span class="tk">5<small>2</small></span><span class="tk">2<small>1</small></span><span class="tk">+<small></small></span><span class="tk">4<small>2</small></span><span class="tk">7<small>1</small></span><span class="tk">=<small></small></span><span class="tk ans">3<small>1</small></span><span class="tk ans">9<small>2</small></span><span class="tk ans">9<small>3</small></span>
       </div>
-      <p class="read"><b>Why test it:</b> lining up ones with ones and tens with tens is exactly what column addition needs, so tags should make big-number arithmetic easier.</p></div>
-    <div class="term"><h3>Answer order: normal vs reversed</h3>
-      <p>Normally the model writes <code>352+47=399</code> left to right, biggest digit first. In <b>reversed order</b> it writes the answer smallest digit first: <code>352+47=993</code>, which we flip back when scoring.</p>
-      <p class="read"><b>Why test it:</b> people add from the ones column up, because carries move leftward. Writing the biggest digit first forces the model to know every carry before it writes anything. Reversed order lets it write digits in the order it can work them out. Earlier work (Lee et al., ICLR 2024) found this helps small models with addition.</p></div>
+      <p class="read"><b>Why:</b> column addition lines up ones with ones and tens with tens, so the labels should make big numbers easier. The idea comes from McLeish et al. (NeurIPS 2024).</p></div>
+
+    <div class="term"><h3>Answer order</h3>
+      <p>Normally the answer comes biggest digit first: <code>352+47=399</code>. Reversed, it comes smallest digit first: <code>=993</code>. We flip it back to score it.</p>
+      <p class="read"><b>Why:</b> carries move from the ones column up. Biggest-first forces the model to know every carry before writing anything. Lee et al. (ICLR 2024) found reversed order helps small models add.</p></div>
+
     <div class="term"><h3>How we judge results</h3>
       <ul>
-        <li><b>Accuracy</b> = share of test problems answered exactly right. Each test group holds about 1,000 problems, so a difference under about 0.03 can be chance.</li>
-        <li><b>Seeds:</b> each model is trained twice from different random starts. Results shown as "0.86 / 0.87" are seed 0 / seed 1. A result counts only if both agree.</li>
-        <li><b>Rules written in advance:</b> before each experiment we wrote down what result would count as a yes, so we can't move the goalposts after seeing the numbers.</li>
-        <li><b>%Gap</b> = how much of the shallow-to-deep gap the looped model closes. 1.0 means looped is as good as deep; 0 means looping added nothing.</li>
+        <li><b>Accuracy</b> is the share of test problems answered exactly right. Each test group has about 1,000 problems, so differences under 0.03 can be chance.</li>
+        <li>Every model is trained <b>twice</b> from different random starts, for 120k steps. Numbers below are the average of the two. Where the two disagree, both are shown.</li>
+        <li>Before each experiment we wrote down what result would count as a yes.</li>
+        <li><b>Gap closed</b> is how much of the shallow-to-deep difference the looped model makes up. 1.0 means as good as deep. 0 means no help.</li>
       </ul></div>
   </div>
 </section>
 
 <section aria-labelledby="sum">
-  <h2 id="sum">What we learned, and what we didn't</h2>
+  <h2 id="sum">What we know so far</h2>
   <div class="panel ledger">
-    <div class="row"><span class="pill yes">Learned</span><div><p><b>Loops buy steps.</b> On problems with many sequential steps, looped beats shallow (same weights) by +0.11 at 4 steps and +0.25 at 8 steps.</p><p class="ev">Both seeds, 120k steps. The gap grows with step count.</p></div></div>
-    <div class="row"><span class="pill yes">Learned</span><div><p><b>Looped matches deep on steps with a quarter of the weights.</b> Within ±0.03 at every depth.</p><p class="ev">4.4M looped vs 19M deep, same compute. Holds past the training depth (depth 13, trained ≤ 8).</p></div></div>
-    <div class="row"><span class="pill yes">Learned</span><div><p><b>Weights buy number size.</b> Deep beats looped by +0.05 to +0.15 on big answers and big inputs, and by the same amount on pure addition and subtraction.</p><p class="ev">So it is not about multiplication tables. H13 rejected on unseen problems.</p></div></div>
-    <div class="row"><span class="pill yes">Learned</span><div><p><b>Operator mix doesn't matter</b> once depth and number size are fixed (±0.015).</p><p class="ev">H14 not supported. Multiplication-heavy problems are hard only because their answers are big.</p></div></div>
-    <div class="row"><span class="pill yes">Learned</span><div><p><b>Training length mattered a lot.</b> 40k → 120k steps lifted everything by +0.08 to +0.26, and models are still not converged.</p><p class="ev">The loop gap survived the longer training: it is capability, not faster learning.</p></div></div>
-    <div class="row"><span class="pill no">Broken</span><div><p><b>No generalization to longer numbers.</b> Every model scores 0% on 4-digit inputs, even a single <code>a+b</code>.</p><p class="ev">The place-value tags cause the collapse: without tags, answers stay within 5% (0.92); with tags, garbage (0.01–0.10).</p></div></div>
-    <div class="row"><span class="pill no">Broken</span><div><p><b>A model trained at 8 loops only works at 8 loops</b> (≤ 0.11 at other counts).</p><p class="ev">Blocks "use fewer loops on easy problems" until training changes (plan step 5).</p></div></div>
-    <div class="row"><span class="pill mixed">Depends</span><div><p><b>Reversed answer order</b> hurts small models and helps big ones: big answers −0.08 shallow, −0.03 looped, +0.12 deep.</p><p class="ev">Fails the pre-set rule on all three, so normal order stays.</p></div></div>
-    <div class="row"><span class="pill open">Unknown</span><div><p><b>Why number size needs weights</b>, whether width fixes it, and whether a model can choose its own loop count.</p><p class="ev">These are the roadmap below.</p></div></div>
+    <div class="row"><span class="pill yes">Holds</span><p><b>Loops buy steps.</b> The looped model beats shallow by more as problems get deeper, and matches deep with a quarter of the weights.</p></div>
+    <div class="row"><span class="pill yes">Holds</span><p><b>Weights buy number size.</b> Deep beats looped on big numbers, with or without multiplication.</p></div>
+    <div class="row"><span class="pill yes">Holds</span><p><b>Operator type doesn't matter</b> once depth and number size are fixed.</p></div>
+    <div class="row"><span class="pill yes">Holds</span><p><b>Longer training mattered.</b> Going from 40k to 120k steps raised every result, and the loop advantage survived.</p></div>
+    <div class="row"><span class="pill no">Broken</span><p><b>Numbers longer than training fail.</b> The place-value tags turn them into nonsense.</p></div>
+    <div class="row"><span class="pill no">Broken</span><p><b>A model trained at 8 loops only works at 8.</b> It can't yet skip loops on easy problems.</p></div>
+    <div class="row"><span class="pill mixed">Depends</span><p><b>Reversed answers</b> hurt the small models and help the big one.</p></div>
+    <div class="row"><span class="pill open">Open</span><p><b>How loops do it.</b> Does each pass work through one level of brackets? Can a model pick its own loop count? Does width fix number size?</p></div>
   </div>
 </section>
 
 <section aria-labelledby="f1">
   <div class="eyebrow">Finding 1 · steps</div>
-  <h2 id="f1">Loops close the gap to depth as problems get longer</h2>
+  <h2 id="f1">Loops keep up with depth as problems get longer</h2>
   <div class="wwr">
-    <div><b>What</b><div><p>Accuracy by depth on problems whose answer is a single digit, so number size can't be the difficulty. Models trained on depths 1–8, tested on 2–13.</p></div></div>
-    <div><b>Why</b><div><p>If looping adds sequential reasoning, the looped model should pull away from shallow as depth grows and keep up with deep, even past the depths it trained on.</p></div></div>
+    <div><b>What</b><div><p>Accuracy by depth, on problems with 1-digit answers so number size isn't a factor.</p></div></div>
+    <div><b>Why</b><div><p>If loops add steps, looped should pull away from shallow as depth grows and keep up with deep.</p></div></div>
     <div><b>Result</b><div>
       <div class="panel">
         <div class="legend" id="lg1"></div>
         <svg id="c1" viewBox="0 0 640 300" role="img" aria-label="Accuracy by depth for shallow, looped and deep models"></svg>
-        <p class="note">Lines = mean of the two seeds; shaded band spans them. Grey area = depths seen in training.</p>
+        <p class="note">Line = average of the two runs, band = their range. Grey = depths seen in training. Hover for each run.</p>
       </div>
-      <p>Looped beats shallow by +0.11 at depth 4 and +0.25 at depth 8, and stays within ±0.03 of deep everywhere, including depth 13.</p></div></div>
-    <div><b>Meaning</b><div><p>The core claim holds: repeating the same layers buys the ability to do more steps, about as well as four times the weights.</p></div></div>
+      <p>Looped beats shallow by +0.11 at depth 4 and +0.25 at depth 8. It stays within 0.03 of deep everywhere, including depth 13.</p></div></div>
+    <div><b>Meaning</b><div><p>Repeating the same layers buys about as many steps as four times the weights.</p></div></div>
   </div>
 </section>
 
@@ -204,141 +216,143 @@ step 3   -10 + 7 = -3                 (needs step 2)
   <div class="eyebrow">Finding 2 · number size</div>
   <h2 id="f2">Bigger answers need more weights, not more loops</h2>
   <div class="wwr">
-    <div><b>What</b><div><p>Accuracy at depths 3–6 split by how many digits the answer has.</p></div></div>
-    <div><b>Why</b><div><p>If loops were a general boost, looped would match deep on big numbers too. If big numbers need stored knowledge (digit facts, carrying patterns), extra distinct weights should win there.</p></div></div>
+    <div><b>What</b><div><p>Accuracy at depths 3–6, split by how many digits the answer has.</p></div></div>
+    <div><b>Why</b><div><p>If big numbers need stored knowledge, extra distinct layers should beat extra passes.</p></div></div>
     <div><b>Result</b><div>
       <div class="panel">
         <div class="legend" id="lg2"></div>
         <svg id="c2" viewBox="0 0 640 280" role="img" aria-label="Accuracy by answer digits for the three models"></svg>
-        <p class="note">Bar = mean of the two seeds; the thin line spans them.</p>
+        <p class="note">Bar = average of the two runs, thin line = their range.</p>
       </div>
       <div class="scroll"><table>
-        <thead><tr><th>Share of the shallow→deep gap that looped closes (%Gap)</th><th>seed 0</th><th>seed 1</th></tr></thead>
+        <thead><tr><th>How much of the shallow → deep gap looped closes</th><th>gap closed</th></tr></thead>
         <tbody>
-          <tr><td>Step count (1-digit answers, depth 8)</td><td>0.91</td><td>1.08</td></tr>
-          <tr><td>4-digit answers, depths 3–6</td><td>0.55</td><td>0.63</td></tr>
-          <tr><td>Multi-digit inputs, depths 1–3</td><td>0.23</td><td>0.46</td></tr>
+          <tr><td>Steps (1-digit answers, depth 8)</td><td>1.0</td></tr>
+          <tr><td>4-digit answers, depths 3–6</td><td>0.6</td></tr>
+          <tr><td>Multi-digit inputs, depths 1–3</td><td>0.35 <span class="note">(runs: 0.23, 0.46)</span></td></tr>
         </tbody></table></div></div></div>
-    <div><b>Meaning</b><div><p>Loops do most of the job on steps and only part of it on number size. This mirrors Saunshi et al. (ICLR 2025): in their language models, loops closed 34–48% of the gap on memorization but over 100% on reasoning.</p></div></div>
+    <div><b>Meaning</b><div><p>Loops do the whole job on steps and part of it on numbers. Saunshi et al. (ICLR 2025) saw the same split in language models: loops helped reasoning far more than memory.</p></div></div>
   </div>
 </section>
 
 <section aria-labelledby="f3">
-  <div class="eyebrow">Finding 3 · pure addition and subtraction (H13)</div>
-  <h2 id="f3">Deep's edge on numbers doesn't come from multiplication</h2>
+  <div class="eyebrow">Finding 3 · pure addition and subtraction</div>
+  <h2 id="f3">Deep's edge on numbers isn't about times tables</h2>
   <div class="wwr">
-    <div><b>What</b><div><p>New test-only sets with only <code>+</code> or only <code>-</code>, inputs of exactly 1–4 digits, scored on the already-trained models. Shown: problems never seen in training, depths 1–3, 2–3-digit inputs.</p></div></div>
-    <div><b>Why</b><div><p>Finding 2 could mean deep wins because multiplication needs memorized tables (a lookup job). Addition has no tables, just a step-by-step carrying procedure, which should suit loops. If deep's edge disappears without <code>*</code>, the gap was about lookup; if it stays, it's about number size itself.</p></div></div>
+    <div><b>What</b><div><p>New test sets with only <code>+</code> or only <code>-</code>, scored on the trained models. Shown: unseen problems, depths 1–3, 2–3-digit inputs.</p></div></div>
+    <div><b>Why</b><div><p>Addition has no times tables. If deep still wins, the gap is about number size, not lookup.</p></div></div>
     <div><b>Result</b><div><div class="scroll"><table>
       <thead><tr><th></th><th>shallow</th><th>looped</th><th>deep</th><th>deep − looped</th></tr></thead>
       <tbody>
-        <tr><td>Addition</td><td>0.43 / 0.38</td><td>0.44 / 0.43</td><td>0.49 / 0.58</td><td class="pos">+0.05 / +0.15</td></tr>
-        <tr><td>Subtraction</td><td>0.34 / 0.29</td><td>0.39 / 0.48</td><td>0.51 / 0.55</td><td class="pos">+0.11 / +0.08</td></tr>
-        <tr><td>Mixed problems, same region</td><td></td><td></td><td></td><td class="pos">+0.07 / +0.10</td></tr>
-      </tbody></table></div>
-      <p>The gap is the same size with or without multiplication. With 1-digit inputs, the step result appears again: looped 0.81 vs deep 0.82 on subtraction.</p></div></div>
-    <div><b>Meaning</b><div><p>"Weights buy arithmetic" really means weights buy <i>number size</i>.</p></div></div>
+        <tr><td>Addition</td><td>0.41</td><td>0.44</td><td>0.54</td><td class="pos">+0.10 <span class="note">(runs: +0.05, +0.15)</span></td></tr>
+        <tr><td>Subtraction</td><td>0.32</td><td>0.44</td><td>0.53</td><td class="pos">+0.10</td></tr>
+        <tr><td>Mixed problems, same range</td><td></td><td></td><td></td><td class="pos">+0.09</td></tr>
+      </tbody></table></div></div></div>
+    <div><b>Meaning</b><div><p>The gap is the same with or without multiplication. Weights buy number size.</p></div></div>
   </div>
 </section>
 
 <section aria-labelledby="f4">
-  <div class="eyebrow">Finding 4 · longer numbers (broken)</div>
+  <div class="eyebrow">Finding 4 · longer numbers</div>
   <h2 id="f4">Place-value tags break on numbers longer than training</h2>
   <div class="wwr">
-    <div><b>What</b><div><p>Training data never contained 4-digit inputs. We asked each model 300 random 4-digit additions such as <code>6268+9071</code> and compared models trained with and without place-value tags.</p></div></div>
-    <div><b>Why</b><div><p>Every model scored 0% exact on 4-digit inputs in the add/sub sets, even for a single <code>a+b</code>. We wanted to know whether the models were close or lost.</p></div></div>
+    <div><b>What</b><div><p>Training never had 4-digit inputs. Every model got 0% exactly right on them, even a single <code>a+b</code>. We asked 300 random 4-digit sums like <code>6268+9071</code> to see how close the models came.</p></div></div>
+    <div><b>Why</b><div><p>Near misses and nonsense call for different fixes.</p></div></div>
     <div><b>Result</b><div><div class="scroll"><table>
-      <thead><tr><th>model</th><th>exact</th><th>right length</th><th>first 2 digits right</th><th>within 5%</th><th>6268+9071 = 15339</th></tr></thead>
+      <thead><tr><th>model</th><th>right length</th><th>first 2 digits right</th><th>within 5%</th><th>6268+9071 = 15339</th></tr></thead>
       <tbody>
-        <tr><td>Looped, no tags (40k)</td><td>0.00</td><td>0.98</td><td>0.54</td><td class="pos">0.92</td><td>15765</td></tr>
-        <tr><td>Deep, no tags (40k)</td><td>0.01</td><td>0.98</td><td>0.55</td><td class="pos">0.93</td><td>15545</td></tr>
-        <tr><td>Looped, tags (120k)</td><td>0.00</td><td>0.16</td><td>0.05</td><td class="neg">0.01</td><td>–</td></tr>
-        <tr><td>Deep, tags (120k)</td><td>0.00</td><td>0.63</td><td>0.07</td><td class="neg">0.10</td><td>7539</td></tr>
+        <tr><td>Looped, no tags</td><td>0.98</td><td>0.54</td><td class="pos">0.92</td><td><code>15765</code></td></tr>
+        <tr><td>Deep, no tags</td><td>0.98</td><td>0.55</td><td class="pos">0.93</td><td><code>15545</code></td></tr>
+        <tr><td>Looped, tags</td><td>0.16</td><td>0.05</td><td class="neg">0.01</td><td>–</td></tr>
+        <tr><td>Deep, tags</td><td>0.63</td><td>0.07</td><td class="neg">0.10</td><td><code>7539</code></td></tr>
       </tbody></table></div>
-      <p>Without tags the models estimate well: right size, right leading digits, wrong last digits. With tags the answers are nonsense. Yet on number sizes seen in training, tags help a lot (3-digit sums: 0.24 → 0.74 exact).</p></div></div>
-    <div><b>Meaning</b><div><p>The tags are labels the model has only seen with values 1–3 on question digits. One table of labels is shared by question and answer, so a thousands digit arrives with label 4, which until now only ever meant "4th digit of the answer". Likely the model reads it as an answer position. This is a known weakness of fixed position labels; it is not yet confirmed by an experiment.</p></div></div>
+      <p>Without tags the models estimate well. With tags the answers are nonsense. Yet tags help a lot on trained sizes: 3-digit sums go from 0.24 to 0.74 exact.</p>
+      <p class="note">The no-tag models had 40k training steps, the tagged ones 120k.</p></div></div>
+    <div><b>Meaning</b><div><p>Question digits only ever had labels 1–3. Label 4 only appeared on the 4th answer digit. So a thousands digit arrives labelled as an answer position. This is a likely cause, not yet tested.</p></div></div>
   </div>
 </section>
 
 <section aria-labelledby="f5">
   <div class="eyebrow">Finding 5 · answer order</div>
-  <h2 id="f5">Reversed answers pay off only with enough weights</h2>
+  <h2 id="f5">Reversed answers pay off only in the bigger model</h2>
   <div class="wwr">
-    <div><b>What</b><div><p>The same three models trained with reversed answers (smallest digit first), two seeds, 120k steps, compared with normal order.</p></div></div>
-    <div><b>Why</b><div><p>Reversed order matches how carries flow, so it should make multi-digit answers easier (Lee et al. 2024). The rule set in advance: switch if reversed gains ≥ 0.05 on multi-digit inputs and costs ≤ 0.03 on 1-digit inputs.</p></div></div>
+    <div><b>What</b><div><p>The three models trained again with reversed answers.</p></div></div>
+    <div><b>Why</b><div><p>Reversed order follows the carries, so it should make big answers easier. We'd switch if it gained at least 0.05 on multi-digit inputs at a cost of no more than 0.03 elsewhere.</p></div></div>
     <div><b>Result</b><div>
       <div class="panel">
         <svg id="c5" viewBox="0 0 640 190" role="img" aria-label="Reversed minus normal accuracy by model"></svg>
-        <p class="note">Reversed − normal accuracy; the two bars per model are seeds 0 and 1. Blue = reversed better, red = worse.</p>
+        <p class="note">Reversed minus normal. Two bars per model, one per run. Blue = reversed better.</p>
       </div>
-      <p>Reversed hurts shallow, is roughly neutral for looped and helps deep, especially on big answers (+0.13 / +0.10). It failed the rule on all three models, so normal order stays the default.</p></div></div>
-    <div><b>Meaning</b><div><p>Reversed order is not a free win. It seems to need spare capacity to pay off, so it may matter again for wider models.</p></div></div>
+      <p>Reversed hurts shallow, is about neutral for looped and helps deep. It missed the bar on all three, so normal order stays.</p></div></div>
+    <div><b>Meaning</b><div><p>Reversed order seems to need spare capacity. It may matter again for wider models.</p></div></div>
   </div>
 </section>
 
 <section aria-labelledby="f6">
-  <div class="eyebrow">Finding 6 · things that didn't matter</div>
-  <h2 id="f6">Operator mix, and tags on the smallest model</h2>
+  <div class="eyebrow">Finding 6 · operator type</div>
+  <h2 id="f6">Multiplication isn't harder once size is fixed</h2>
   <div class="wwr">
-    <div><b>What</b><div><p>(a) Whether problems with more <code>*</code> are harder, comparing only problems with the same depth, answer size and input size (H14). (b) Tags on the shallow model.</p></div></div>
-    <div><b>Why</b><div><p>(a) If multiplication itself were hard, <code>*</code>-heavy problems should fail more even at equal size. (b) Tags should help any model if they help at all.</p></div></div>
-    <div><b>Result</b><div><p>(a) The most-<code>*</code> third scores within ±0.015 of the least-<code>*</code> third, all models, both seeds. Unmatched, <code>*</code>-heavy problems look much harder (looped 0.50 → 0.19), but that is entirely their bigger answers. (b) Tags changed shallow by −0.01; on looped they added +0.055 on big answers.</p></div></div>
-    <div><b>Meaning</b><div><p>Difficulty comes from depth and number size, not operator type. Tags need some capacity to be useful, and Finding 4 shows they also have a cost.</p></div></div>
+    <div><b>What</b><div><p>Problems with many <code>*</code> against problems with few, at the same depth, answer size and input size.</p></div></div>
+    <div><b>Why</b><div><p>If multiplication itself were hard, <code>*</code>-heavy problems would fail more at equal size.</p></div></div>
+    <div><b>Result</b><div><p>The two score within 0.015 of each other for every model. Unmatched, <code>*</code>-heavy problems look much harder (looped 0.50 → 0.19), but only because their answers are bigger.</p></div></div>
+    <div><b>Meaning</b><div><p>Difficulty comes from depth and number size, not operator type.</p></div></div>
   </div>
 </section>
 
 <section aria-labelledby="runs">
   <h2 id="runs">Every run so far</h2>
   <div class="scroll"><table>
-    <thead><tr><th class="l">Experiment</th><th>runs</th><th class="l">What it asked</th><th class="l">Answer</th></tr></thead>
+    <thead><tr><th class="l">Experiment</th><th>runs</th><th class="l">Question</th><th class="l">Answer</th></tr></thead>
     <tbody>
-      <tr><td class="l">Grid (seed 0)</td><td>12</td><td class="l">Cores 2/4/8/16 × loops, curriculum by depth, 40k</td><td class="l">Curriculum stalled at depth 3: big numbers, not steps. Led to balanced data.</td></tr>
-      <tr><td class="l">D-007 answer order</td><td>6</td><td class="l">Shallow / looped / deep × normal / reversed, balanced data, 40k</td><td class="l">First clean result: loops buy steps, weights buy arithmetic. Reversed worse.</td></tr>
-      <tr><td class="l">D-011 place-value tags</td><td>4</td><td class="l">Shallow / looped × tags + normal / reversed, 40k</td><td class="l">Tags +0.055 on looped big answers → adopted. Normal order kept.</td></tr>
-      <tr><td class="l">D-012 long, normal</td><td>6</td><td class="l">Three models × 2 seeds, tags, 120k</td><td class="l">The headline: looped = deep on steps; deep wins on number size; seeds agree within 0.01–0.04.</td></tr>
-      <tr><td class="l">D-012 long, reversed</td><td>6</td><td class="l">Same, reversed answers</td><td class="l">Fails rule on all three; helps deep, hurts shallow.</td></tr>
-      <tr><td class="l">H13 / H14 scoring</td><td>24</td><td class="l">12 saved models × add-only, sub-only sets; operator labels</td><td class="l">Number size, not lookup. Operator mix irrelevant. 4-digit inputs 0%.</td></tr>
-      <tr><td class="l">4-digit diagnosis</td><td>4</td><td class="l">Greedy decoding with and without tags</td><td class="l">Tags break out-of-range numbers.</td></tr>
+      <tr><td class="l">First sweep</td><td>12</td><td class="l">Many core sizes and loop counts, easy problems first</td><td class="l">Stalled at depth 3. Big numbers, not steps, were the problem.</td></tr>
+      <tr><td class="l">Answer order</td><td>6</td><td class="l">Three models, normal vs reversed, balanced data</td><td class="l">First clean result. Loops buy steps, weights buy arithmetic.</td></tr>
+      <tr><td class="l">Place-value tags</td><td>4</td><td class="l">Shallow and looped, with tags</td><td class="l">Small gain for looped. Adopted.</td></tr>
+      <tr><td class="l">Long runs</td><td>6</td><td class="l">Three models, two runs each, 3× longer training</td><td class="l">The main result. Runs agree within 0.01–0.04.</td></tr>
+      <tr><td class="l">Long runs, reversed</td><td>6</td><td class="l">Same, reversed answers</td><td class="l">Helps deep, hurts shallow.</td></tr>
+      <tr><td class="l">Add / subtract tests</td><td>24</td><td class="l">Trained models on new test sets</td><td class="l">Number size, not lookup. Operator type irrelevant.</td></tr>
+      <tr><td class="l">4-digit check</td><td>4</td><td class="l">How close are the answers?</td><td class="l">Tags break longer numbers.</td></tr>
     </tbody></table></div>
-  <p class="note">Earlier, separate track: retrofitting loops into Qwen (exp1–3). Paused; it didn't work. Full details in <code>docs/research-log.md</code>, decisions in <code>docs/decisions.md</code>, open questions in <code>docs/hypotheses.md</code>.</p>
+  <p class="note">An earlier track tried adding loops to a pretrained Qwen model. It is paused because it didn't work. Details are in the project's <code>docs/</code> folder.</p>
 </section>
 
 <section aria-labelledby="limits">
   <h2 id="limits">How far to trust this</h2>
   <ul>
-    <li>Two seeds per model at 120k steps. Seeds agree within 0.01–0.04 on most slices but differ by up to 0.10 on 3-digit answers.</li>
-    <li>Test sets hold about 1,000 problems per cell (±0.03 sampling noise); no test problem appears in training for the main data.</li>
-    <li>Models are tiny (256 wide) and still improving at 120k steps; "deep beats looped on numbers" could shrink with width or training.</li>
-    <li>Two pre-set rules measured the wrong thing (D-011 used 1-digit inputs; H13 averaged in 0% cells). Both were caught and logged; conclusions rest on the corrected views.</li>
+    <li>Two runs per model. They agree within 0.01–0.04 on most results and differ by up to 0.10 on 3-digit answers.</li>
+    <li>No test problem appears in training, except where noted.</li>
+    <li>The models are tiny (256 wide) and still improving. Deep's edge on numbers may shrink with width or more training.</li>
   </ul>
 </section>
 
 <section aria-labelledby="road">
-  <h2 id="road">Roadmap</h2>
-  <p class="read">Goal: know "what mostly works" for arithmetic, then go wider (H16) toward middle-school math. Each stage has its decision rule written before it runs.</p>
-  <div class="road">
-    <div class="stage"><div class="when">Next</div><div><h3>Fix longer numbers (H18)</h3><ul>
-      <li>Train looped and deep with a random offset on the tags, and with separate question/answer tag tables; add a no-tag 120k control.</li>
-      <li>Test on 4–5-digit inputs. Success: 4-digit <code>a+b</code> above 0.5 exact without losing in-range accuracy.</li>
-      <li>Cheap first: plot what each attention head looks at per loop pass on saved models (free).</li>
+  <h2 id="road">What's next</h2>
+  <p class="read">The goal is a recipe that mostly works for arithmetic, then wider models toward middle-school math.</p>
+  <div>
+    <div class="stage"><div class="when">Next</div><div><h3>Watch the loops work <span class="tag">H19 · free</span></h3><ul>
+      <li>Plot what each attention head looks at on each pass, using the trained models.</li>
+      <li>Hypothesis: each pass works through one level of brackets, innermost first. That would show how loops buy steps.</li>
     </ul></div></div>
-    <div class="stage"><div class="when">Then</div><div><h3>Variable loop count (H9, plan step 5)</h3><ul>
-      <li>Train with an answer read out after every pass (deep supervision or progressive loss), so any loop count works.</li>
-      <li>Then let the model stop early: confidence rule, then a learned stop head. Success: few loops on easy problems, many on hard ones, no accuracy loss. Neither paper did this.</li>
+    <div class="stage"><div class="when">Next</div><div><h3>Fix longer numbers <span class="tag">H18 · 3–5 runs</span></h3><ul>
+      <li>Shift the tags by a random amount during training, or give question and answer separate tags. Compare with no tags.</li>
+      <li>Success: 4-digit sums above 0.5 exact, with no loss on trained sizes.</li>
+    </ul></div></div>
+    <div class="stage"><div class="when">Then</div><div><h3>Let the model pick its loop count <span class="tag">H9</span></h3><ul>
+      <li>Train it to give a usable answer after every pass, then let it stop early.</li>
+      <li>Success: few passes on easy problems, more on hard ones, same accuracy. Neither close paper did this.</li>
     </ul></div></div>
     <div class="stage"><div class="when">Then</div><div><h3>Settle the recipe</h3><ul>
-      <li>Full grid with the fixed recipe, 2 seeds, longer training. Fit accuracy against log(depth) for loops vs layers.</li>
-      <li>Prefix attention (H15) and loop placement (H11) as ablations.</li>
+      <li>All model sizes with the fixed recipe, two runs each.</li>
+      <li>Side tests: let question tokens see each other, and change which layers loop.</li>
     </ul></div></div>
-    <div class="stage"><div class="when">Later</div><div><h3>Wider models and harder math</h3><ul>
-      <li>H16: width 512–1024. Does width fix number size, and do loops still add steps on top?</li>
-      <li>H12 chain task (data exists), H17 algebra (<code>3*x+5=20;x?</code>), then back to Qwen if a recipe clearly works.</li>
+    <div class="stage"><div class="when">Later</div><div><h3>Wider models, harder math <span class="tag">H16, H12, H17</span></h3><ul>
+      <li>Width 512–1024. Does width fix number size, with loops still adding steps?</li>
+      <li>Chained definitions like <code>a=3*4; b=a+2</code>, then algebra like <code>3*x+5=20</code>.</li>
     </ul></div></div>
   </div>
 </section>
 
 <details>
-  <summary>Chart data (seed 0 / seed 1)</summary>
+  <summary>Chart data, per run</summary>
   <div class="scroll"><table id="tdata"></table></div>
 </details>
 </main>
@@ -348,9 +362,9 @@ step 3   -10 + 7 = -3                 (needs step 2)
 const D = {"depth": {"shallow0": [null, 1.0, 0.989, 0.839, 0.754, 0.722, 0.663, 0.616, 0.592, 0.55, 0.537, 0.47, 0.419], "shallow1": [null, 1.0, 0.982, 0.848, 0.783, 0.755, 0.657, 0.625, 0.577, 0.563, 0.535, 0.484, 0.427], "looped0": [null, 1.0, 0.996, 0.957, 0.91, 0.93, 0.892, 0.857, 0.813, 0.771, 0.75, 0.71, 0.624], "looped1": [null, 1.0, 0.999, 0.961, 0.932, 0.941, 0.902, 0.874, 0.837, 0.795, 0.75, 0.688, 0.599], "deep0": [null, 1.0, 1.0, 0.975, 0.941, 0.94, 0.904, 0.88, 0.843, 0.805, 0.742, 0.722, 0.65], "deep1": [null, 1.0, 0.998, 0.964, 0.921, 0.926, 0.875, 0.855, 0.843, 0.791, 0.769, 0.706, 0.597]},
   "ansd": {"shallow0": [0.826, 0.626, 0.324, 0.148, 0.021, 0.003], "shallow1": [0.842, 0.625, 0.326, 0.18, 0.024, 0.004], "looped0": [0.948, 0.833, 0.52, 0.291, 0.077, 0.015], "looped1": [0.958, 0.875, 0.594, 0.319, 0.094, 0.025], "deep0": [0.964, 0.881, 0.654, 0.41, 0.137, 0.04], "deep1": [0.952, 0.864, 0.623, 0.4, 0.131, 0.035]}};
 const MODELS = [
-  {key: "shallow", name: "Shallow", tok: "--s-shallow", pre: 1, core: 2, loops: 1, coda: 1, params: "4.4M", note: "2 core blocks, run once"},
-  {key: "looped", name: "Looped", tok: "--s-looped", pre: 1, core: 2, loops: 8, coda: 1, params: "4.4M", note: "same 2 core blocks, run 8 times"},
-  {key: "deep", name: "Deep", tok: "--s-deep", pre: 1, core: 16, loops: 1, coda: 1, params: "19M", note: "16 distinct core blocks, run once"}];
+  {key: "shallow", name: "Shallow", tok: "--s-shallow", core: 2, loops: 1, params: "4.4M", note: "2 layers, run once"},
+  {key: "looped", name: "Looped", tok: "--s-looped", core: 2, loops: 8, params: "4.4M", note: "the same 2 layers, 8 times"},
+  {key: "deep", name: "Deep", tok: "--s-deep", core: 16, loops: 1, params: "19M", note: "16 distinct layers, once"}];
 const NS = "http://www.w3.org/2000/svg";
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
@@ -358,41 +372,39 @@ const tip = document.getElementById("tip");
 function showTip(ev, html) { tip.innerHTML = html; tip.hidden = false; tip.style.left = Math.min(ev.clientX + 12, innerWidth - 250) + "px"; tip.style.top = (ev.clientY + 12) + "px"; }
 function hideTip() { tip.hidden = true; }
 
-// model cards
 const mc = document.getElementById("mcards");
 for (const m of MODELS) {
   const c = document.createElement("div"); c.className = "panel mcard"; c.style.color = `var(${m.tok})`;
   let blocks = `<span class="blk">in</span>`;
-  const shown = Math.min(m.core, 16);
-  for (let i = 0; i < shown; i++) blocks += `<span class="blk core">${m.core > 4 ? "" : "c"}</span>`;
+  for (let i = 0; i < m.core; i++) blocks += `<span class="blk core"></span>`;
   blocks += m.loops > 1 ? `<span class="loopbadge">×${m.loops}</span>` : "";
   blocks += `<span class="blk">out</span>`;
-  c.innerHTML = `<div class="name" style="color:var(--ink)">${m.name}</div><div class="blocks">${blocks}</div>
-    <dl class="facts" style="color:var(--ink)"><dt>Weights</dt><dd>${m.params}</dd><dt>Layers run</dt><dd>${m.pre + m.core * m.loops + m.coda}</dd><dt>Core</dt><dd>${m.note}</dd></dl>`;
+  c.innerHTML = `<div class="name">${m.name}</div><div class="blocks">${blocks}</div>
+    <dl class="facts"><dt>Weights</dt><dd>${m.params}</dd><dt>Layers run</dt><dd>${2 + m.core * m.loops}</dd><dt>Core</dt><dd>${m.note}</dd></dl>`;
   mc.appendChild(c);
 }
 function legend(id) { document.getElementById(id).innerHTML = MODELS.map(m => `<span><i class="sw" style="background:var(${m.tok})"></i>${m.name}</span>`).join(""); }
 legend("lg1"); legend("lg2");
 
-function axes(svg, W, H, m, x0, x1, xs, xlab, ylab) {
-  const g = el("g", {}, svg);
-  const X = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r), Y = v => m.t + (1 - v) * (H - m.t - m.b);
+function yAxis(svg, W, H, m) {
+  const Y = v => m.t + (1 - v) * (H - m.t - m.b);
   for (const t of [0, 0.25, 0.5, 0.75, 1]) {
-    el("line", {x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: css("--grid"), "stroke-width": 1}, g);
-    el("text", {x: m.l - 8, y: Y(t) + 4, "text-anchor": "end"}, g).textContent = t.toFixed(2);
+    el("line", {x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: css("--grid"), "stroke-width": 1}, svg);
+    el("text", {x: m.l - 8, y: Y(t) + 4, "text-anchor": "end"}, svg).textContent = t.toFixed(2);
   }
-  for (const v of xs) el("text", {x: X(v), y: H - m.b + 16, "text-anchor": "middle"}, g).textContent = v;
-  el("text", {x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle"}, g).textContent = xlab;
-  el("text", {x: 12, y: m.t - 8}, g).textContent = ylab;
-  return {X, Y};
+  el("text", {x: 12, y: m.t - 8}, svg).textContent = "accuracy";
+  return Y;
 }
 
 function drawDepth() {
   const svg = document.getElementById("c1"); svg.innerHTML = "";
   const W = 640, H = 300, m = {l: 44, r: 70, t: 22, b: 40};
   const xs = [2,3,4,5,6,7,8,9,10,11,12,13];
-  const {X, Y} = axes(svg, W, H, m, 2, 13, xs, "nested steps (depth)", "accuracy");
+  const X = v => m.l + (v - 2) / 11 * (W - m.l - m.r);
   el("rect", {x: X(2), y: m.t, width: X(8) - X(2), height: H - m.t - m.b, fill: css("--grid"), opacity: 0.35}, svg);
+  const Y = yAxis(svg, W, H, m);
+  for (const v of xs) el("text", {x: X(v), y: H - m.b + 16, "text-anchor": "middle"}, svg).textContent = v;
+  el("text", {x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle"}, svg).textContent = "depth (steps in sequence)";
   el("text", {x: X(5), y: m.t + 14, "text-anchor": "middle"}, svg).textContent = "trained depths";
   for (const mm of MODELS) {
     const col = css(mm.tok), a = D.depth[mm.key + "0"], b = D.depth[mm.key + "1"];
@@ -404,7 +416,7 @@ function drawDepth() {
     for (const p of pts) {
       el("circle", {cx: X(p.x), cy: Y(p.mean), r: 3, fill: col, stroke: css("--surface"), "stroke-width": 1.5}, svg);
       const hit = el("circle", {cx: X(p.x), cy: Y(p.mean), r: 10, fill: "transparent"}, svg);
-      hit.addEventListener("pointermove", ev => showTip(ev, `<b>${mm.name}</b>, depth ${p.x}<br>seed 0: ${p.a.toFixed(2)} · seed 1: ${p.b.toFixed(2)}`));
+      hit.addEventListener("pointermove", ev => showTip(ev, `<b>${mm.name}</b>, depth ${p.x}<br>run 1: ${p.a.toFixed(2)} · run 2: ${p.b.toFixed(2)}`));
       hit.addEventListener("pointerleave", hideTip);
     }
   }
@@ -414,23 +426,18 @@ function drawAns() {
   const svg = document.getElementById("c2"); svg.innerHTML = "";
   const W = 640, H = 280, m = {l: 44, r: 12, t: 22, b: 40};
   const n = 6, gw = (W - m.l - m.r) / n, bw = Math.min(26, gw / 4.2);
-  const Y = v => m.t + (1 - v) * (H - m.t - m.b);
-  for (const t of [0, 0.25, 0.5, 0.75, 1]) {
-    el("line", {x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: css("--grid"), "stroke-width": 1}, svg);
-    el("text", {x: m.l - 8, y: Y(t) + 4, "text-anchor": "end"}, svg).textContent = t.toFixed(2);
-  }
-  el("text", {x: 12, y: m.t - 8}, svg).textContent = "accuracy";
-  el("text", {x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle"}, svg).textContent = "answer digits (depths 3–6)";
+  const Y = yAxis(svg, W, H, m);
+  el("text", {x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle"}, svg).textContent = "digits in the answer (depths 3–6)";
   for (let i = 0; i < n; i++) {
     const cx = m.l + gw * (i + 0.5);
     el("text", {x: cx, y: H - m.b + 16, "text-anchor": "middle"}, svg).textContent = i + 1;
     MODELS.forEach((mm, j) => {
       const a = D.ansd[mm.key + "0"][i], b = D.ansd[mm.key + "1"][i], v = (a + b) / 2;
-      const x = cx + (j - 1) * (bw + 2) - bw / 2, y = Y(v), h = Math.max(1, Y(0) - y);
-      el("path", {d: `M${x},${Y(0)}V${y + Math.min(4, h)}Q${x},${y} ${x + Math.min(4, bw/2)},${y}H${x + bw - Math.min(4, bw/2)}Q${x + bw},${y} ${x + bw},${y + Math.min(4, h)}V${Y(0)}Z`, fill: css(mm.tok)}, svg);
+      const x = cx + (j - 1) * (bw + 2) - bw / 2, y = Y(v), h = Math.max(1, Y(0) - y), r = Math.min(4, bw / 2, h);
+      el("path", {d: `M${x},${Y(0)}V${y + r}Q${x},${y} ${x + r},${y}H${x + bw - r}Q${x + bw},${y} ${x + bw},${y + r}V${Y(0)}Z`, fill: css(mm.tok)}, svg);
       el("line", {x1: x + bw / 2, x2: x + bw / 2, y1: Y(Math.min(a, b)), y2: Y(Math.max(a, b)), stroke: css("--ink"), "stroke-width": 1.5, opacity: 0.6}, svg);
       const hit = el("rect", {x: x - 1, y: m.t, width: bw + 2, height: Y(0) - m.t, fill: "transparent"}, svg);
-      hit.addEventListener("pointermove", ev => showTip(ev, `<b>${mm.name}</b>, ${i + 1}-digit answers<br>seed 0: ${a.toFixed(2)} · seed 1: ${b.toFixed(2)}`));
+      hit.addEventListener("pointermove", ev => showTip(ev, `<b>${mm.name}</b>, ${i + 1}-digit answers<br>run 1: ${a.toFixed(2)} · run 2: ${b.toFixed(2)}`));
       hit.addEventListener("pointerleave", hideTip);
     });
   }
@@ -458,7 +465,7 @@ function drawOrder() {
         const y = yy + s * 7, x = Math.min(X(0), X(v)), w = Math.abs(X(v) - X(0));
         el("rect", {x, y, width: Math.max(w, 1), height: 5, rx: 2, fill: v >= 0 ? css("--div-pos") : css("--div-neg")}, svg);
         const hit = el("rect", {x: m.l, y: y - 1, width: W - m.l - m.r, height: 7, fill: "transparent"}, svg);
-        hit.addEventListener("pointermove", ev => showTip(ev, `<b>${mm.name}</b>, ${r.label}<br>seed ${s}: ${(v > 0 ? "+" : "") + v.toFixed(3)}`));
+        hit.addEventListener("pointermove", ev => showTip(ev, `<b>${mm.name}</b>, ${r.label}<br>run ${s + 1}: ${(v > 0 ? "+" : "") + v.toFixed(3)}`));
         hit.addEventListener("pointerleave", hideTip);
       });
     });
@@ -467,7 +474,7 @@ function drawOrder() {
 
 function table() {
   const t = document.getElementById("tdata");
-  let h = "<thead><tr><th>depth (1-digit answers)</th>" + MODELS.map(m => `<th>${m.name}</th>`).join("") + "</tr></thead><tbody>";
+  let h = "<thead><tr><th>depth (1-digit answers)</th>" + MODELS.map(m => `<th>${m.name} (run 1 / 2)</th>`).join("") + "</tr></thead><tbody>";
   for (let d = 2; d <= 13; d++) h += `<tr><td>${d}</td>` + MODELS.map(m => `<td>${D.depth[m.key+"0"][d-1].toFixed(2)} / ${D.depth[m.key+"1"][d-1].toFixed(2)}</td>`).join("") + "</tr>";
   h += "<tr><th>answer digits (depths 3–6)</th>" + MODELS.map(m => `<th>${m.name}</th>`).join("") + "</tr>";
   for (let i = 0; i < 6; i++) h += `<tr><td>${i+1}</td>` + MODELS.map(m => `<td>${D.ansd[m.key+"0"][i].toFixed(2)} / ${D.ansd[m.key+"1"][i].toFixed(2)}</td>`).join("") + "</tr>";

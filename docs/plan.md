@@ -7,10 +7,13 @@ Revise this file when a step finishes or the plan changes, and say why.
 _Last revised 2026-11-23 09:30._
 
 ## Roadmap as of 2026-11-23 (after D-012 and H13/H14; Walter: "know what mostly works, then H16")
+0. **First, free: watch the loops work (H19).** On the saved models, plot what each attention
+   head looks at on each pass, for problems of known depth. Hypothesis: each pass handles one
+   level of brackets, innermost first. No training needed.
 1. **Next: fix longer numbers (H18).** Tags make out-of-range inputs garbage (4-digit `a+b`:
    within-5% 0.01–0.10 with tags vs 0.92 without). Try a random tag offset (McLeish) and separate
    question/answer tag tables, plus a no-tag 120k control; test 4–5-digit inputs. Success: 4-digit
-   `a+b` > 0.5 exact without losing in-range accuracy. Free first step: attention maps per loop pass.
+   `a+b` > 0.5 exact without losing in-range accuracy.
 2. **Then: variable loop count (H9, step 5 below)**, the novel part.
 3. **Then: settle the recipe** on the full grid (step 4), with H15 prefix attention and H11 placement as ablations.
 4. **Later: wider models (H16)**, chain task (H12), algebra (H17).
