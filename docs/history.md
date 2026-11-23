@@ -8,8 +8,11 @@ Short record of each shift and why. Details are in `research-log.md`; decisions 
 (shared weights) to recover or beat the original's benchmark scores with fewer unique parameters.
 
 **What happened:** looping without training collapsed accuracy (arc_easy 0.617 → 0.357, near the
-0.25 chance level); distillation "healing" runs (exp1–3) did not recover it. Benchmarks like
-arc_easy and hellaswag mostly test stored knowledge, which loops are not expected to add.
+0.25 chance level). Distillation partly repaired it (exp1). With learned on/off dials, training
+switched the loop off by itself (exp2, exp3); forced on, more passes hurt (GSM8K 0.39 → 0.27 from
+1 to 4 passes). No recipe beat the no-loop control. Likely causes: no input injection, too little
+training (~33M tokens vs the billions used by working looped models), and web-text data that
+doesn't reward extra thinking.
 
 **Why we moved on:** a pretrained model mixes too many effects to see whether looping adds
 *reasoning depth*. We needed a task where the number of reasoning steps is controlled exactly.

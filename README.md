@@ -1,67 +1,90 @@
-# loop-transformer
+# looped-transformer
 
-Take a pretrained Qwen model, cut it down, and re-run a block of its layers in a loop
-(shared weights) to get depth without parameters. Measure whether looping recovers or
-beats the original on benchmarks, and how accuracy scales with the number of loops.
+Does running the same transformer layers several times in a row (a **looped transformer**) add
+reasoning depth? This project trains tiny transformers from scratch on nested PEMDAS arithmetic,
+where difficulty is controlled exactly, and compares three models:
+
+| model | core | weights | layers run |
+|---|---|---|---|
+| shallow | 2 blocks, once | 4.4M | 4 |
+| looped | the same 2 blocks, 8 times | 4.4M | 18 |
+| deep | 16 distinct blocks, once | 19M | 18 |
+
+Looped vs shallow asks whether repeating helps; looped vs deep asks whether repeating is as good
+as more distinct layers at the same compute.
+
+## Results so far
+
+120k training steps, two seeds each. Full write-up with charts:
+[results page](https://claude.ai/artifact/BBw1f6Y9HGTgb75UBM1Nfj) (source `docs/visual/loop-depth-results.html`).
+
+- **Loops buy steps.** On many-step problems with small answers, looped beats shallow by +0.11
+  (4 steps) to +0.25 (8 steps) and matches deep within ±0.03, including past the training depth.
+- **Weights buy number size.** On big answers and big inputs, deep beats looped by +0.05 to +0.15,
+  with or without multiplication.
+- **Operator mix doesn't matter** once depth and number size are fixed.
+- **Place-value tags break on longer numbers.** No model handles 4-digit inputs; with tags the
+  answers are garbage, without tags they are approximately right.
+- **A model trained at 8 loops works only at 8 loops.**
+
+Closest prior work: Saunshi et al., *Reasoning with Latent Thoughts* (ICLR 2025) and McLeish et al.,
+*Transformers Can Do Arithmetic with the Right Embeddings* (NeurIPS 2024). See `docs/related-work.md`.
+
+## The task
+
+Problems are written as characters and answered one character at a time, ending with `#`:
+
+```
+7*8=56#
+(8-3)*(4-6)+7=-3#
+352+47=399#
+```
+
+Two independent difficulty dials: **depth** (operations that must happen in sequence) and
+**number size** (digits in the inputs and answer). Answers are exact integers, unbounded.
 
 ## Setup
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cu128
 .venv/bin/pip install -e ".[dev]"
-source .venv/bin/activate
 ```
 
-Hardware: one RTX 5090 (32 GB, power-limited to 450 W). Keep runs single-GPU.
+Hardware used: one RTX 5090 (32 GB). Each 120k-step run takes 0.6–2.5 h.
 
-## Loop spec
-
-`--loop start:end:n_loops[:coda_start]` → prelude `[0,start)`, loop `[start,end)` × n, coda `[coda_start, L)`.
-Layers in `[end, coda_start)` are dropped. Example for Qwen3-0.6B (28 layers):
-
-- `4:16:2:28` — keep the first 16 layers, loop 4–15 twice → depth 28, 407M unique params (vs 596M)
-- `0:28:1` — identity (matches the base model exactly; see tests)
-
-## Usage
+## Reproduce
 
 ```bash
-# 1. Baseline benchmark (any lm-eval task: arc_easy, hellaswag, mmlu, gsm8k, humaneval, ...)
-python scripts/eval.py --model Qwen/Qwen3-0.6B-Base --tasks arc_easy,hellaswag --limit 300
+# Build the frozen datasets (deterministic) and check every answer independently
+.venv/bin/python scripts/build_data.py --which nested_bal --out data     # ~6 min, 2.6 GB
+.venv/bin/python scripts/verify_data.py --root data/nested_bal
+.venv/bin/python scripts/build_ops.py --kind add --out data/nested_add  # test-only sets
+.venv/bin/python scripts/build_ops.py --kind sub --out data/nested_sub
 
-# 2. Same model, looped, no training
-python scripts/eval.py --tasks arc_easy,hellaswag --limit 300 --loop 4:16:2:28
+# Train one model (looped 2x8, place-value tags, 120k steps)
+.venv/bin/python -m looptf.toy.train --name long/c2k8-s0 --data data/nested_bal --place_emb \
+  --n_core 2 --train_loops 8 --train_depth 1-8 --lr 3e-4 --steps 120000 --seed 0
 
-# 3. Heal the looped model by distilling from the original
-python scripts/train.py configs/qwen3-0.6b-half-loop2.yaml
+# The main experiment: shallow / looped / deep x 2 seeds
+scripts/arith_long.sh "--place_emb"
 
-# 4. Evaluate the trained checkpoint
-python scripts/eval.py --checkpoint checkpoints/qwen3-0.6b-half-loop2/step2000.pt --tasks arc_easy,hellaswag
+# Score saved models on the add-only / sub-only sets, then write the report
+scripts/eval_ops.sh && .venv/bin/python scripts/ops_report.py --out docs/results-ops.md
 
-pytest tests
+.venv/bin/python -m pytest tests -q -k toy
 ```
 
-Results land in `results/*.json`.
-
-## Initial numbers (Qwen3-0.6B-Base, 0-shot, 300 examples each)
-
-| model | unique params | arc_easy acc | hellaswag acc_norm |
-|---|---|---|---|
-| base | 596M | 0.617 | 0.523 |
-| loop 4:16:2:28, untrained | 407M | 0.357 | 0.297 |
-
-Training is needed. Chance is about 0.25.
+Each run writes `results/toy/<name>/` (config, training log, per-example correctness) and a
+checkpoint in `checkpoints/toy/`.
 
 ## Layout
 
-- `src/looptf/model.py`: `LoopSpec`, `apply_loop` (rewires `model.model.layers` into weight-shared `LoopSlot`s, each with its own KV-cache index), save/load
-- `src/looptf/evaluate.py`: lm-evaluation-harness wrapper
-- `src/looptf/train.py`: distillation (KL to the frozen teacher + CE)
-- `configs/`: training configs
-- `docs/research-log.md`: running log of the research thinking and results
-
-## Next ideas
-
-- Vary `n_loops` at eval time on a trained checkpoint (does more loops = better?)
-- Train with randomly sampled `n_loops` per step so the model generalizes across depths
-- Train only the loop block (`train_only_loop: true`), or add LoRA per loop iteration
-- Larger models (Qwen3-1.7B/4B) and harder benchmarks (gsm8k, mbpp/humaneval; SWE-bench needs an agent harness + docker and comes later)
+- `src/looptf/toy/`: data generators (`data.py`, `chain.py`, `ops_data.py`), frozen dataset loader
+  (`dataset.py`), model (`model.py`: prelude / looped core / coda, input injection, place-value tags),
+  training (`train.py`)
+- `scripts/`: dataset build and verify, experiment runners (`arith_*.sh`), scoring and reports
+- `docs/`: start with `HANDOFF.md`. `hypotheses.md` (what's tested, what's open), `plan.md`
+  (next steps with decision rules written in advance), `decisions.md`, `research-log.md`
+  (chronological), `history.md` (how the project's direction changed), `glossary.md`
+- `src/looptf/model.py`, `evaluate.py`, `train.py`, `configs/`: the earlier Qwen-retrofit track
+  (paused), see `docs/history.md`
