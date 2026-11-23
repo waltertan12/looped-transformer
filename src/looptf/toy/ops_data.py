@@ -1,8 +1,9 @@
-"""Single-operator expressions (only '+' or only '-') with exact-size inputs, for test-only sets (H13).
+"""Single-operator expressions (only '+', only '-' or only '*') with exact-size inputs, for test-only sets (H13).
 
 Separate from data.py so the nested generators' RNG use (and so the frozen datasets) never change.
 - add: the nested generator never puts '+' on the right of '+', so an add-only tree is a left-deep
   chain: depth == n_ops (== terms - 1), rendered flat ("12+34+56"), and it parses that way too.
+- mul: like add (the renderer drops brackets in a*(b*c)), so a flat left-deep chain.
 - sub: any tree shape; data.render parenthesizes a '-' right child, so the printed depth is the tree depth.
 """
 
@@ -12,7 +13,7 @@ import random
 
 from looptf.toy.data import render, tree_value
 
-_KIND_OP = {"add": "+", "sub": "-"}
+_KIND_OP = {"add": "+", "sub": "-", "mul": "*"}
 
 
 def exact_leaf(rng: random.Random, k: int) -> int:
@@ -23,7 +24,7 @@ def exact_leaf(rng: random.Random, k: int) -> int:
 
 
 def feasible_n_ops(kind: str, depth: int) -> tuple[int, int]:
-    if kind == "add":
+    if kind in ("add", "mul"):  # flat chains: depth == n_ops
         return depth, depth
     if kind == "sub":
         return depth, 2**depth - 1
@@ -76,6 +77,6 @@ def gen_single_op(kind: str, n_ops: int, depth: int, rng: random.Random, in_digi
     if in_digits < 1:
         raise ValueError("in_digits must be >= 1")
     op = _KIND_OP[kind]
-    shape = _left_chain(n_ops, op) if kind == "add" else _shape(n_ops, depth, rng, op)
+    shape = _left_chain(n_ops, op) if kind in ("add", "mul") else _shape(n_ops, depth, rng, op)
     tree = _freeze(shape, rng, in_digits)
     return render(tree), tree_value(tree)

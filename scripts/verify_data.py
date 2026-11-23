@@ -187,7 +187,7 @@ def check_chain(prompt: str, answer: int, chain_len: int, n_dist: int, n_ops_tot
 def check_ops(root: Path, meta: dict) -> None:
     """Test-only single-operator sets (nested_add / nested_sub): re-check every row from its text."""
     cols = {c: i for i, c in enumerate(meta["columns"])}
-    op = {"nested_add": "+", "nested_sub": "-"}[meta["name"]]
+    op = {"add": "+", "sub": "-", "mul": "*"}[meta["kind"]]
     width = meta["width"]
     print(f"Verifying {root} ({meta['name']}, test only)")
     for lv in sorted(int(k) for k in meta["slices"]):
@@ -407,7 +407,7 @@ def main() -> None:
         sys.exit(1)
     meta = json.loads(meta_path.read_text())
     name = meta.get("name", root.name)
-    if name in ("nested_add", "nested_sub"):
+    if meta.get("generator") == "looptf.toy.ops_data.gen_single_op":
         if meta["vocab"] != VOCAB[: len(meta["vocab"])]:
             fail("meta vocab is not a prefix of looptf.toy.data.VOCAB")
         check_ops(root, meta)

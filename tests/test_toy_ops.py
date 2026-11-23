@@ -234,3 +234,18 @@ def test_region_acc_excludes_seen():
     d = {"depth": np.array([1, 1, 2, 4]), "in_digits": np.array([2, 2, 3, 2]),
          "in_train": np.array([1, 0, 0, 0]), "correct": np.array([1.0, 0.0, 1.0, 1.0])}
     assert region_acc(d) == pytest.approx(0.5)  # seen row and depth-4 row excluded
+
+
+# ---- H18: longer-number test sets ----
+def test_mul_is_flat_chain():
+    rng = random.Random(3)
+    expr, ans = gen_single_op("mul", 2, 2, rng, 3)
+    assert expr.count("*") == 2 and "(" not in expr and eval(expr) == ans
+    assert _bin_depth(ast.parse(expr, mode="eval").body) == 2
+
+
+def test_build_ops_custom_digits(tmp_path):
+    from build_ops import build_ops
+    meta = build_ops("add", tmp_path, n_per_cell=10, max_depth=1, in_digits=(4, 5))
+    assert set(meta["slices"]["1"]["cells"]) == {"in4", "in5"}
+    assert meta["in_digits"] == [4, 5]

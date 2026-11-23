@@ -27,7 +27,7 @@ REPO = Path(__file__).resolve().parent.parent
 WIDTH = 80
 COLUMNS = ["answer", "n_ops", "depth", "length", "n_tgt", "in_digits", "ans_digits", "in_train"]
 # in_train: 1 = prompt also in the overlap root's train split at this depth, 0 = unseen, -1 = not checked
-MAX_DEPTH = {"add": 15, "sub": 8}
+MAX_DEPTH = {"add": 15, "sub": 8, "mul": 4}
 IN_DIGITS = (1, 2, 3, 4)
 
 
@@ -69,13 +69,13 @@ def _train_prompts(root: Path, depth: int) -> set[bytes]:
 
 
 def build_ops(kind: str, root: Path, n_per_cell: int = 1000, seed: int = 0, max_depth: int | None = None,
-              overlap_root: Path | None = None) -> dict:
+              overlap_root: Path | None = None, in_digits: tuple[int, ...] = IN_DIGITS) -> dict:
     name = f"nested_{kind}"
     root = Path(root)
     slices = {}
     for depth in range(1, (max_depth or MAX_DEPTH[kind]) + 1):
         rows, cells = [], {}
-        for k in IN_DIGITS:
+        for k in in_digits:
             cell = _gen_cell(kind, depth, k, n_per_cell, random.Random(seed_for(seed, name, "test", depth, k)))
             cells[f"in{k}"] = len(cell)
             for prompt, ans, n_ops in cell:
@@ -94,14 +94,14 @@ def build_ops(kind: str, root: Path, n_per_cell: int = 1000, seed: int = 0, max_
             lab[:, COLUMNS.index("in_train")] = seen
             sl["overlap_with_nested_bal_train"] = float(seen.mean())
             sl["overlap_by_cell"] = {f"in{k}": float(seen[lab[:, 5] == k].mean()) if (lab[:, 5] == k).any() else 0.0
-                                     for k in IN_DIGITS}
+                                     for k in in_digits}
         write_slice(root, "test", depth, tok, lab)
         slices[str(depth)] = sl
         print(f"  {name} depth {depth:2d}: {len(rows):5d} rows  {cells}"
               + (f"  overlap {sl['overlap_with_nested_bal_train']:.4f}" if overlap_root else ""), flush=True)
     meta = {"name": name, "vocab": VOCAB, "width": WIDTH, "columns": COLUMNS, "level_column": "depth",
             "bound": BOUND, "eos": EOS, "seed": seed, "test_only": True, "kind": kind,
-            "n_per_cell": n_per_cell, "in_digits": list(IN_DIGITS), "slices": slices,
+            "n_per_cell": n_per_cell, "in_digits": list(in_digits), "slices": slices,
             "generator": "looptf.toy.ops_data.gen_single_op"}
     write_meta(root, meta)
     return meta
@@ -109,7 +109,9 @@ def build_ops(kind: str, root: Path, n_per_cell: int = 1000, seed: int = 0, max_
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--kind", choices=["add", "sub"], required=True)
+    ap.add_argument("--kind", choices=["add", "sub", "mul"], required=True)
+    ap.add_argument("--in_digits", default="1,2,3,4", help="comma-separated exact input sizes")
+    ap.add_argument("--max_depth", type=int, default=None)
     ap.add_argument("--out", required=True)
     ap.add_argument("--n_per_cell", type=int, default=1000)
     ap.add_argument("--seed", type=int, default=0)
@@ -118,7 +120,8 @@ def main() -> None:
     out = Path(a.out) if Path(a.out).is_absolute() else REPO / a.out
     ov = (REPO / a.overlap_root) if a.overlap_root else None
     t0 = time.time()
-    build_ops(a.kind, out, a.n_per_cell, a.seed, overlap_root=ov if ov and ov.exists() else None)
+    build_ops(a.kind, out, a.n_per_cell, a.seed, max_depth=a.max_depth, overlap_root=ov if ov and ov.exists() else None,
+              in_digits=tuple(int(v) for v in a.in_digits.split(",")))
     print(f"done in {time.time() - t0:.1f}s -> {out}")
 
 
