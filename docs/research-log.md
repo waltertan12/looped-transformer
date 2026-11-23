@@ -733,6 +733,18 @@ Shallow 2×1, tags, 120k, normal vs reversed, seeds 0 / 1 (reversed − normal):
 - Reversed still wins only a single big multiplication: depth 1, 3-digit inputs +0.12 / +0.15.
 - Longer training didn't change the 40k picture. Looped and deep reversed pairs still to come.
 
+## 2026-11-23 05:50 — D-012 reversed arm, looped pair: closer call, still fails the rule
+
+Looped 2×8, tags, 120k, reversed − normal, seeds 0 / 1:
+- **Rule:** multi-digit inputs (depths 1–3) +0.038 / +0.062 (needs ≥ +0.05 on both: seed 0
+  misses); 1-digit inputs (depths 1–3) −0.014 / −0.012 (allowed ≤ −0.03: passes). **Fails**,
+  narrowly, on seed 0's gain.
+- Very different from 40k (cost −0.110) and from shallow at 120k (cost −0.10): with loops and
+  long training, reversed no longer breaks multi-step problems. Big answers −0.03 / −0.03;
+  depth 1, 3-digit inputs +0.07 / +0.11; 1-digit answers at depth 8 +0.02 / +0.04.
+- Read: for the looped model, order is close to a wash, a slight edge to reversed on big
+  inputs. Not a reason to switch the default; noted as "order matters less with loops".
+
 ---
 
 ## Open questions / ideas to come back to
