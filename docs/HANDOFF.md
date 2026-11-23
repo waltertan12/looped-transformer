@@ -13,6 +13,7 @@ Current track: **tiny transformers trained from scratch on synthetic PEMDAS arit
 ## Where things are
 | what | file |
 |---|---|
+| Code on GitHub (public, branch `main`) | https://github.com/waltertan12/looped-transformer |
 | Forward plan, with decision rules written **before** results | `docs/plan.md` |
 | Hypotheses (status + Walter's ranking) | `docs/hypotheses.md` |
 | Idea backlog (short / medium / long) | `docs/ideas.md` |
@@ -79,4 +80,4 @@ Shallow 2×1 (4.4M), looped 2×8 (same 4.4M, 8 passes), deep 16×1 (19M, same co
 - Headless Firefox screenshots hang on this machine; there's no node/playwright. Publish without a preview.
 - `results/`, `checkpoints/`, `data/` are gitignored. Data rebuilds deterministically:
   `scripts/build_data.py --which nested_bal --out data` (~6 min), verify with `scripts/verify_data.py`.
-- Commit docs/code changes as you go; end commit messages with the attribution line in use.
+- Push after committing: `git push` (origin = GitHub, SSH). Commit docs/code changes as you go; end commit messages with the attribution line in use.
