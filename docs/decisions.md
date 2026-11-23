@@ -9,7 +9,7 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
-## D-011 · Place-value embeddings: which runs? (open)
+## D-011 · Place-value embeddings: which runs? (decided: screen on shallow + looped)
 
 **Question.** Plan step 2. Looping doesn't fix big answers (+0.03), so number representation
 is the next target. The plan says test place-value embeddings with the winning order (normal).
@@ -27,8 +27,12 @@ digit is the ones place, so tags line up), so reversed may only have lost becaus
 (plan rule). If reversed + place-value beats normal + place-value by ≥ 0.05 → revisit D-007.
 If place-value doesn't help either order → number size needs width/training length instead.
 
-**Recommendation.** (b). **Needs Walter?** Yes. **Status.** Open; would queue after the deep
-pair (~18:30).
+**Recommendation.** (b). **Needs Walter?** Yes. **Status.** Decided by Walter, 2026-11-22: a
+directional screen on **shallow 2×1 and looped 2×8 only**, each with tags + normal and tags +
+reversed (4 runs, 40k steps, seed 0; `scripts/arith_place.sh`, results in `results/toy/place/`).
+No-tag baselines reused from D-007. Rules: tags help if big answers (3–5 digits, depths 2–6)
+rise ≥ 0.05 and small answers drop ≤ 0.03; reversed + tags worth it if ≥ 0.05 over normal +
+tags. Winners then go to longer training on the full matrix, with a second seed to confirm.
 
 ## D-010 · How much of the grid does each new fix get tested on? (decided: probe set)
 

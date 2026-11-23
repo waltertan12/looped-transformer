@@ -35,7 +35,12 @@ digit answers. It does not need to win every cell. If the gain is < 0.05, keep n
 widens the gap, the loop benefits from the cleaner arithmetic; if it narrows it, reversal
 mostly helps the no-loop model.
 
-### 2. Place-value embeddings (D-009)
+### 2. Place-value embeddings (D-009 / D-011) — running
+Walter's design: screen on shallow 2×1 + looped 2×8 only, tags with normal and with reversed
+answers (4 runs). Thresholds below are for direction, not proof; the second seed in step 4
+confirms. Seed-to-seed noise is still unmeasured, which is why 0.05, not 0.03, is the bar.
+
+**Earlier version of this step:**
 Probe set with the order chosen in step 1, `--place_emb` on (the off condition already exists
 from step 1). 3 runs, ≈ 1.3 h.
 
@@ -48,7 +53,11 @@ on both seeds.
 
 ## Medium term (this week)
 
-### 4. The recipe on the full grid
+### 4. The recipe on the full grid, trained longer
+All D-007 models were still improving at 40k steps (loss falling steadily; train ≈ test
+accuracy, i.e. undertrained), so the full-matrix runs use more steps (≈ 3×).
+
+**Earlier version of this step:**
 Core {2,4,8,16} × loops, with the settled recipe (order + embeddings), 2 seeds (≈ 6 h, overnight).
 **Question:** with the arithmetic handled, does the looped-vs-deep gap and the gain from loops
 grow with depth? **Success:** looped 2×8 within 0.03 of deep 16×1 at depths 4–8 with 4× fewer
