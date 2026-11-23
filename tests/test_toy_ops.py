@@ -50,3 +50,53 @@ def test_sub_depth_and_value():
         assert eval(expr) == ans
         assert _bin_depth(ast.parse(expr, mode="eval").body) == depth
         assert all(len(n) == k for n in re.findall(r"\d+", expr))
+
+
+# ---- Task 2: build + verify ----
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO / "scripts"))
+
+
+def test_build_ops_small(tmp_path):
+    from build_ops import build_ops
+    from looptf.toy.data import decode
+    from looptf.toy.dataset import FrozenData
+
+    meta = build_ops("sub", tmp_path, n_per_cell=20, max_depth=3)
+    fd = FrozenData(tmp_path, device="cpu")
+    sets = fd.test_sets()
+    assert sorted(sets) == [1, 2, 3]
+    assert meta["columns"] == ["answer", "n_ops", "depth", "length", "n_tgt", "in_digits", "ans_digits"]
+    for lv, b in sets.items():
+        prompts = []
+        for i in range(len(b["pos"])):
+            L = int(b["length"][i])
+            row = decode(b["x"][i])
+            assert len(row) <= 80
+            p = row[:L]
+            prompts.append(p)
+            assert p.endswith("=") and set(p[:-1]) <= set("0123456789-()")
+            k = int(b["in_digits"][i])
+            assert all(len(n) == k for n in re.findall(r"\d+", p))
+            assert int(b["depth"][i]) == lv
+        assert len(set(prompts)) == len(prompts)
+
+
+def test_build_ops_thin_cell(tmp_path):
+    from build_ops import build_ops
+
+    meta = build_ops("add", tmp_path, n_per_cell=1000, max_depth=1)
+    assert meta["slices"]["1"]["cells"]["in1"] == 81
+
+
+def test_verify_accepts_ops_build(tmp_path):
+    from build_ops import build_ops
+
+    build_ops("add", tmp_path / "nested_add", n_per_cell=30, max_depth=4)
+    r = subprocess.run([sys.executable, str(REPO / "scripts/verify_data.py"), "--root", str(tmp_path / "nested_add")],
+                       capture_output=True, text=True, cwd=REPO)
+    assert "ALL CHECKS PASSED" in r.stdout, r.stdout[-2000:]

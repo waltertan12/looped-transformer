@@ -184,6 +184,70 @@ def check_chain(prompt: str, answer: int, chain_len: int, n_dist: int, n_ops_tot
 # Per-slice checks
 # ---------------------------------------------------------------------------
 
+def check_ops(root: Path, meta: dict) -> None:
+    """Test-only single-operator sets (nested_add / nested_sub): re-check every row from its text."""
+    cols = {c: i for i, c in enumerate(meta["columns"])}
+    op = {"nested_add": "+", "nested_sub": "-"}[meta["name"]]
+    width = meta["width"]
+    print(f"Verifying {root} ({meta['name']}, test only)")
+    for lv in sorted(int(k) for k in meta["slices"]):
+        sl = meta["slices"][str(lv)]
+        tp, mp_ = slice_paths(root, "test", lv)
+        if not tp.exists() or not mp_.exists():
+            fail(f"level {lv}: missing files")
+            continue
+        tok, lab = np.load(tp), np.load(mp_)
+        if tok.dtype != np.uint8 or tok.shape[1] != width or lab.shape != (len(tok), len(cols)):
+            fail(f"level {lv}: bad dtype/shape {tok.dtype} {tok.shape} {lab.shape}")
+            continue
+        if len(tok) != sl["test"] or sum(sl["cells"].values()) != len(tok):
+            fail(f"level {lv}: row count {len(tok)} != meta {sl['test']} / cells {sl['cells']}")
+        seen, cells = set(), {}
+        for i in range(len(tok)):
+            r = lab[i]
+            L = int(r[cols["length"]])
+            prompt = decode(tok[i, :L])
+            full = decode(tok[i])
+            if prompt in seen:
+                fail(f"level {lv} row {i}: duplicate prompt {prompt!r}")
+            seen.add(prompt)
+            if not prompt.endswith("="):
+                fail(f"level {lv} row {i}: prompt does not end with '=': {prompt!r}")
+                continue
+            expr = prompt[:-1]
+            if set(expr) - set("0123456789()" + op):
+                fail(f"level {lv} row {i}: unexpected characters in {expr!r}")
+            k = int(r[cols["in_digits"]])
+            cells[f"in{k}"] = cells.get(f"in{k}", 0) + 1
+            if any(len(n) != k for n in re.findall(r"\d+", expr)):
+                fail(f"level {lv} row {i}: numbers not all {k} digits: {expr!r}")
+            try:
+                tree = ast.parse(expr, mode="eval").body
+                val, dep = eval(expr), _bin_depth(tree)
+            except Exception as e:  # noqa: BLE001
+                fail(f"level {lv} row {i}: cannot parse {expr!r}: {e}")
+                continue
+            ans = int(r[cols["answer"]])
+            if val != ans:
+                fail(f"level {lv} row {i}: answer {ans} != {val} for {expr!r}")
+            if dep != lv or int(r[cols["depth"]]) != lv:
+                fail(f"level {lv} row {i}: depth {dep} / label {int(r[cols['depth']])} != level")
+            if int(r[cols["n_ops"]]) != expr.count(op):
+                fail(f"level {lv} row {i}: n_ops label != operator count")
+            if int(r[cols["ans_digits"]]) != len(str(abs(ans))):
+                fail(f"level {lv} row {i}: ans_digits label wrong")
+            errs: list[str] = []
+            check_answer_text(ans, int(r[cols["n_tgt"]]), errs)
+            for e in errs:
+                fail(f"level {lv} row {i}: {e}")
+            if full != prompt + answer_tokens(ans) or len(full) > width:
+                fail(f"level {lv} row {i}: stored row {full!r} != prompt + answer")
+        if cells != {c: n for c, n in sl["cells"].items() if n}:
+            fail(f"level {lv}: recounted cells {cells} != meta {sl['cells']}")
+        print(f"  depth {lv:2d}: {len(tok):5d} rows  {sl['cells']}"
+              + (f"  overlap {sl['overlap_with_nested_bal_train']:.4f}" if "overlap_with_nested_bal_train" in sl else ""))
+
+
 def check_slice(root: Path, name: str, split: str, level: int, expected_rows: int, sample: int,
                 is_nested: bool, width: int, cols: dict, allowed: dict | None = None
                 ) -> tuple[np.ndarray, np.ndarray] | None:
@@ -343,6 +407,17 @@ def main() -> None:
         sys.exit(1)
     meta = json.loads(meta_path.read_text())
     name = meta.get("name", root.name)
+    if name in ("nested_add", "nested_sub"):
+        if meta["vocab"] != VOCAB[: len(meta["vocab"])]:
+            fail("meta vocab is not a prefix of looptf.toy.data.VOCAB")
+        check_ops(root, meta)
+        if fails:
+            print(f"FAILURES ({len(fails)}):")
+            for f_ in fails[:200]:
+                print("  - " + f_)
+            sys.exit(1)
+        print("ALL CHECKS PASSED")
+        return
     is_nested = name in ("nested", "nested_bal")
     is_bal = name == "nested_bal"
     cols = {c: i for i, c in enumerate(meta["columns"])}
