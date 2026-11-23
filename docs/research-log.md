@@ -902,6 +902,29 @@ Shallow: offset 0.23, separate 0.01, tags 0.07, no tags 0.78 (within 5%).
 - Card says "approximate only → report, don't adopt". Offset nonetheless dominates plain tags
   (same in-range, 0.97 vs 0.03 out of range). Whether to make it the default is Walter's call.
 
+<a id="log-attn-viewer"></a>
+
+## 2026-11-23 16:30 — Attention viewer: look first, no hypothesis built in
+
+Walter wanted to *see* where the models look, not test an expected pattern (H19 tested one).
+`scripts/attn_export.py` runs 9 problems through looped, deep and shallow (120k, seed 0), using
+each model's own greedy answer (all 27 correct). It records every attention call in order:
+prelude, each core block on each pass, coda. Page: `docs/visual/attention.html`, data
+`docs/visual/attn/*.json` (weights stored as one base-36 digit each, about 3% resolution).
+Artifact: https://claude.ai/artifact/BrSUsELtTfMcQZrj6rLxbp.
+
+First look, one problem `(8-3)*(4-6)+7=` (anecdote, not a result):
+- The `=` that writes the first answer digit looks mostly at itself, the `7` and the `+`, not into
+  the brackets. Bracket work probably happens earlier, at the `)` tokens.
+- Looped heads keep one job across passes (block 2 head 4 fixes on the `7` every pass). Deep's
+  heads change from layer to layer. Expected: looped reuses the same weights.
+
+How the loop feeds itself (asked by Walter): concat injection. Each pass starts from
+`adapter([h, e])`: `h` is the previous pass's output (after core block 2) and `e` is the
+prelude output (the embedded problem), the same on every pass. So the model sees both its
+running state and the original problem each pass. This led to H20
+([idea](ideas.md#idea-intermediate)).
+
 ---
 
 ## Open questions / ideas to come back to

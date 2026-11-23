@@ -25,6 +25,7 @@ Current track: **tiny transformers trained from scratch on synthetic PEMDAS arit
 | State snapshots (newest first) | `docs/status.md` |
 | Glossary: plain (for Walter) / terse (for agents) | `docs/glossary.md`, `docs/glossary-agent.md` |
 | Visual results page (claude.ai artifact, private to Walter; republish to keep the URL) | https://claude.ai/artifact/BBw1f6Y9HGTgb75UBM1Nfj, source `docs/visual/loop-depth-results.html` |
+| Attention viewer (artifact, private; publish from a scratchpad copy with `attn/*.json` as files) | https://claude.ai/artifact/BrSUsELtTfMcQZrj6rLxbp, source `docs/visual/attention.html`, data `scripts/attn_export.py` |
 | Skills | `.claude/skills/status-update`, `.claude/skills/decision-brief` (has a pre-launch checklist) |
 | Working rules | `CLAUDE.md` (bottom section "Working with Walter") |
 

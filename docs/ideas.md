@@ -44,6 +44,18 @@ Related hypotheses in `hypotheses.md`.
   arithmetic and gains looped's step skill?
 - **I-M5 Additive vs concat input injection**; McLeish's multiplication tweaks (no injection
   inside the loop, loop gradients ÷ K).
+<a id="idea-intermediate"></a>
+
+- **I-M7 Teach each pass an intermediate step** (Walter, 23 Nov; H20). Add a loss so the state
+  after pass p can be read out as the problem with p levels of brackets done, for example
+  `(8-3)*(4-6)+7` → `5*-2+7` → `-10+7` → `-3`. A small readout head per pass, or a probe-like
+  loss at each `)` once its level ≤ p. Softer version: only require "by pass p, every piece of
+  level ≤ p is readable", with no fixed order. Why: H19 found levels 4+ unreadable, so this tells
+  us whether forcing explicit steps helps or hurts. Bonus for H9: if the state is explicit, the
+  model can stop when it is a single number. Catches: it hand-writes the algorithm and fixes one
+  step per pass, which may be worse than what the model finds. Loop-specific test: does it help
+  looped more than deep given the same per-layer-group loss? Related: deep supervision, progressive
+  loss (McLeish), latent-reasoning work. Check papers before building.
 - **I-M6 Fit accuracy = α·log(effective depth) + β** over the grid; compare α for loops vs layers.
 
 ## Long term

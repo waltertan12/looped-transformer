@@ -18,6 +18,7 @@ Nothing. The last batch (the long runs and the add/subtract tests) finished on 2
 | H11 | Looping only the middle layers beats looping all of them | Five layer layouts at the same compute | 5 runs | [plan](plan.md#plan-step-7) |
 | H16 | Wider models fix number size, and loops still add steps | Width 512–1024 | Many hours | [idea](ideas.md#idea-wide) |
 | H12 | Loops help follow chained definitions like `a=3*4; b=a+2` | Same comparison on the chain data (already built) | 6 runs | [plan](plan.md#plan-step-8) |
+| H20 | Teaching each pass to output one intermediate step (one bracket level done) helps loops more than deep | Extra loss per pass on a readout of the half-solved problem | 4–6 runs, needs a target generator | [idea](ideas.md#idea-intermediate) |
 | H17 | Step skill carries over to algebra like `3*x+5=20` | New data generator first | Later | [idea](ideas.md#idea-algebra) |
 
 ## Done

@@ -19,6 +19,8 @@ as more distinct layers at the same compute.
 **[results page](https://waltertan12.github.io/looped-transformer/visual/loop-depth-results.html)**
 (all docs: [waltertan12.github.io/looped-transformer](https://waltertan12.github.io/looped-transformer/)). Tables: [`docs/results-ops.md`](docs/results-ops.md),
 [`docs/hypotheses.md`](docs/hypotheses.md).
+To see where each model looks while it solves a problem, pass by pass:
+**[attention viewer](https://waltertan12.github.io/looped-transformer/visual/attention.html)**.
 
 - **Loops buy steps.** On many-step problems with small answers, looped beats shallow by +0.11
   (4 steps) to +0.25 (8 steps) and matches deep within ±0.03, including past the training depth.
