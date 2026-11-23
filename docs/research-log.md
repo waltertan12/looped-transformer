@@ -843,6 +843,39 @@ Greedy decoding of 300 random `a+b` with 4-digit a, b (`scripts/diag_4digit.py`;
 - Fix candidates (I-M2 / H18): (a) random offset on tags; (b) separate tag tables for question and
   answer; (c) a few 4–5-digit inputs in training (tests interpolation, not extrapolation).
 
+<a id="log-h19"></a>
+
+## 2026-11-23 14:20 — H19 probes: no one-level-per-pass staircase; only levels 1–3 are readable
+
+Linear probes (D-013 option b) read the last digit of every sub-expression's value from the hidden
+state at the token right after it ends, after each pass (looped) or layer (deep, shallow).
+~5,600 test problems (1-digit inputs, depths 2–8), 20% held out by problem.
+`scripts/probe_levels.py`, results `results/toy/probe/levels.json`.
+
+| level (height) | best accuracy: looped s0 / s1 | deep s0 / s1 | shallow | guessing |
+|---|---|---|---|---|
+| 1 | 0.70 / 0.67 | 0.67 / 0.57 | 0.70 | 0.14 |
+| 2 | 0.33 / 0.38 | 0.47 / 0.33 | 0.28 | 0.16 |
+| 3 | 0.27 / 0.31 | 0.33 / 0.25 | 0.23 | 0.18 |
+| 4–7 | ≤ +0.05 over guessing everywhere | | | 0.16–0.19 |
+
+- **Rule (pre-registered): not supported.** Looped "ready pass" for levels 1–5: 0, 2, 4, 2, 4
+  (s0, Spearman 0.74) and 0, 6, 7, 4, 3 (s1, 0.10). But levels 4–5 are never readable, so their
+  ready pass is noise: the rule again included floor cells (same mistake as H13).
+- **Where readable (levels 1–3):** level 1 is readable *before* the first pass (the prelude layer
+  does it) and fades over passes; levels 2 and 3 rise together and slowly (looped s0 peaks ~pass 4,
+  s1 still rising at pass 8). Deep shows the same order over layers (level 1 by ~layer 7, levels 2–3
+  by ~9–12). An ordering, not one level per pass.
+- **Read:** the models don't hold intermediate values as linearly readable digits where each
+  sub-expression ends, yet they answer depth-4 problems at 0.96. The work is elsewhere (later
+  positions, e.g. at '='), or in a non-linear form, or the last digit of big intermediates is the
+  wrong target. This probe can't answer H19 beyond level 3.
+- Possible next probes (not planned): read every sub-expression value at the '=' token; non-linear
+  (small MLP) probes; sign / small-value targets; the per-pass attention maps already saved in
+  `results/toy/probe/attn_*.json`.
+- Practical: with a 6-thread cap the probes took ~45 s per model vs ~8 min uncapped (thread
+  oversubscription with sklearn's BLAS).
+
 ---
 
 ## Open questions / ideas to come back to

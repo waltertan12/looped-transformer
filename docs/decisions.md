@@ -76,6 +76,9 @@ range); a probe can find information the model doesn't use (state it, it's a kno
 
 **Needs Walter?** Yes (it defines what the result means). **Status.** Decided by Walter,
 2026-11-23: (b), probes plus attention maps.
+**Outcome (2026-11-23 14:20):** not supported by the rule, but the rule was flawed: levels 4–7 are
+never readable, so their "ready pass" is noise. Levels 1–3 become readable in order (1 before the
+loop, 2–3 together and gradually), in looped and deep alike. Research log 14:20.
 
 ---
 

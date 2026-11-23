@@ -12,7 +12,6 @@ Nothing. The last batch (the long runs and the add/subtract tests) finished on 2
 
 | # | Hypothesis | How we'll test it | Cost | Details |
 |---|---|---|---|---|
-| H19 | Each loop pass works through one level of brackets, innermost first | Plot what each attention head looks at on each pass, on the trained models | Free | [idea](ideas.md#idea-attention) |
 | H18 | Longer numbers work if the place-value tags are shifted randomly in training, or kept separate for question and answer | Train with each fix and without tags. Pass: 4-digit sums above 0.5 exact | 3–5 runs | [log](research-log.md#log-4digit), [idea](ideas.md#idea-offset) |
 | H9 | A looped model can choose its own loop count: few on easy problems, more on hard ones | Train it to answer after every pass, then let it stop early | A few runs | [plan](plan.md#plan-step-5) |
 | H10 | A stop signal learned from the model's internal state beats a simple rule or a separate checker | Compare the three on the H9 model | After H9 | [plan](plan.md#plan-step-6) |
@@ -35,4 +34,5 @@ Nothing. The last batch (the long runs and the add/subtract tests) finished on 2
 | H7 | Place-value tags help | **A little.** +0.055 on big answers for looped (40k steps, one run). No effect on shallow | [log](research-log.md#log-tags) |
 | H8 | The first models (40k steps) were undertrained | **Yes.** 120k steps raised every result by +0.08 to +0.26 | [log](research-log.md#log-long-shallow) |
 | H13 | Loops match deep on pure addition and subtraction, so the number gap is about times tables | **No.** Deep still wins by about +0.10 on unseen problems. The gap is number size | [log](research-log.md#log-h13-h14) |
+| H19 | Each loop pass works through one level of brackets, innermost first | **Not shown.** Probes only read levels 1–3: level 1 before the loop, levels 2–3 together and gradually. Same in deep | [log](research-log.md#log-h19) |
 | H14 | Problems with more multiplication are harder at the same size | **No.** Within 0.015 once depth and number size are matched | [log](research-log.md#log-h13-h14) |
