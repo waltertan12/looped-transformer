@@ -32,4 +32,4 @@ Evidence is seed 0 / seed 1 at 120k steps (D-012 normal arm) unless noted.
 | | H15 | Letting the question tokens see each other (prefix attention) helps, because causal attention hides later operators | I-M3 |
 | | H16 | Wider models fix number size; loops still add steps on top | I-L1 |
 | | H17 | Step skill transfers to algebra (solving 3x+5=20) | I-L2 |
-| | H18 | Tags + random offset let models handle longer numbers than trained (today: 4-digit inputs = 0% everywhere) | I-M2 |
+| | H18 | Tags + random offset (or separate question/answer tag tables) let models handle longer numbers than trained. Today tags make 4-digit inputs garbage (within-5%: 0.01–0.10) while no-tag models stay approximately right (0.92) | I-M2 |

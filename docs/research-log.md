@@ -802,6 +802,31 @@ their looped models matched depth on addition with far more training and length-
 **not supported.** Unmatched, high-`*` problems look much harder (looped 0.50 → 0.19), but that is
 entirely answer size and depth. Operator type adds nothing once those are fixed.
 
+## 2026-11-23 09:10 — Why 4-digit inputs score 0%: the place-value tags break out-of-range numbers
+
+Greedy decoding of 300 random `a+b` with 4-digit a, b (`scripts/diag_4digit.py`; no training run).
+
+| model | 3-digit `a+b` exact | 4-digit exact | right length | first 2 digits right | within 5% |
+|---|---|---|---|---|---|
+| looped, **no tags** (bal, 40k) | 0.20 | 0.00 | 0.98 | 0.54 | **0.92** |
+| deep, **no tags** (bal, 40k) | 0.24 | 0.01 | 0.98 | 0.55 | **0.93** |
+| looped, tags (long, 120k) | – | 0.00 | 0.16 | 0.05 | 0.01 |
+| deep, tags (long, 120k) | 0.74 | 0.00 | 0.63 | 0.07 | 0.10 |
+
+- Without tags, 4-digit sums come out **approximately right** (e.g. 6268+9071=15339 → 15765):
+  right length, right leading digits, wrong low digits. Exactness fails, magnitude generalizes.
+- With tags, the answer is **garbage** (15339 → 7539): wrong length, wrong digits.
+- So tags trade robustness for exactness: they lift in-range 3-digit sums 0.24 → 0.74 but wreck
+  anything longer than seen. (Confound: no-tag models had 40k steps, tag models 120k. The gap is
+  too large for training length to explain, but a clean no-tag 120k model would settle it.)
+- **Likely mechanism (untested):** the tags are *absolute*: a question digit gets id 1 + its place
+  from the end, and one embedding table serves question and answer digits. In training, question
+  digits only ever had ids 1–3; id 4 appeared only on the 4th *answer* digit. A thousands digit in
+  the question therefore arrives labelled "4th answer digit". This is the known weakness of
+  absolute position embeddings (McLeish §3.1); their fix is a random offset during training.
+- Fix candidates (I-M2 / H18): (a) random offset on tags; (b) separate tag tables for question and
+  answer; (c) a few 4–5-digit inputs in training (tests interpolation, not extrapolation).
+
 ---
 
 ## Open questions / ideas to come back to
