@@ -123,6 +123,28 @@ code { font-size: 0.88em; }
         <li><b>Number size:</b> how many digits the inputs and the answer have. <code>9071+6268</code> is one step but needs careful digit work and carrying.</li>
       </ul>
       <p>Separating the two dials is what lets us say which one loops help with.</p></div>
+    <div class="term"><h3>What depth looks like</h3>
+      <p><b>Depth counts steps that must wait for each other, not operators.</b> Operations that don't depend on each other happen in the same step. Take <code>(8-3)*(4-6)+7</code>:</p>
+      <div class="ex">step 1   8-3 = 5   and   4-6 = -2     (independent, same step)
+step 2   5 * -2 = -10                 (needs both results)
+step 3   -10 + 7 = -3                 (needs step 2)
+         depth 3, with 4 operators</div>
+      <p>Two problems with 3 operators each show the difference:</p>
+      <div class="ex">7*7-4*6   = 25    depth 2   both multiplications at once, then subtract
+6+5+2+9   = 22    depth 3   each addition waits for the one before it</div>
+      <p>Real test problems by depth (1-digit inputs, small answers, so only depth varies):</p>
+      <div class="scroll"><table>
+        <thead><tr><th>depth</th><th class="l">example</th><th>operators</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td class="l"><code>7+5=12</code></td><td>1</td></tr>
+          <tr><td>2</td><td class="l"><code>7*7-4*6=25</code></td><td>3</td></tr>
+          <tr><td>3</td><td class="l"><code>9-1+2*2-6*1=6</code></td><td>5</td></tr>
+          <tr><td>4</td><td class="l"><code>9-(7-9-(1*4+3*4))=27</code></td><td>6</td></tr>
+          <tr><td>6</td><td class="l"><code>5+(7+7*(7-(2+8)))*(5-6)=19</code></td><td>7</td></tr>
+          <tr><td>8</td><td class="l"><code>(1-1*(9+6*(5-(6-(1-6)))))*2=56</code></td><td>8</td></tr>
+          <tr><td>12</td><td class="l"><code>5-(8+5*(9*1+8-4+8)+4-8-7)-6+9=-94</code></td><td>12</td></tr>
+        </tbody></table></div>
+      <p class="read">Models train on depths 1–8 and are tested up to 13, so depths 9–13 check whether the skill extends beyond anything seen in training. A model with a fixed stack of layers has a limited number of steps it can chain; the hypothesis is that each loop pass adds room for more.</p></div>
     <div class="term"><h3>The three models</h3>
       <p>Every model has an input layer, a "core" and an output layer. Only the core changes:</p></div>
     <div class="grid3" id="mcards"></div>
