@@ -1,6 +1,6 @@
 # Handoff: read this first in a new session
 
-_Written 2026-11-22 21:25 EST, updated 2026-11-23 15:00._ Update it whenever the state below changes._
+_Written 2026-11-22 21:25 EST, updated 2026-11-23 15:00. Update it whenever the state below changes._
 
 ## What this project is
 Walter (software engineer, newer to ML research) is testing whether **looped transformers**
