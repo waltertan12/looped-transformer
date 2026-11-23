@@ -760,6 +760,42 @@ Deep 16×1, tags, 120k, reversed − normal, seeds 0 / 1:
   metric, so noted as a finding, not a recipe change. Possible follow-up: does looped catch up
   with more training?
 
+## 2026-11-23 08:40 — H13 / H14 on the D-012 checkpoints (no training): weights buy number size, not lookup; operator mix doesn't matter
+
+Full tables: `docs/results-ops.md`. New test-only sets `data/nested_add` (depth 1–15) and
+`data/nested_sub` (depth 1–8), exactly 1–4-digit inputs, verified. Normal-order models, seeds 0 / 1.
+
+**H13 (do loops match deep on pure add/sub?).** Pre-registered rule: deep − looped on 2–4-digit
+inputs over all depths = add +0.024 / +0.033, sub +0.018 / +0.017 → "unclear". **That verdict is
+a floor effect (Claude's rule-design mistake, same kind as D-011):** most cells are at ~0 for every
+model, so averaging them in shrinks every gap. Where models are off the floor and in distribution
+(depths 1–3, where training had multi-digit inputs):
+
+| depths 1–3 | looped | deep | deep − looped |
+|---|---|---|---|
+| add, 2-digit inputs | 0.76 / 0.77 | 0.80 / 0.88 | +0.04 / +0.11 |
+| add, 3-digit inputs | 0.30 / 0.28 | 0.35 / 0.42 | +0.05 / +0.14 |
+| sub, 2-digit inputs | 0.77 / 0.83 | 0.81 / 0.84 | +0.04 / +0.01 |
+| sub, 3-digit inputs | 0.21 / 0.29 | 0.36 / 0.41 | +0.15 / +0.12 |
+| mixed data, same region | | | +0.07…+0.10 |
+
+→ **H13 rejected in practice:** deep's edge on big numbers is as large without `*` as with it.
+"Weights buy arithmetic" is about **number size**, not multiplication lookup. (Contrast McLeish:
+their looped models matched depth on addition with far more training and length-generalizing tricks.)
+
+**Out-of-distribution findings (all models):**
+- **4-digit inputs: 0% everywhere, even a single `a+b`.** Training never had 4-digit inputs; no
+  input-length generalization at all. Motivates McLeish's random tag offset (H18 / I-M2).
+- Multi-digit inputs beyond depth 3 (never in training) collapse: add 2–4-digit inputs at depth 5:
+  looped 0.04–0.05, deep 0.08–0.12. Depth generalization does not carry over to bigger numbers.
+- 1-digit sub (in distribution): looped ≈ deep (0.81/0.82 vs 0.82/0.83), %Gap 0.97 — the
+  step-count result again.
+
+**H14 (operator mix).** Within cells matched on depth, answer digits and input digits, low − high
+`*`-share third: shallow −0.006 / −0.011, looped +0.001 / +0.015, deep +0.008 / +0.009 →
+**not supported.** Unmatched, high-`*` problems look much harder (looped 0.50 → 0.19), but that is
+entirely answer size and depth. Operator type adds nothing once those are fixed.
+
 ---
 
 ## Open questions / ideas to come back to

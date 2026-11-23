@@ -37,6 +37,8 @@ Shallow 2×1 (4.4M), looped 2×8 (same 4.4M, 8 passes), deep 16×1 (19M, same co
   a clean depth-vs-number-size decomposition + negative results.
 
 ## In flight right now
+- **Nothing running.** D-012 (12 runs) and H13/H14 (`docs/results-ops.md`) are done. H13 rejected
+  (number size, not lookup), H14 not supported; 4-digit inputs 0% everywhere. Branch `h13-h14-eval`.
 - **D-012 long probe set**, launched 2026-11-22 21:40: shallow / looped / deep × seeds 0,1,
   120k steps, `--place_emb`, normal order. Results `results/toy/long/`; queue log
   `results/toy/long.queue.log` (6 "done" lines = finished; order shallow → looped → deep,
