@@ -38,6 +38,8 @@ Shallow 2×1 (4.4M), looped 2×8 (same 4.4M, 8 passes), deep 16×1 (19M, same co
   120k steps, `--place_emb`, normal order. Results `results/toy/long/`; queue log
   `results/toy/long.queue.log` (6 "done" lines = finished; order shallow → looped → deep,
   2 at a time). Shallow ~40 min, looped and deep ~2.5 h each → done ~03:30–04:00.
+- Looped pair done (00:30): looped beats shallow at 120k by +0.11 (depth 4) … +0.25 (depth 8),
+  both seeds; also +0.13/+0.15 on big answers. Deep pair running → ~02:50.
 - **D-012 reversed arm** (Walter, 22:20): same 6 runs with `--place_emb --reverse_answer`,
   queued behind the normal arm (`scripts/arith_long_arm.sh`, WAIT_PID on the normal queue),
   names `long/<model>-rev-s<seed>`, queue log `results/toy/long-rev.queue.log`; starts ~02:50,

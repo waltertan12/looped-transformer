@@ -680,6 +680,26 @@ only; seed noise still unmeasured).
   120k pair decides this. If looped at 120k doesn't stay clearly ahead, the headline changes.
 - Train accuracy at the end is still 0.42 (loss 0.68): not converged.
 
+## 2026-11-23 00:30 — D-012 looped pair (120k): the loop gap is real, and grows with depth
+
+| tags, normal order | shallow 120k s0 / s1 | looped 120k s0 / s1 | looped − shallow (s0 / s1) |
+|---|---|---|---|
+| big answers, 1-digit inputs, depths 2–6 | 0.25 / 0.26 | 0.37 / 0.41 | +0.13 / +0.15 |
+| small answers, 1-digit inputs, depths 2–6 | 0.78 / 0.79 | 0.91 / 0.93 | +0.13 / +0.15 |
+| multi-digit inputs, depths 1–3 | 0.40 / 0.38 | 0.43 / 0.45 | +0.03 / +0.07 |
+| 1-digit answers, depth 4 | 0.84 / 0.85 | 0.96 / 0.96 | +0.12 / +0.11 |
+| … depth 8 | 0.62 / 0.63 | 0.86 / 0.87 | +0.24 / +0.25 |
+| … depth 13 (past training depth 8) | 0.42 / 0.43 | 0.62 / 0.60 | +0.21 / +0.17 |
+
+- **Answers the worry from the shallow pair:** shallow at 120k ≈ looped at 40k, but looped also
+  improves with training and stays far ahead. The gap is "can do more", not just "learns faster".
+- **The gap grows with step count:** +0.11 at depth 4 → +0.25 at depth 8, on both seeds.
+- **New: loops now help big answers too** (+0.13/+0.15, was +0.03 at 40k without tags).
+- Multi-digit inputs: small, noisy gain (+0.03/+0.07); input size is still mostly a weights issue.
+- Seed spread for looped is wider on multi-digit-input slices (up to 0.07 at depth 1, 3-digit
+  inputs); 0.01–0.04 elsewhere.
+- Still undertrained? Train accuracy 0.50 at the end. Deep pair (same compute, 4× weights) next.
+
 ---
 
 ## Open questions / ideas to come back to
