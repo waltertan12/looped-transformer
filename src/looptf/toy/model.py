@@ -40,7 +40,15 @@ def _run_index(is_digit: torch.Tensor) -> torch.Tensor:
     return t - last_non - 1
 
 
-def place_ids(x: torch.Tensor, max_places: int) -> torch.Tensor:
+def answer_mask(x: torch.Tensor) -> torch.Tensor:
+    """True for tokens strictly after the terminal ('?' if the sequence has one, else '=')."""
+    has_q = (x == _Q_ID).any(dim=1, keepdim=True)
+    is_term = torch.where(has_q, x == _Q_ID, x == _EQ_ID)
+    c = is_term.long().cumsum(dim=1)
+    return (c - is_term.long()) > 0
+
+
+def place_ids(x: torch.Tensor, max_places: int, offset: torch.Tensor | None = None) -> torch.Tensor:
     """Place index per token: 0 for non-digits, else 1 + place.
 
     Question digits (before the terminal '=' / '?'): place counted from the END of the number,
@@ -54,10 +62,9 @@ def place_ids(x: torch.Tensor, max_places: int) -> torch.Tensor:
     from_end = _run_index(is_digit.flip(1)).flip(1)
     # terminal: '?' if the sequence has one (chain task, where '=' appears inside statements),
     # else '='; answer region = strictly after its first occurrence
-    has_q = (x == _Q_ID).any(dim=1, keepdim=True)
-    is_term = torch.where(has_q, x == _Q_ID, x == _EQ_ID)
-    c = is_term.long().cumsum(dim=1)
-    after = (c - is_term.long()) > 0
+    after = answer_mask(x)
+    if offset is not None:  # H18: shift question-digit places (offset: [B, 1] ints)
+        from_end = from_end + offset
     place = torch.where(after, from_start, from_end).clamp(max=max_places - 1)
     return torch.where(is_digit, place + 1, torch.zeros_like(place))
 
@@ -73,6 +80,8 @@ class ToyConfig:
     n_core: int = 2  # unique layers in the core block
     n_coda: int = 1  # unique layers after the core
     inject: str = "concat"  # "concat" | "add" | "none"
+    tag_offset: int = 0  # H18: train-only random shift U[0, tag_offset] on question-digit tags
+    sep_tags: bool = False  # H18: separate tag table for answer digits
     dropout: float = 0.0
     # Place-value embeddings (McLeish et al. 2024 call them "Abacus"): each digit token gets an
     # extra learned embedding for its place within its number. Off by default.
@@ -173,6 +182,8 @@ class ToyLM(nn.Module):
         self.cfg = cfg
         self.embed = nn.Embedding(cfg.vocab_size, cfg.d_model)
         self.place = nn.Embedding(cfg.max_places + 1, cfg.d_model, padding_idx=0) if cfg.place_emb else None
+        self.place_ans = (nn.Embedding(cfg.max_places + 1, cfg.d_model, padding_idx=0)
+                          if cfg.place_emb and cfg.sep_tags else None)
         self.prelude = nn.ModuleList([Block(cfg) for _ in range(cfg.n_prelude)])
         self.core = nn.ModuleList([Block(cfg) for _ in range(cfg.n_core)])
         self.coda = nn.ModuleList([Block(cfg) for _ in range(cfg.n_coda)])
@@ -205,6 +216,8 @@ class ToyLM(nn.Module):
         if self.place is not None:
             with torch.no_grad():
                 self.place.weight[0].zero_()  # non-digit tokens get no place signal
+                if self.place_ans is not None:
+                    self.place_ans.weight[0].zero_()
 
     def forward(self, x: torch.Tensor, n_loops: int = 1) -> torch.Tensor:
         if n_loops < 0:
@@ -217,7 +230,16 @@ class ToyLM(nn.Module):
 
         e = self.embed(x)
         if self.place is not None:
-            e = e + self.place(place_ids(x, self.cfg.max_places))
+            off = None
+            if self.training and self.cfg.tag_offset > 0:
+                off = torch.randint(0, self.cfg.tag_offset + 1, (B, 1), device=x.device)
+            pid = place_ids(x, self.cfg.max_places, off)
+            if self.place_ans is None:
+                e = e + self.place(pid)
+            else:
+                after = answer_mask(x)
+                zero = torch.zeros_like(pid)
+                e = e + self.place(torch.where(after, zero, pid)) + self.place_ans(torch.where(after, pid, zero))
         for blk in self.prelude:
             e = blk(e, cos, sin)
 

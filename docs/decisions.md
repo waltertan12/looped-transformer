@@ -9,7 +9,7 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
-## D-014 · H18: which tag fix for longer numbers, on which runs? (open)
+## D-014 · H18: which tag fix for longer numbers, on which runs? (decided: (a) and (b), separately)
 
 **Question.** With place-value tags, 4-digit inputs come out as nonsense (within 5% for 0.01–0.10
 of sums; 0.92 without tags). Suspected cause: question digits only ever had tag ids 1–3, and id 4
@@ -42,9 +42,11 @@ compared at 40k).
 **Recommendation.** (a) and (b), not (c): each tests one explanation, 4 runs, ≈ 1.2 h. Run (c)
 only if both pass.
 
-**Needs Walter?** Yes. **Status.** Open.
+**Needs Walter?** Yes. **Status.** Decided by Walter, 2026-11-23: (a) and (b) as separate runs.
+Pass bar stays ≥ 0.5 exact; results also reported against ≥ 0.7 ("as good as in-range": tagged
+3-digit sums are 0.74).
 
-## D-013 · H19: how do we tell whether each loop pass handles one level of brackets? (open)
+## D-013 · H19: how do we tell whether each loop pass handles one level of brackets? (decided: (b))
 
 **Question.** Does the looped model work through a nested problem one level per pass, innermost
 first? Measured on saved models only (no training).
@@ -72,7 +74,8 @@ range); a probe can find information the model doesn't use (state it, it's a kno
 
 **Recommendation.** (b): probes give a number a rule can judge; maps make it visible.
 
-**Needs Walter?** Yes (it defines what the result means). **Status.** Open.
+**Needs Walter?** Yes (it defines what the result means). **Status.** Decided by Walter,
+2026-11-23: (b), probes plus attention maps.
 
 ---
 

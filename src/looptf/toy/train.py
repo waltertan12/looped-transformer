@@ -157,6 +157,9 @@ def main(argv=None):
     p.add_argument("--data", default=None,
                    help="frozen dataset dir (e.g. data/nested, data/chain); default: generate on the fly. "
                         "With --data, 'depth' flags refer to the dataset's level (depth or chain length)")
+    p.add_argument("--tag_offset", type=int, default=0,
+                   help="H18: train-only random shift U[0, N] on question-digit place tags")
+    p.add_argument("--sep_tags", action="store_true", help="H18: separate place-tag table for answer digits")
     p.add_argument("--place_emb", action="store_true",
                    help="add place-value ('Abacus') embeddings for digit tokens (D-009)")
     p.add_argument("--reverse_answer", action="store_true",
@@ -186,7 +189,7 @@ def main(argv=None):
     max_len = max(128, fd.meta["width"]) if fd else 128
     cfg = ToyConfig(vocab_size=len(VOCAB), max_len=max_len, d_model=a.d_model, n_heads=a.n_heads, d_ff=a.d_ff,
                     n_prelude=a.n_prelude, n_core=a.n_core, n_coda=a.n_coda, inject=a.inject,
-                    place_emb=a.place_emb)
+                    place_emb=a.place_emb, tag_offset=a.tag_offset, sep_tags=a.sep_tags)
     model = ToyLM(cfg).to(dev)  # fp32 weights; bf16 compute via autocast (exp3 lesson)
     fwd = torch.compile(model) if a.compile else model
     loops_lo, loops_hi = parse_range(a.train_loops)
