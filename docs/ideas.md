@@ -55,7 +55,7 @@ Related hypotheses in `hypotheses.md`.
   model can stop when it is a single number. Catches: it hand-writes the algorithm and fixes one
   step per pass, which may be worse than what the model finds. Loop-specific test: does it help
   looped more than deep given the same per-layer-group loss? Related: deep supervision, progressive
-  loss (McLeish), latent-reasoning work. Check papers before building.
+  loss (McLeish), latent-reasoning work. Prior art: [related work](related-work.md#rw-steps).
 - **I-M6 Fit accuracy = α·log(effective depth) + β** over the grid; compare α for loops vs layers.
 
 ## Long term
