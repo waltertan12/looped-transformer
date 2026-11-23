@@ -16,8 +16,8 @@ as more distinct layers at the same compute.
 ## Results so far
 
 120k training steps, two seeds each. Full write-up with charts and a primer on every term:
-[`docs/visual/loop-depth-results.html`](docs/visual/loop-depth-results.html) (download and open in a
-browser; GitHub shows HTML as source). Tables: [`docs/results-ops.md`](docs/results-ops.md),
+**[results page](https://waltertan12.github.io/looped-transformer/visual/loop-depth-results.html)**
+(all docs: [waltertan12.github.io/looped-transformer](https://waltertan12.github.io/looped-transformer/)). Tables: [`docs/results-ops.md`](docs/results-ops.md),
 [`docs/hypotheses.md`](docs/hypotheses.md).
 
 - **Loops buy steps.** On many-step problems with small answers, looped beats shallow by +0.11

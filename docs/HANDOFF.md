@@ -15,6 +15,7 @@ Current track: **tiny transformers trained from scratch on synthetic PEMDAS arit
 | what | file |
 |---|---|
 | Code on GitHub (public, branch `main`) | https://github.com/waltertan12/looped-transformer |
+| Public docs site (GitHub Pages from `main:/docs`, updates on push) | https://waltertan12.github.io/looped-transformer/ |
 | Forward plan, with decision rules written **before** results | `docs/plan.md` |
 | Hypotheses (status + Walter's ranking) | `docs/hypotheses.md` |
 | Idea backlog (short / medium / long) | `docs/ideas.md` |
