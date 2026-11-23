@@ -1,6 +1,6 @@
 # Handoff: read this first in a new session
 
-_Written 2026-11-22 21:25 EST, updated 21:45. Update it whenever the state below changes._
+_Written 2026-11-22 21:25 EST, updated 2026-11-23 15:00._ Update it whenever the state below changes._
 
 ## What this project is
 Walter (software engineer, newer to ML research) is testing whether **looped transformers**
@@ -28,50 +28,44 @@ Current track: **tiny transformers trained from scratch on synthetic PEMDAS arit
 | Skills | `.claude/skills/status-update`, `.claude/skills/decision-brief` (has a pre-launch checklist) |
 | Working rules | `CLAUDE.md` (bottom section "Working with Walter") |
 
-## Main result so far (seed 0, 40k steps, `data/nested_bal`)
-Shallow 2×1 (4.4M), looped 2×8 (same 4.4M, 8 passes), deep 16×1 (19M, same compute as looped):
-- **Loops buy depth:** on many-step problems with small answers, looped beats shallow by
-  +0.16…+0.29 and matches deep with 4× fewer weights. Generalises past training depth.
-- **Weights buy arithmetic:** on 3-digit answers deep beats looped by +0.08…+0.30; loops add ~+0.03.
-- **Reversed answers** hurt all three (D-007 → normal order).
-- A fixed-8-loop model is useless at other loop counts (≤ 0.11).
-- Close prior work: Saunshi et al., ICLR 2025 (arXiv 2502.17416): looped ≈ deeper models on
-  reasoning; loops help reasoning more than memorization. This project is a replication +
-  a clean depth-vs-number-size decomposition + negative results.
+## Main results (as of 2026-11-23 15:00; full list in `docs/hypotheses.md`)
+Shallow 2×1 (4.4M), looped 2×8 (4.4M, 8 passes), deep 16×1 (19M, same compute as looped).
+120k steps, 2 seeds, place-value tags, normal answer order (D-012).
+- **Loops buy steps:** looped beats shallow by +0.11 (depth 4) to +0.25 (depth 8) and matches
+  deep within ±0.03, also past training depth (13).
+- **Weights buy number size:** deep beats looped by +0.05…+0.15 on big numbers, with or without `*` (H13).
+- **Operator mix doesn't matter** at fixed depth and number size (H14).
+- **Tags break longer numbers:** 4-digit inputs 0% exact everywhere; with tags answers are
+  nonsense, without tags within 5% (research log 09:10). → H18.
+- **H19 not shown:** probes read only levels 1–3; no one-level-per-pass staircase
+  (`docs/results-h19.md`).
+- Fixed-K models fail at other loop counts. Reversed order: fails the rule, helps only deep.
+- Prior work: Saunshi et al. ICLR 2025, McLeish et al. NeurIPS 2024 (`docs/related-work.md`).
 
 ## In flight right now
-- **Nothing running.** D-012 (12 runs) and H13/H14 (`docs/results-ops.md`) are done. H13 rejected
-  (number size, not lookup), H14 not supported; 4-digit inputs 0% everywhere. Merged to `main` (renamed from master).
-- 4-digit failure explained: tags break out-of-range numbers (research log 09:10).
-- **D-012 long probe set**, launched 2026-11-22 21:40: shallow / looped / deep × seeds 0,1,
-  120k steps, `--place_emb`, normal order. Results `results/toy/long/`; queue log
-  `results/toy/long.queue.log` (6 "done" lines = finished; order shallow → looped → deep,
-  2 at a time). Shallow ~40 min, looped and deep ~2.5 h each → done ~03:30–04:00.
-- Looped pair done (00:30): looped beats shallow at 120k by +0.11 (depth 4) … +0.25 (depth 8),
-  both seeds; also +0.13/+0.15 on big answers. Deep pair running → ~02:50.
-- **Normal arm done (02:55):** looped = deep on step count (±0.03, both seeds); deep beats
-  looped by +0.05…+0.15 on big answers / multi-digit inputs. Research log 2026-11-23 02:55.
-- **D-012 reversed arm** (running since 02:55) (Walter, 22:20): same 6 runs with `--place_emb --reverse_answer`,
-  queued behind the normal arm (`scripts/arith_long_arm.sh`, WAIT_PID on the normal queue),
-  names `long/<model>-rev-s<seed>`, queue log `results/toy/long-rev.queue.log`; starts ~02:50,
-  done ~08:15. Rule on the D-012 card.
-- Shallow pair done (21:55): 120k ≫ 40k (+0.08…+0.26), seeds agree within 0.03. Shallow at
-  120k ≈ looped at 40k, so the looped 120k pair decides whether the loop gap is real (research log).
-- D-011 screen is finished: **tags on (looped big answers +0.055), normal order** (reversed
-  +0.033 on multi-digit inputs but −0.110 on 1-digit inputs). See research log and D-011 card.
-  Re-run the comparison: `.venv/bin/python scripts/d011_compare.py`.
+- **H18 screen (D-014)**, launched 2026-11-23 ~13:45: `scripts/arith_tags.sh 0`, results
+  `results/toy/tags/`, queue log `results/toy/tags-s0.queue.log` (4 "done" lines = finished).
+  Runs: `tags/c2k1-offset-s0`, `tags/c2k1-sep-s0` (done), `tags/c2k8-offset-s0`, `tags/c2k8-sep-s0`
+  (finishing ~15:00). Options: `--tag_offset 8` (train-only random shift of question-digit tags),
+  `--sep_tags` (separate answer tag table). 40k steps, seed 0, same settings as the D-011 screen.
 
 ## Next actions, in order
-1. When both D-012 arms finish (12 runs): compare normal vs reversed by the D-012 card rule; report with `scripts/arith_report.py --runs results/toy/long --out
-   docs/results-arith-long.md`, plus seed-to-seed spread (seed 0 vs 1) on every headline
-   number. Log in research log and on the D-012 card. Check whether 120k beats 40k (vs
-   `results/toy/place/` and `results/toy/bal/`).
-2. Update the visual page (republish the same file path or pass the URL), with seed spread.
-   This is the write-up checkpoint.
-3. Offered, not yet accepted: scaffold `docs/paper/outline.md` (sections, numbers, figures,
-   checked related work). Walter writes the prose.
-4. Later (plan steps 5–8): variable loop control (deep supervision → confidence stop →
-   learned stop head); deferred step 6 "who decides to stop"; loop placement; chain task.
+1. **When the H18 queue shows 4 done:** `.venv/bin/python scripts/tags_report.py --score` (scores
+   8 checkpoints on `data/longnum_add`, `data/longnum_mul`; GPU, a few minutes), then
+   `.venv/bin/python scripts/tags_report.py` (writes `docs/results-tags.md`, prints the D-014
+   verdict per fix). Baselines: tags no fix = `place/*-normal-pv-s0`, no tags = `bal/*-normal-s0`.
+   Rule: looped 4-digit `a+b` exact ≥ 0.5 and trained sizes within 0.03 → pass; also report vs ≥ 0.7.
+2. Log the result (research log entry with `<a id="log-h18">`, D-014 outcome, `hypotheses.md` row
+   H18 → Done, link `results-tags.md` from `docs/index.md`). Tell Walter.
+3. If a fix passes: card for the long probe set with it (shallow / looped / deep × 2 seeds,
+   120k, ≈ 6 h: `scripts/arith_long_arm.sh "--place_emb --tag_offset 8" offset` or `--sep_tags`).
+   Run (c) both fixes only if both pass. If neither passes: discuss with Walter (no tags, or
+   train on longer numbers).
+4. Update the results page (`docs/visual/loop-depth-results.html` + the claude.ai artifact
+   BBw1f6Y9HGTgb75UBM1Nfj from `/tmp/.../scratchpad/viz/loop-depth-results.html` if it still
+   exists, else from the docs copy) with H19 and H18 findings. Keep the v2 writing style:
+   what / why / result / meaning, no semicolons, no H-codes in the body.
+5. Then H9 (variable loop count, plan step 5).
 
 ## Practical notes
 - Run Python as `/mnt/data/walter/loop-transformer/.venv/bin/python`. Tests: `pytest tests -q -k toy`.

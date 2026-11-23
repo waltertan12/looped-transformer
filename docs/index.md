@@ -7,5 +7,6 @@ Tiny models trained from scratch on nested arithmetic. Code: [GitHub](https://gi
 - [Hypotheses](hypotheses.md): what's been tested and what's open
 - [Plan](plan.md): next steps, with decision rules written in advance
 - [H13 / H14 results](results-ops.md): pure addition / subtraction and operator mix
+- [H19 results](results-h19.md): does each loop pass handle one level of brackets? (probes)
 - [Related work](related-work.md): the two closest papers, compared with our results
 - [Research log](research-log.md) (chronological) · [Decisions](decisions.md) · [History](history.md) · [Glossary](glossary.md)

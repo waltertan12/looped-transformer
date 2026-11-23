@@ -34,5 +34,5 @@ Nothing. The last batch (the long runs and the add/subtract tests) finished on 2
 | H7 | Place-value tags help | **A little.** +0.055 on big answers for looped (40k steps, one run). No effect on shallow | [log](research-log.md#log-tags) |
 | H8 | The first models (40k steps) were undertrained | **Yes.** 120k steps raised every result by +0.08 to +0.26 | [log](research-log.md#log-long-shallow) |
 | H13 | Loops match deep on pure addition and subtraction, so the number gap is about times tables | **No.** Deep still wins by about +0.10 on unseen problems. The gap is number size | [log](research-log.md#log-h13-h14) |
-| H19 | Each loop pass works through one level of brackets, innermost first | **Not shown.** Probes only read levels 1–3: level 1 before the loop, levels 2–3 together and gradually. Same in deep | [log](research-log.md#log-h19) |
+| H19 | Each loop pass works through one level of brackets, innermost first | **Not shown.** Probes only read levels 1–3: level 1 before the loop, levels 2–3 together and gradually. Same in deep | [results](results-h19.md), [log](research-log.md#log-h19) |
 | H14 | Problems with more multiplication are harder at the same size | **No.** Within 0.015 once depth and number size are matched | [log](research-log.md#log-h13-h14) |
