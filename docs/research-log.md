@@ -724,6 +724,15 @@ only; seed noise still unmeasured).
   too tight for that slice; use both seeds.
 - Reversed arm started 02:55 (shallow pair first).
 
+## 2026-11-23 03:35 — D-012 reversed arm, shallow pair: reversed still loses
+
+Shallow 2×1, tags, 120k, normal vs reversed, seeds 0 / 1 (reversed − normal):
+- **Rule:** multi-digit inputs (depths 1–3) +0.01 / +0.03 (needs ≥ +0.05); 1-digit inputs
+  (depths 1–3, same slice as the 40k screen) −0.10 / −0.10 (allowed ≤ −0.03). **Fails both.**
+- Big answers −0.07 / −0.08; small answers −0.07 / −0.08.
+- Reversed still wins only a single big multiplication: depth 1, 3-digit inputs +0.12 / +0.15.
+- Longer training didn't change the 40k picture. Looped and deep reversed pairs still to come.
+
 ---
 
 ## Open questions / ideas to come back to
