@@ -178,3 +178,23 @@ def test_labels_join_asserts(tmp_path):
     bad = dict(pe, answer=pe["answer"][::-1].copy())
     with pytest.raises(AssertionError):
         labels_for_run(tmp_path, bad)
+
+
+# ---- Task 5: report logic ----
+def test_mul_tercile_gap():
+    from ops_report import mul_tercile_gap
+
+    mf = np.linspace(0, 1, 90)
+    correct = mf < 0.5  # low-mul rows right, high-mul rows wrong
+    gap, rows = mul_tercile_gap(correct, mf, np.zeros(90, dtype=int))
+    assert gap == pytest.approx(1.0) and rows == 60
+    gap, rows = mul_tercile_gap(correct[:30], mf[:30], np.zeros(30, dtype=int))
+    assert rows == 0
+
+
+def test_h13_verdict():
+    from ops_report import h13_verdict
+
+    assert h13_verdict([0.01, 0.02], [0.0, 0.03]) == "supported"
+    assert h13_verdict([0.01], [0.06]) == "rejected"
+    assert h13_verdict([0.04], [0.0]) == "unclear"
