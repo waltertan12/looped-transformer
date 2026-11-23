@@ -4,7 +4,7 @@ The forward-looking plan, with a decision rule for each step written **before** 
 come in. Reasoning lives in `research-log.md`, choices in `decisions.md`, state in `status.md`.
 Revise this file when a step finishes or the plan changes, and say why.
 
-_Last revised 2026-11-22 17:15._
+_Last revised 2026-11-22 21:25._
 
 ## The question
 
@@ -19,7 +19,7 @@ the arithmetic; steps 3–5 measure looping.
 
 ## Short term (today / tomorrow)
 
-### 1. Digit order (D-007) — running
+### 1. Digit order (D-007) — done: normal order (reversed worse for all three models)
 Probe set (looped 2×8, shallow 2×1, deep 16×1) × normal / reversed on `nested_bal`.
 
 **Primary metric** (fixed now, before the results): exact-match accuracy at each run's training
@@ -35,7 +35,7 @@ digit answers. It does not need to win every cell. If the gain is < 0.05, keep n
 widens the gap, the loop benefits from the cleaner arithmetic; if it narrows it, reversal
 mostly helps the no-loop model.
 
-### 2. Place-value embeddings (D-009 / D-011) — running
+### 2. Place-value embeddings (D-009 / D-011) — screen running (looped pair finishes ~21:35)
 Walter's design: screen on shallow 2×1 + looped 2×8 only, tags with normal and with reversed
 answers (4 runs). Thresholds below are for direction, not proof; the second seed in step 4
 confirms. Seed-to-seed noise is still unmeasured, which is why 0.05, not 0.03, is the bar.
@@ -84,11 +84,7 @@ exit).
   average. That would mean the model measures difficulty and spends compute to match: new
   beyond the Saunshi et al. replication.
 - Per-token halting (ACT) is out of scope: the answer is read at one position.
-- **5c (optional, Walter's question): who should decide to stop?** Same deep-supervision model,
-  three controllers: (1) hand rule "previous answer == current answer → stop"; (2) a separate
-  small checker network trained on (previous, current) answers; (3) the built-in stop head on
-  the hidden state. If (3) clearly beats (1)–(2), the model "knows" it is done in a way its
-  outputs don't show.
+
 
 **Earlier version (superseded):** More loops at test time (extrapolation)
 Train on depths ≤ 8 with a **random** loop count, test depths 9–16 at more loops than trained.
@@ -96,11 +92,17 @@ Fixed-loop models can't do this (they only work at their training loop count). R
 cost accuracy in the first grid, so this step also tries to fix that (e.g. bias the random K
 toward the maximum). **Success:** accuracy at depth 9–16 rises with test-time loops.
 
-### 6. Loop placement
+### 6. Who decides to stop? (deferred; Walter: "interesting on its own")
+Same deep-supervision model from step 5, three controllers: (1) hand rule "previous answer ==
+current answer → stop"; (2) a separate small checker network trained on (previous, current)
+answers; (3) the built-in stop head on the hidden state. If (3) clearly beats (1)–(2), the
+model "knows" it is done in a way its outputs don't show. Run after step 5 works.
+
+### 7. Loop placement
 Fixed 4 unique blocks, same compute: 0+4+0, 1+2+1, 2+1+1, 1+1+2, 3+1+0. **Question:** which
 blocks should recur?
 
-### 7. Chain task (intermediate values)
+### 8. Chain task (intermediate values)
 Run the recipe on `data/chain`. **Question:** does looping help with following references,
 not just nested evaluation?
 

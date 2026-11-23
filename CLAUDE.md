@@ -11,6 +11,7 @@ Research repo for turning pretrained Qwen models into looped (weight-shared) tra
 - `results/` and `checkpoints/` are gitignored.
 
 ## Working with Walter
+- **New session? Read `docs/HANDOFF.md` first**: current state, what is running, next actions.
 - Walter is newer to ML research and wants to see the key calls, not have them made silently.
   Before any experiment or design change that alters what a result means (or spends >30 min of
   GPU), write a decision card with the `decision-brief` skill (`docs/decisions.md`) and ask.
