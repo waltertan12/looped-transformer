@@ -43,3 +43,10 @@ Related hypotheses in `hypotheses.md`.
 - **I-L2 Algebra** (plan "Later"). Tests H17.
 - **I-L3 Number base 2 / 10 / 16**; embedding-space side quest; routing / branching; back to
   Qwen once a recipe clearly works.
+
+## Docs (later; Walter, 2026-11-23)
+- **Research log per topic**: split `research-log.md` into one file per line of work (e.g.
+  `log/digit-order.md`, `log/place-value.md`, `log/h13-h14.md`), each ordered by date/time, with
+  an index. Today it is one long chronological file.
+- **`history.md` as a changelog**: dated entries of direction changes, newest first, each linking
+  the hypothesis or decision that caused it.
