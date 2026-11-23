@@ -6,6 +6,31 @@ the reasoning, this file holds the state.
 
 ---
 
+## 2026-11-22 19:57 EST
+
+**Aim.** Unchanged (see 18:30): stage 2, does looping add reasoning depth.
+
+**Done** (since 18:30)
+- Sliced the D-007 probe-set results by depth × answer size × input size and published a
+  visual report: https://claude.ai/artifact/BBw1f6Y9HGTgb75UBM1Nfj (source:
+  `docs/visual/loop-depth-results.html`). New slices beyond 18:30:
+  - Depth 1 → 8, 1-digit answers: shallow loses 0.53, looped 0.26, deep 0.28.
+  - Deep − looped gain is concentrated on 3-digit answers at depths 3–6 (+0.13 to +0.30);
+    near zero on 1–2 digit answers. Looped − shallow gain is on 1–2 digit answers, growing
+    with depth.
+  - Fixed-8-loop model at other test-time loop counts: ≤ 0.11 on small answers (vs 0.78 at
+    8 loops, depth 4). Extra test-time loops need random-loop training.
+  - Depth 1, 3-digit inputs (`639*53`): ≤ ~0.38 for every model on any answer size.
+
+**Doing.** Nothing; GPU idle.
+
+**Blocked / problems.** Same as 18:30 (big-number arithmetic; one seed).
+
+**Next decisions.** D-011 (place-value embeddings; recommended option b, 4 runs ≈ 1.6 h), then a
+second seed.
+
+---
+
 ## 2026-11-22 18:30 EST
 
 **Aim.** Stage 2: does looping add reasoning depth? Separate "many steps" from "big numbers",
