@@ -127,3 +127,4 @@ Plain-language definitions, each tied to this project. Terse agent-facing defini
 - **Logit lens.** Reading off what answer the model would give at an intermediate point
   (e.g. after loop pass 3).
 - **Fixed point.** When running another loop pass no longer changes the hidden state.
+- **Probe.** A tiny linear classifier trained to read one fact (say, a sub-expression's value) out of a model's hidden state. If it can, the model has that fact stored there. It doesn't prove the model uses it.

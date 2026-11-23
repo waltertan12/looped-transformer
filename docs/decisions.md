@@ -9,6 +9,73 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
+## D-014 · H18: which tag fix for longer numbers, on which runs? (open)
+
+**Question.** With place-value tags, 4-digit inputs come out as nonsense (within 5% for 0.01–0.10
+of sums; 0.92 without tags). Suspected cause: question digits only ever had tag ids 1–3, and id 4
+otherwise means "4th answer digit". Which fix do we train, and on which runs?
+
+**Options.**
+- (a) **Random offset** (McLeish): during training, add a random shift β ~ U[0, 8] to every
+  question digit's tag (β = 0 at test). Ids 1–11 all get trained on question digits. Tests the
+  "id 4 was never trained on a question" explanation.
+- (b) **Separate tag tables** for question and answer digits, no offset. Removes the collision but
+  question id 4 is still untrained. Tests the "it reads as an answer position" explanation.
+- (c) Both together.
+Each at 40k steps on shallow 2×1 and looped 2×8, seed 0 (same screen design as D-011). Baselines
+already exist at 40k: tags (`place/*-normal-pv-s0`) and no tags (`bal/*-normal-s0`). (a)+(b) = 4 runs,
+≈ 1.2 h. Adding (c) = 6 runs, ≈ 1.8 h. The winner then gets the long probe set (shallow / looped /
+deep × 2 seeds, 120k, ≈ 6 h) as in D-012.
+What outcomes mean: (a) fixes it and (b) doesn't → untrained labels were the cause. (b) fixes it →
+the collision was. Neither → tags can't extrapolate here; fall back to no tags or train on longer numbers.
+
+**Test data.** Add-only and mixed single-operation sets with exactly 4- and 5-digit inputs (new
+cells in the add/sub builder, plus `*`), depths 1–2.
+
+**What would change our minds (pre-registered).** A fix passes if, on looped, (1) 4-digit `a+b`
+(depth 1) exact accuracy ≥ 0.5, and (2) in-range accuracy (multi-digit inputs depths 1–3, and big
+answers on 1-digit inputs) is within 0.03 of tags-without-fix at 40k. If (1) fails but within-5%
+rises to ≥ 0.8, the fix restores "approximately right" only: report it, don't adopt. Confounds:
+seed noise (one seed: confirm the winner on 2 seeds in the long set); training length (all
+compared at 40k).
+
+**Recommendation.** (a) and (b), not (c): each tests one explanation, 4 runs, ≈ 1.2 h. Run (c)
+only if both pass.
+
+**Needs Walter?** Yes. **Status.** Open.
+
+## D-013 · H19: how do we tell whether each loop pass handles one level of brackets? (open)
+
+**Question.** Does the looped model work through a nested problem one level per pass, innermost
+first? Measured on saved models only (no training).
+
+**Options.**
+- (a) **Attention maps only.** Plot where each head looks on each pass for a few problems. Cheap
+  and intuitive, but it's eyeballing: easy to see patterns that aren't there.
+- (b) **Probes plus attention maps.** A probe is a tiny linear classifier trained to read a value
+  out of the model's hidden state. For every bracketed sub-expression in a problem, at its last
+  token, train a probe after each pass to read out the sub-expression's last digit. If passes
+  handle levels, a sub-expression 1 level high becomes readable after an early pass, 2 levels high
+  later, and so on: a staircase. Attention maps are the illustration, probes the evidence.
+- (c) **Read the answer out after each pass.** Doesn't work yet: the model only gives sensible
+  answers after exactly 8 passes (≤ 0.11 otherwise). Needs H9 first.
+Cost of (b): minutes of GPU. Same probes on deep 16×1 (after each layer) and shallow 2×1 for
+comparison: does depth also form a staircase?
+
+**What would change our minds (pre-registered).** Define, for each height h, the first pass at
+which the probe reaches 90% of its best accuracy for that height. H19 is supported if that pass
+rises with h for h = 1…5 (each step ≥, overall rank correlation ≥ 0.8) on looped. Not supported if
+all heights become readable at the same pass, or readability doesn't depend on pass. Confounds:
+higher sub-expressions are longer and end later in the sequence (also probe at the matching
+position in shallow, which has no passes); small values are easier to decode (report per value
+range); a probe can find information the model doesn't use (state it, it's a known limit).
+
+**Recommendation.** (b): probes give a number a rule can judge; maps make it visible.
+
+**Needs Walter?** Yes (it defines what the result means). **Status.** Open.
+
+---
+
 ## D-012 · Long probe set: the checkpoint run (running: tags on, normal + reversed arms)
 
 **Question.** Does the looping result hold with fully trained models and on a second seed?
