@@ -3,15 +3,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
 <style>
-/* Layout: one reading column of findings; each finding = claim, chart, how to read it. */
+/* Layout: one reading column. Summary first (what we learned / didn't), then one section per finding
+   (claim, chart or table, how to read it), then every run, then the roadmap. */
 :root {
   --plane: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
   --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
   --s-shallow: #2a78d6; --s-looped: #eb6834; --s-deep: #1baf7a;
-  --heat-lo: #eef4fc; --heat-hi: #104281; --heat-ink-dark: #0b0b0b; --heat-ink-light: #ffffff;
-  --div-pos: #1c5cab; --div-neg: #c03a3a; --div-mid: #f0efec;
-  --band: rgba(42,120,214,0.07);
-  --good: #006300; --warn: #8a5a00;
+  --div-pos: #1c5cab; --div-neg: #c03a3a;
+  --good: #006300; --warn: #8a5a00; --bad: #a32020;
   --f-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -19,425 +18,368 @@
   --plane: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
   --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
   --s-shallow: #3987e5; --s-looped: #d95926; --s-deep: #199e70;
-  --heat-lo: #1e2733; --heat-hi: #9ec5f4; --heat-ink-dark: #0b0b0b; --heat-ink-light: #f0efec;
-  --div-pos: #5598e7; --div-neg: #e66767; --div-mid: #383835;
-  --band: rgba(57,135,229,0.10); --good: #0ca30c; --warn: #fab219; color-scheme: dark; } }
+  --div-pos: #5598e7; --div-neg: #e66767;
+  --good: #0ca30c; --warn: #fab219; --bad: #ef6b6b; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --plane: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
   --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
   --s-shallow: #3987e5; --s-looped: #d95926; --s-deep: #199e70;
-  --heat-lo: #1e2733; --heat-hi: #9ec5f4; --heat-ink-dark: #0b0b0b; --heat-ink-light: #f0efec;
-  --div-pos: #5598e7; --div-neg: #e66767; --div-mid: #383835;
-  --band: rgba(57,135,229,0.10); --good: #0ca30c; --warn: #fab219; color-scheme: dark; }
+  --div-pos: #5598e7; --div-neg: #e66767;
+  --good: #0ca30c; --warn: #fab219; --bad: #ef6b6b; color-scheme: dark; }
 
 body { background: var(--plane); color: var(--ink); font: 15px/1.55 var(--f-body);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-main { max-width: 860px; margin: 0 auto; padding-block: 32px 64px; display: grid; gap: 40px; }
+main { max-width: 880px; margin: 0 auto; padding-block: 32px 72px; display: grid; gap: 44px; }
 h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.2; }
 h1 { font-size: 2rem; font-weight: 600; }
 h2 { font-size: 1.35rem; font-weight: 600; }
 h3 { font-size: 1rem; font-weight: 600; }
 p { margin: 0; max-width: 68ch; }
 .eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-.lede { font-size: 1.1rem; color: var(--ink-2); }
+.lede { font-size: 1.08rem; color: var(--ink-2); }
 section { display: grid; gap: 14px; min-width: 0; }
 .claim { font-weight: 600; }
 .read { color: var(--ink-2); font-size: 0.92rem; }
-.panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 16px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 16px; min-width: 0; display: grid; gap: 10px; align-content: start; }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
-.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
 svg { display: block; width: 100%; height: auto; overflow: visible; }
 svg text { fill: var(--ink-2); font: 11px var(--f-body); font-variant-numeric: tabular-nums; }
 .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.85rem; color: var(--ink-2); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .sw { width: 14px; height: 4px; border-radius: 2px; display: inline-block; }
-.status { display: grid; gap: 10px; }
-.status-row { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: start; }
-.pill { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--ring); text-align: center; color: var(--ink-2); }
-.pill.done { color: var(--good); } .pill.blocked { color: var(--warn); }
-ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 4px; }
+ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; }
+li { max-width: 68ch; }
 table { border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; width: 100%; }
-th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--grid); }
+th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--grid); vertical-align: top; }
 th:first-child, td:first-child { text-align: left; }
+td.l, th.l { text-align: left; }
 th { color: var(--muted); font-weight: 600; }
 .scroll { overflow-x: auto; }
-details summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
-details[open] summary { margin-bottom: 8px; }
 .tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--ring);
   border-radius: 8px; padding: 6px 9px; font-size: 0.8rem; box-shadow: 0 4px 14px rgba(0,0,0,0.12); max-width: 240px; z-index: 20; }
-.big { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-.big .v { font-family: var(--f-display); font-size: 1.9rem; font-weight: 600; }
-.big .k { color: var(--ink-2); font-size: 0.88rem; }
-pre.mermaid { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 12px; overflow-x: auto; }
-code { font-size: 0.88em; }
-.glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-.mcard { display: grid; gap: 10px; align-content: start; }
-.mcard .name { font-family: var(--f-display); font-size: 1.15rem; font-weight: 600; }
-.blocks { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; min-height: 26px; }
-.blk { height: 22px; min-width: 12px; padding: 0 5px; border-radius: 4px; font-size: 0.68rem; display: inline-flex; align-items: center; justify-content: center; color: var(--ink-2); border: 1px solid var(--axis); background: var(--plane); }
+.ledger { display: grid; gap: 8px; }
+.row { display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--grid); }
+.row:last-child { border-bottom: 0; }
+.row p { font-size: 0.93rem; }
+.row .ev { color: var(--ink-2); font-size: 0.85rem; margin-top: 2px; }
+.pill { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; border: 1px solid currentColor; text-align: center; justify-self: start; white-space: nowrap; }
+.pill.yes { color: var(--good); } .pill.no { color: var(--bad); } .pill.open { color: var(--warn); } .pill.mixed { color: var(--ink-2); }
+.mcard .name { font-family: var(--f-display); font-size: 1.1rem; font-weight: 600; }
+.blocks { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; min-height: 24px; }
+.blk { height: 20px; min-width: 11px; padding: 0 4px; border-radius: 4px; font-size: 0.66rem; display: inline-flex; align-items: center; justify-content: center; color: var(--ink-2); border: 1px solid var(--axis); background: var(--plane); }
 .blk.core { border-color: currentColor; }
-.loopbadge { font-size: 0.75rem; font-weight: 600; padding: 1px 6px; border-radius: 999px; border: 1.5px dashed currentColor; }
-.facts { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.loopbadge { font-size: 0.72rem; font-weight: 600; padding: 1px 6px; border-radius: 999px; border: 1.5px dashed currentColor; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 0.85rem; font-variant-numeric: tabular-nums; margin: 0; }
 .facts dt { color: var(--muted); } .facts dd { margin: 0; }
-.verdict { font-size: 0.92rem; }
-.qa { display: grid; gap: 12px; }
-.qa div { display: grid; gap: 2px; }
-.qa b { font-family: var(--f-display); }
-.reach td.cell { font-weight: 600; }
-.divider { border: 0; border-top: 1px solid var(--grid); margin: 8px 0 0; }
+.pos { color: var(--div-pos); font-weight: 600; } .neg { color: var(--div-neg); font-weight: 600; }
+.road { display: grid; gap: 12px; }
+.stage { display: grid; grid-template-columns: 112px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--grid); }
+.stage h3 { margin-bottom: 4px; }
+.stage .when { font-family: var(--f-display); font-weight: 600; color: var(--ink-2); }
+.stage ul { font-size: 0.93rem; }
+.note { font-size: 0.85rem; color: var(--muted); }
+details summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
+details[open] summary { margin-bottom: 8px; }
+code { font-size: 0.88em; }
 :focus-visible { outline: 2px solid var(--s-shallow); outline-offset: 2px; }
-@media (max-width: 480px) { h1 { font-size: 1.6rem; } .status-row { grid-template-columns: 1fr; gap: 4px; } }
+@media (max-width: 520px) { h1 { font-size: 1.6rem; } .row, .stage { grid-template-columns: 1fr; gap: 4px; } }
 </style>
 
 <main>
-  <header style="display:grid; gap:10px">
-    <div class="eyebrow">loop-transformer · status 22 Nov 2026, 19:57 · seed 0</div>
-    <h1>Looping buys depth, not arithmetic</h1>
-    <p class="lede">Tiny models trained from scratch to do arithmetic in their heads. Looping the same layers lets a small model handle more steps, as well as a model 4× its size. Big numbers are a separate problem: looping doesn't fix them, and extra weights only partly do.</p>
-  </header>
+<header style="display:grid; gap:10px">
+  <div class="eyebrow">Looped transformers · PEMDAS arithmetic · as of 23 Nov 2026</div>
+  <h1>Do loops add reasoning depth?</h1>
+  <p class="lede">Tiny transformers trained from scratch on nested arithmetic like <code>(8-3)*(4-6)+7=-3</code>. Same weights run several times (looped) versus no repeats (shallow) versus more distinct layers (deep). 34 training runs and 24 scoring runs so far; the headline numbers below are 120k-step models on two seeds.</p>
+</header>
 
+<section aria-labelledby="sum">
+  <h2 id="sum">What we learned, and what we didn't</h2>
+  <div class="panel ledger">
+    <div class="row"><span class="pill yes">Learned</span><div><p><b>Loops buy steps.</b> On problems with many sequential steps, looped beats shallow (same weights) by +0.11 at 4 steps and +0.25 at 8 steps.</p><p class="ev">Both seeds, 120k steps. The gap grows with step count.</p></div></div>
+    <div class="row"><span class="pill yes">Learned</span><div><p><b>Looped matches deep on steps with a quarter of the weights.</b> Within ±0.03 at every depth.</p><p class="ev">4.4M looped vs 19M deep, same compute. Holds past the training depth (depth 13, trained ≤ 8).</p></div></div>
+    <div class="row"><span class="pill yes">Learned</span><div><p><b>Weights buy number size.</b> Deep beats looped by +0.05 to +0.15 on big answers and big inputs, and by the same amount on pure addition and subtraction.</p><p class="ev">So it is not about multiplication tables. H13 rejected on unseen problems.</p></div></div>
+    <div class="row"><span class="pill yes">Learned</span><div><p><b>Operator mix doesn't matter</b> once depth and number size are fixed (±0.015).</p><p class="ev">H14 not supported. Multiplication-heavy problems are hard only because their answers are big.</p></div></div>
+    <div class="row"><span class="pill yes">Learned</span><div><p><b>Training length mattered a lot.</b> 40k → 120k steps lifted everything by +0.08 to +0.26, and models are still not converged.</p><p class="ev">The loop gap survived the longer training: it is capability, not faster learning.</p></div></div>
+    <div class="row"><span class="pill no">Broken</span><div><p><b>No generalization to longer numbers.</b> Every model scores 0% on 4-digit inputs, even a single <code>a+b</code>.</p><p class="ev">The place-value tags cause the collapse: without tags, answers stay within 5% (0.92); with tags, garbage (0.01–0.10).</p></div></div>
+    <div class="row"><span class="pill no">Broken</span><div><p><b>A model trained at 8 loops only works at 8 loops</b> (≤ 0.11 at other counts).</p><p class="ev">Blocks "use fewer loops on easy problems" until training changes (plan step 5).</p></div></div>
+    <div class="row"><span class="pill mixed">Depends</span><div><p><b>Reversed answer order</b> hurts small models and helps big ones: big answers −0.08 shallow, −0.03 looped, +0.12 deep.</p><p class="ev">Fails the pre-set rule on all three, so normal order stays.</p></div></div>
+    <div class="row"><span class="pill open">Unknown</span><div><p><b>Why number size needs weights</b>, whether width fixes it, and whether a model can choose its own loop count.</p><p class="ev">These are the roadmap below.</p></div></div>
+  </div>
+</section>
 
-  <section aria-labelledby="g">
-    <h2 id="g">At a glance</h2>
-    <div class="glance">
-      <div class="panel mcard" style="color:var(--s-shallow)">
-        <div class="name" style="color:var(--ink)">Shallow 2×1</div>
-        <div class="blocks"><span class="blk">read</span><span class="blk core">A</span><span class="blk core">B</span><span class="blk">write</span></div>
-        <dl class="facts" style="color:var(--ink)"><dt>Layers</dt><dd>4 blocks, each run once</dd><dt>Weights</dt><dd>4.4M (≈17 MB)</dd><dt>Work per problem</dt><dd>4 block-steps</dd><dt>Training speed</dt><dd>fastest (≈8 ms/step)</dd></dl>
-        <p class="verdict" style="color:var(--ink)"><b>Works on short problems.</b> Small answers stay mostly right up to depth 7; it can't handle many steps.</p>
-      </div>
-      <div class="panel mcard" style="color:var(--s-looped)">
-        <div class="name" style="color:var(--ink)">Looped 2×8</div>
-        <div class="blocks"><span class="blk">read</span><span class="blk core">A</span><span class="blk core">B</span><span class="loopbadge">×8</span><span class="blk">write</span></div>
-        <dl class="facts" style="color:var(--ink)"><dt>Layers</dt><dd>same 4 blocks; A,B run 8 times</dd><dt>Weights</dt><dd>4.4M (≈17 MB), same as shallow</dd><dt>Work per problem</dt><dd>18 block-steps</dd><dt>Training speed</dt><dd>≈32 ms/step</dd></dl>
-        <p class="verdict" style="color:var(--ink)"><b>Looping helps a lot on many-step problems</b> and matches deep there, with a quarter of the weights. It doesn't help with big numbers.</p>
-      </div>
-      <div class="panel mcard" style="color:var(--s-deep)">
-        <div class="name" style="color:var(--ink)">Deep 16×1</div>
-        <div class="blocks"><span class="blk">read</span><span class="blk core">1</span><span class="blk core">2</span><span class="blk core">3</span><span class="blk core">4</span><span class="blk core">…</span><span class="blk core">16</span><span class="blk">write</span></div>
-        <dl class="facts" style="color:var(--ink)"><dt>Layers</dt><dd>18 different blocks, each run once</dd><dt>Weights</dt><dd>19.0M (≈76 MB), 4.4× more</dd><dt>Work per problem</dt><dd>18 block-steps (same as looped)</dd><dt>Training speed</dt><dd>≈32 ms/step (same as looped)</dd></dl>
-        <p class="verdict" style="color:var(--ink)"><b>Best overall, but only on big numbers.</b> On many-step problems it ties looped. It costs 4.4× the weights to store, not more compute.</p>
-      </div>
-    </div>
+<section aria-labelledby="models">
+  <h2 id="models">The three models</h2>
+  <div class="grid3" id="mcards"></div>
+  <p class="read">Each block is a transformer layer (width 256, 4 attention heads). Dashed badge = how many times the core repeats. Looped and deep do the same amount of compute per answer; looped and shallow have the same weights.</p>
+</section>
 
-    <h3 style="margin-top:6px">How deep does each model stay mostly right (50%+)?</h3>
-    <div class="panel scroll"><table class="reach">
-      <tr><th>model</th><th>1-digit answers</th><th>2-digit</th><th>3-digit</th><th>4-digit</th></tr>
-      <tr><td>Shallow 2×1</td><td class="cell">depth 7</td><td class="cell">depth 3</td><td class="cell">depth 2</td><td class="cell">never</td></tr>
-      <tr><td>Looped 2×8</td><td class="cell">depth 12</td><td class="cell">depth 6</td><td class="cell">depth 2</td><td class="cell">never</td></tr>
-      <tr><td>Deep 16×1</td><td class="cell">depth 12</td><td class="cell">depth 6</td><td class="cell">depth 3</td><td class="cell">never</td></tr>
-    </table></div>
-    <p class="read">Read it as: "the looped model gets more than half of 2-digit-answer problems right up to 6 steps deep." Trained on depths 1–8, so depth 12 is beyond anything it practised. 1-digit inputs, normal answer order.</p>
+<section aria-labelledby="f1">
+  <div class="eyebrow">Finding 1 · steps</div>
+  <h2 id="f1">Loops close the gap to depth as problems get longer</h2>
+  <p class="claim">Accuracy on 1-digit answers by number of nested steps. Looped tracks deep; shallow falls away.</p>
+  <div class="panel">
+    <div class="legend" id="lg1"></div>
+    <svg id="c1" viewBox="0 0 640 300" role="img" aria-label="Accuracy by depth for shallow, looped and deep models"></svg>
+  </div>
+  <p class="read">Lines are the mean of seeds 0 and 1; the shaded band spans the two seeds. Training covered depths 1–8 (grey band); 9–13 is beyond it. Small answers isolate step count from number size.</p>
+</section>
 
-    <div class="panel qa">
-      <div><b>Does shallow work?</b><span>Yes on short problems (95% at depth 3 with 1-digit answers), and it falls off fast: 47% at depth 8.</span></div>
-      <div><b>Does the loop help?</b><span>Yes, a lot, for many-step problems: same weights as shallow, +16 to +29 points at depths 4–10 on small answers. Almost no help on big answers (+3 points).</span></div>
-      <div><b>Is deep better, and does it use more memory?</b><span>Only on big numbers (3-digit answers at depths 3–6: +8 to +30 points over looped). On many-step problems it ties looped. It needs 4.4× the weights (memory to store), but the same compute and speed as looped.</span></div>
-      <div><b>What falls off?</b><span>Everything falls with depth, and answer size matters more: 1-digit answers last to depth 12 (looped), 2-digit to 6, 3-digit to 2–3, 4-digit never pass 50% even at depth 3.</span></div>
-      <div><b>What happened with backwards answers?</b><span>Writing <code>258</code> as <code>852</code> made every model worse: big answers −0.04 to −0.08, small answers −0.04 to −0.11. We keep normal order. It may only help once digits get place-value tags (next step).</span></div>
-    </div>
+<section aria-labelledby="f2">
+  <div class="eyebrow">Finding 2 · number size</div>
+  <h2 id="f2">Bigger answers need more weights, not more loops</h2>
+  <p class="claim">Accuracy at depths 3–6 by answer length. Loops help over shallow, but deep pulls ahead from 3 digits on.</p>
+  <div class="panel">
+    <div class="legend" id="lg2"></div>
+    <svg id="c2" viewBox="0 0 640 280" role="img" aria-label="Accuracy by answer digits for the three models"></svg>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>How much of the shallow→deep gap looped closes (%Gap)</th><th>seed 0</th><th>seed 1</th></tr></thead>
+    <tbody>
+      <tr><td>Step count (1-digit answers, depth 8)</td><td>0.91</td><td>1.08</td></tr>
+      <tr><td>4-digit answers, depths 3–6</td><td>0.55</td><td>0.63</td></tr>
+      <tr><td>Multi-digit inputs, depths 1–3</td><td>0.23</td><td>0.46</td></tr>
+    </tbody></table></div>
+  <p class="read">%Gap = (looped − shallow) / (deep − shallow), the metric from Saunshi et al. (ICLR 2025). They found loops close 34–48% on memorization and 131% on pure reasoning; our step-count vs number-size split mirrors that.</p>
+</section>
 
-    <h3 style="margin-top:6px">Other loop shapes (earlier grid, older and easier data)</h3>
-    <p class="read">These ran on the first, unbalanced dataset with a depth curriculum, so their numbers aren't comparable to the ones above. Accuracy on unseen depth-3 problems (mostly small answers), ±0.02.</p>
-    <div class="panel scroll"><table>
-      <tr><th>model</th><th>layers (read + core + write)</th><th>core runs</th><th>weights</th><th>block-steps</th><th>depth-3 accuracy</th></tr>
-      <tr><td>2×1 (shallow)</td><td>1 + 2 + 1 = 4</td><td>1</td><td>4.4M</td><td>4</td><td>0.80</td></tr>
-      <tr><td>2×2</td><td>4</td><td>2</td><td>4.4M</td><td>6</td><td>0.84</td></tr>
-      <tr><td>2×4</td><td>4</td><td>4</td><td>4.4M</td><td>10</td><td>0.86</td></tr>
-      <tr><td>2×8</td><td>4</td><td>8</td><td>4.4M</td><td>18</td><td>0.86</td></tr>
-      <tr><td>4×1 (medium)</td><td>1 + 4 + 1 = 6</td><td>1</td><td>6.4M</td><td>6</td><td>0.83</td></tr>
-      <tr><td>4×2</td><td>6</td><td>2</td><td>6.4M</td><td>10</td><td>0.86</td></tr>
-      <tr><td>4×4</td><td>6</td><td>4</td><td>6.4M</td><td>18</td><td>0.88</td></tr>
-      <tr><td>8×1 (medium-deep)</td><td>1 + 8 + 1 = 10</td><td>1</td><td>10.6M</td><td>10</td><td>0.81</td></tr>
-      <tr><td>8×2</td><td>10</td><td>2</td><td>10.6M</td><td>18</td><td>0.88</td></tr>
-      <tr><td>16×1 (deep)</td><td>1 + 16 + 1 = 18</td><td>1</td><td>19.0M</td><td>18</td><td>0.88</td></tr>
-      <tr><td>2×(1–8) random loops</td><td>4</td><td>1–8</td><td>4.4M</td><td>4–18</td><td>0.83</td></tr>
-      <tr><td>4×(1–4) random loops</td><td>6</td><td>1–4</td><td>6.4M</td><td>6–18</td><td>0.79</td></tr>
-    </table></div>
-    <p class="read">Same story at small scale: more loops on the same weights help (2×1 0.80 → 2×4 0.86), and every 18-block-step model lands at 0.86–0.88 whatever its weight count. The newer balanced runs only include 2×1, 2×8 and 16×1.</p>
-  </section>
-  <section aria-labelledby="st">
-    <h2 id="st">Status</h2>
-    <div class="panel status">
-      <div class="status-row"><span class="pill done">Done</span><div>Probe set for digit order (D-007): shallow, looped and deep, each with normal and reversed answers, on the balanced dataset (depths 1–8 mixed, no curriculum). Digit order decided: <b>normal</b>.</div></div>
-      <div class="status-row"><span class="pill">Doing</span><div>Nothing running. GPU idle.</div></div>
-      <div class="status-row"><span class="pill blocked">Blocked</span><div>Big answers (3–5 digits) stay at or below 0.29 for every model. One seed for everything, so looped ≈ deep isn't a claim yet.</div></div>
-      <div class="status-row"><span class="pill">Next</span><div><b>D-011 (your call):</b> test place-value embeddings. Recommended: normal order on all three models plus one looped run with reversed order (4 runs, about 1.6 h). Then a second seed.</div></div>
-    </div>
-  </section>
+<section aria-labelledby="f3">
+  <div class="eyebrow">Finding 3 · pure addition and subtraction (H13)</div>
+  <h2 id="f3">Deep's edge on numbers doesn't need multiplication</h2>
+  <p class="claim">Test-only sets with only <code>+</code> or only <code>-</code>, inputs of exactly 1–4 digits. Unseen problems, depths 1–3, 2–3-digit inputs:</p>
+  <div class="scroll"><table>
+    <thead><tr><th></th><th>shallow</th><th>looped</th><th>deep</th><th>deep − looped</th></tr></thead>
+    <tbody>
+      <tr><td>Addition</td><td>0.43 / 0.38</td><td>0.44 / 0.43</td><td>0.49 / 0.58</td><td class="pos">+0.05 / +0.15</td></tr>
+      <tr><td>Subtraction</td><td>0.34 / 0.29</td><td>0.39 / 0.48</td><td>0.51 / 0.55</td><td class="pos">+0.11 / +0.08</td></tr>
+      <tr><td>Mixed problems, same region</td><td></td><td></td><td></td><td class="pos">+0.07 / +0.10</td></tr>
+    </tbody></table></div>
+  <p class="read">Seed 0 / seed 1. The gap is the same size with or without <code>*</code>, so "weights buy arithmetic" means number size. With 1-digit inputs, subtraction shows the step result again: looped 0.81 vs deep 0.82. The pre-set rule came out "unclear" because it averaged in cells where every model scores 0%: a rule-design mistake, flagged in the log.</p>
+</section>
 
-  <hr class="divider">
-  <div class="eyebrow">The detail</div>
-  <section aria-labelledby="models">
-    <h2 id="models">The three models</h2>
-    <p class="read">Same width (256), same data, same 40k training steps. "Looped" reuses the same two core blocks 8 times, so it has shallow's weights and deep's compute.</p>
-    <pre class="mermaid">
-flowchart LR
-  subgraph S["Shallow 2×1 · 4.4M weights · 4 block-steps"]
-    s1[read] --> s2["core A,B"] --> s3[write]
-  end
-  subgraph L["Looped 2×8 · 4.4M weights · 18 block-steps"]
-    l1[read] --> l2["core A,B"] --> l3[write]
-    l2 -- "×8, input fed back each pass" --> l2
-  end
-  subgraph D["Deep 16×1 · 19.0M weights · 18 block-steps"]
-    d1[read] --> d2["16 different core blocks"] --> d3[write]
-  end
-    </pre>
-    <div class="big">
-      <div class="panel"><div class="v" id="bigShallow">–</div><div class="k">Shallow: small answers, depths 2–6</div></div>
-      <div class="panel"><div class="v" id="bigLooped">–</div><div class="k">Looped: small answers, depths 2–6</div></div>
-      <div class="panel"><div class="v" id="bigDeep">–</div><div class="k">Deep: small answers, depths 2–6</div></div>
-    </div>
-  </section>
+<section aria-labelledby="f4">
+  <div class="eyebrow">Finding 4 · longer numbers</div>
+  <h2 id="f4">Place-value tags break on numbers longer than training</h2>
+  <p class="claim">Training never had 4-digit inputs. On 300 random <code>a+b</code> with 4-digit a and b:</p>
+  <div class="scroll"><table>
+    <thead><tr><th>model</th><th>exact</th><th>right length</th><th>first 2 digits right</th><th>within 5%</th><th>example: 6268+9071 = 15339</th></tr></thead>
+    <tbody>
+      <tr><td>Looped, no tags (40k)</td><td>0.00</td><td>0.98</td><td>0.54</td><td class="pos">0.92</td><td>15765</td></tr>
+      <tr><td>Deep, no tags (40k)</td><td>0.01</td><td>0.98</td><td>0.55</td><td class="pos">0.93</td><td>15545</td></tr>
+      <tr><td>Looped, tags (120k)</td><td>0.00</td><td>0.16</td><td>0.05</td><td class="neg">0.01</td><td>–</td></tr>
+      <tr><td>Deep, tags (120k)</td><td>0.00</td><td>0.63</td><td>0.07</td><td class="neg">0.10</td><td>7539</td></tr>
+    </tbody></table></div>
+  <p class="read">Without tags the model estimates: right size, right leading digits, wrong low digits. With tags it produces garbage. Tags raise in-range accuracy a lot (3-digit sums 0.24 → 0.74) but make anything longer unreadable.</p>
+  <p class="read"><b>Likely cause (not yet tested):</b> the tags are absolute and share one table between question and answer. In training, question digits only had tags 1–3; tag 4 only ever meant "4th answer digit". A thousands digit in the question arrives labelled as an answer position. McLeish et al. (NeurIPS 2024) hit the same wall and fixed it with a random offset on the tags during training.</p>
+</section>
 
-  <section aria-labelledby="f1">
-    <div class="eyebrow">Finding 1 · step count</div>
-    <h2 id="f1">More steps hurt every model; looping cuts the damage</h2>
-    <p class="claim">Holding answer size fixed, accuracy falls as depth grows. For 1-digit answers, shallow loses 0.53 between depth 1 and 8; looped loses 0.26. The looped model tracks the deep one almost exactly, including at depths it never trained on.</p>
-    <div class="legend" id="leg1"></div>
-    <div class="grid2">
-      <div class="panel"><h3>1-digit answers</h3><svg id="line1" viewBox="0 0 400 250" role="img" aria-label="Accuracy by depth, 1-digit answers"></svg></div>
-      <div class="panel"><h3>2-digit answers</h3><svg id="line2" viewBox="0 0 400 250" role="img" aria-label="Accuracy by depth, 2-digit answers"></svg></div>
-    </div>
-    <p class="read">Shaded: depths 1–8, the range seen in training. Beyond depth 8 the models degrade gradually instead of collapsing. 1-digit inputs only; depth 1 has only ~25 held-out problems per cell, so it is noisy.</p>
-  </section>
+<section aria-labelledby="f5">
+  <div class="eyebrow">Finding 5 · answer order</div>
+  <h2 id="f5">Reversed answers pay off only with enough weights</h2>
+  <div class="panel">
+    <svg id="c5" viewBox="0 0 640 190" role="img" aria-label="Reversed minus normal accuracy by model"></svg>
+    <p class="note">Reversed − normal accuracy, seeds 0 and 1 as two bars. Blue = reversed better.</p>
+  </div>
+  <p class="read">Writing the answer least-significant digit first (as McLeish do) costs the small models and helps the deep one. On a single big multiplication it helps shallow (+0.12 to +0.15). The pre-set rule (≥ +0.05 on multi-digit inputs, ≤ 0.03 cost) failed on all three models, so normal order stays the default.</p>
+</section>
 
-  <section aria-labelledby="f2">
-    <div class="eyebrow">Finding 2 · number size</div>
-    <h2 id="f2">Answer size is the bigger wall</h2>
-    <p class="claim">Reading across a row (same depth), accuracy collapses as answers get longer, for every model. Each cell: exact-match accuracy on ~1,000 unseen problems.</p>
-    <div class="grid3" id="heats"></div>
-    <div class="legend" style="align-items:center">
-      <span>0</span><svg viewBox="0 0 160 10" style="width:160px"><defs><linearGradient id="hg"><stop offset="0" stop-color="var(--heat-lo)"></stop><stop offset="1" stop-color="var(--heat-hi)"></stop></linearGradient></defs><rect width="160" height="10" rx="3" fill="url(#hg)"></rect></svg><span>1.00</span>
-      <span style="color:var(--muted)">blank = no test problems of that kind</span>
-    </div>
-  </section>
+<section aria-labelledby="f6">
+  <div class="eyebrow">Finding 6 · what didn't matter</div>
+  <h2 id="f6">Operator mix and tags-on-small-models</h2>
+  <ul>
+    <li><b>Operator mix (H14):</b> within groups with the same depth, answer size and input size, the most-<code>*</code> third scores within ±0.015 of the least-<code>*</code> third, for all three models and both seeds.</li>
+    <li><b>Place-value tags on the shallow model</b> did nothing in range (−0.01); on the looped model they added +0.055 on big answers (one seed, 40k steps). They are on by default now, which is what Finding 4 calls into question.</li>
+  </ul>
+</section>
 
-  <section aria-labelledby="f3">
-    <div class="eyebrow">Finding 3 · where each fix helps</div>
-    <h2 id="f3">Loops help with steps, weights help with numbers</h2>
-    <p class="claim">Left: what 8 loops add over shallow (same weights). Right: what 4× the weights add over looped (same compute). Blue = better, red = worse, in accuracy points.</p>
-    <div class="grid2">
-      <div class="panel"><h3>Looped − shallow</h3><svg id="gainLoop" role="img" aria-label="Accuracy gain from looping"></svg></div>
-      <div class="panel"><h3>Deep − looped</h3><svg id="gainWeights" role="img" aria-label="Accuracy gain from more weights"></svg></div>
-    </div>
-    <p class="read">Looping's gains sit in the left columns (small answers) and grow with depth. Extra weights add little there but help on 3-digit answers at depths 3–6 (+0.08 to +0.30), where the arithmetic itself is hard.</p>
-  </section>
+<section aria-labelledby="runs">
+  <h2 id="runs">Every run so far</h2>
+  <div class="scroll"><table>
+    <thead><tr><th class="l">Experiment</th><th>runs</th><th class="l">What it asked</th><th class="l">Answer</th></tr></thead>
+    <tbody>
+      <tr><td class="l">Grid (seed 0)</td><td>12</td><td class="l">Cores 2/4/8/16 × loops, curriculum by depth, 40k</td><td class="l">Curriculum stalled at depth 3: big numbers, not steps. Led to balanced data.</td></tr>
+      <tr><td class="l">D-007 answer order</td><td>6</td><td class="l">Shallow / looped / deep × normal / reversed, balanced data, 40k</td><td class="l">First clean result: loops buy steps, weights buy arithmetic. Reversed worse.</td></tr>
+      <tr><td class="l">D-011 place-value tags</td><td>4</td><td class="l">Shallow / looped × tags + normal / reversed, 40k</td><td class="l">Tags +0.055 on looped big answers → adopted. Normal order kept.</td></tr>
+      <tr><td class="l">D-012 long, normal</td><td>6</td><td class="l">Three models × 2 seeds, tags, 120k</td><td class="l">The headline: looped = deep on steps; deep wins on number size; seeds agree within 0.01–0.04.</td></tr>
+      <tr><td class="l">D-012 long, reversed</td><td>6</td><td class="l">Same, reversed answers</td><td class="l">Fails rule on all three; helps deep, hurts shallow.</td></tr>
+      <tr><td class="l">H13 / H14 scoring</td><td>24</td><td class="l">12 saved models × add-only, sub-only sets; operator labels</td><td class="l">Number size, not lookup. Operator mix irrelevant. 4-digit inputs 0%.</td></tr>
+      <tr><td class="l">4-digit diagnosis</td><td>4</td><td class="l">Greedy decoding with and without tags</td><td class="l">Tags break out-of-range numbers.</td></tr>
+    </tbody></table></div>
+  <p class="note">Earlier, separate track: retrofitting loops into Qwen (exp1–3). Paused; it didn't work. Full details in <code>docs/research-log.md</code>, decisions in <code>docs/decisions.md</code>, open questions in <code>docs/hypotheses.md</code>.</p>
+</section>
 
-  <section aria-labelledby="f4">
-    <div class="eyebrow">Finding 4 · digit order (D-007)</div>
-    <h2 id="f4">Writing answers backwards hurt every model</h2>
-    <p class="claim">Decision rule, written before the runs: adopt reversed if big-answer accuracy rises by at least 0.05 without costing small answers more than 0.03. It failed both conditions for all three models.</p>
-    <div class="panel scroll"><table id="ruleTable"></table></div>
-    <p class="read">This goes against published results on simple addition, where reversed digits line up with the inputs. Reversed order may only pay off together with place-value embeddings (the D-011 question).</p>
-  </section>
+<section aria-labelledby="limits">
+  <h2 id="limits">How far to trust this</h2>
+  <ul>
+    <li>Two seeds per model at 120k steps. Seeds agree within 0.01–0.04 on most slices but differ by up to 0.10 on 3-digit answers.</li>
+    <li>Test sets hold about 1,000 problems per cell (±0.03 sampling noise); no test problem appears in training for the main data.</li>
+    <li>Models are tiny (256 wide) and still improving at 120k steps; "deep beats looped on numbers" could shrink with width or training.</li>
+    <li>Two pre-set rules measured the wrong thing (D-011 used 1-digit inputs; H13 averaged in 0% cells). Both were caught and logged; conclusions rest on the corrected views.</li>
+  </ul>
+</section>
 
-  <section aria-labelledby="f5">
-    <div class="eyebrow">Finding 5 · multi-digit inputs</div>
-    <h2 id="f5">Big inputs are hard even in one step</h2>
-    <p class="claim">Depth 1 with 3-digit numbers (like <code>639*53</code>) is one operation, yet no model gets above about 0.38 on any answer size. That is pure arithmetic capacity, separate from step count.</p>
-    <div class="panel scroll"><table id="multiTable"></table></div>
-  </section>
+<section aria-labelledby="road">
+  <h2 id="road">Roadmap</h2>
+  <p class="read">Goal: know "what mostly works" for arithmetic, then go wider (H16) toward middle-school math. Each stage has its decision rule written before it runs.</p>
+  <div class="road">
+    <div class="stage"><div class="when">Next</div><div><h3>Fix longer numbers (H18)</h3><ul>
+      <li>Train looped and deep with a random offset on the tags, and with separate question/answer tag tables; add a no-tag 120k control.</li>
+      <li>Test on 4–5-digit inputs. Success: 4-digit <code>a+b</code> above 0.5 exact without losing in-range accuracy.</li>
+      <li>Cheap first: plot what each attention head looks at per loop pass on saved models (free).</li>
+    </ul></div></div>
+    <div class="stage"><div class="when">Then</div><div><h3>Variable loop count (H9, plan step 5)</h3><ul>
+      <li>Train with an answer read out after every pass (deep supervision or progressive loss), so any loop count works.</li>
+      <li>Then let the model stop early: confidence rule, then a learned stop head. Success: few loops on easy problems, many on hard ones, no accuracy loss. Neither paper did this.</li>
+    </ul></div></div>
+    <div class="stage"><div class="when">Then</div><div><h3>Settle the recipe</h3><ul>
+      <li>Full grid with the fixed recipe, 2 seeds, longer training. Fit accuracy against log(depth) for loops vs layers.</li>
+      <li>Prefix attention (H15) and loop placement (H11) as ablations.</li>
+    </ul></div></div>
+    <div class="stage"><div class="when">Later</div><div><h3>Wider models and harder math</h3><ul>
+      <li>H16: width 512–1024. Does width fix number size, and do loops still add steps on top?</li>
+      <li>H12 chain task (data exists), H17 algebra (<code>3*x+5=20;x?</code>), then back to Qwen if a recipe clearly works.</li>
+    </ul></div></div>
+  </div>
+</section>
 
-  <section aria-labelledby="f6">
-    <div class="eyebrow">Finding 6 · test-time loops</div>
-    <h2 id="f6">A model trained at 8 loops only works at 8 loops</h2>
-    <p class="claim">Running the looped model with fewer or more passes than it trained with breaks it. Extra loops at test time need random-loop training (plan step 5).</p>
-    <div class="panel"><svg id="ksweep" viewBox="0 0 400 230" role="img" aria-label="Accuracy by test-time loop count"></svg></div>
-    <p class="read">Small answers (1–2 digits), depths 4 and 8. The model was trained with exactly 8 passes.</p>
-  </section>
-
-  <section aria-labelledby="mean">
-    <h2 id="mean">What this does and doesn't show</h2>
-    <div class="panel">
-      <ul>
-        <li><b>Shows:</b> with fixed weights, looping adds real sequential depth. At equal compute it matches a model with 4× the weights on many-step problems.</li>
-        <li><b>Shows:</b> the remaining failures are mostly multi-digit arithmetic, which loops don't fix and extra weights only partly fix.</li>
-        <li><b>Doesn't show yet:</b> that it holds across seeds (one seed so far), that extra loops at test time help (needs random-loop training), or anything beyond arithmetic (chain task and algebra later).</li>
-        <li><b>Caveat:</b> the balanced data costs a little on easy cases (depth 3, 2-digit answers: 0.88 vs 0.94 on the earlier grid).</li>
-      </ul>
-    </div>
-  </section>
-
-  <details>
-    <summary>All numbers as tables (accuracy by depth × answer digits, normal order)</summary>
-    <div class="scroll" id="tables"></div>
-  </details>
+<details>
+  <summary>Chart data (seed 0 / seed 1)</summary>
+  <div class="scroll"><table id="tdata"></table></div>
+</details>
 </main>
 <div class="tip" id="tip" hidden></div>
 
 <script>
-const DATA = {"heat":{"shallow-normal":{"1":{"1":[1.0,24,0.0],"2":[0.96,25,0.077],"3":null,"4":null,"5":null,"6":null,"7":null,"8":null},"2":{"1":[0.996,1000,0.004],"2":[0.968,1000,0.011],"3":[0.976,1000,0.009],"4":null,"5":null,"6":null,"7":null,"8":null},"3":{"1":[0.946,1000,0.014],"2":[0.75,1000,0.027],"3":[0.418,1000,0.031],"4":[0.244,1000,0.027],"5":null,"6":null,"7":null,"8":null},"4":{"1":[0.737,1000,0.027],"2":[0.421,1000,0.031],"3":[0.148,1000,0.022],"4":[0.035,1000,0.011],"5":[0.014,1000,0.007],"6":null,"7":null,"8":null},"5":{"1":[0.629,1000,0.03],"2":[0.329,1000,0.029],"3":[0.101,1000,0.019],"4":[0.02,1000,0.009],"5":[0.008,1000,0.006],"6":[0.004,1000,0.004],"7":null,"8":null},"6":{"1":[0.578,1000,0.031],"2":[0.254,1000,0.027],"3":[0.061,1000,0.015],"4":[0.019,1000,0.008],"5":[0.006,1000,0.005],"6":[0.001,1000,0.002],"7":null,"8":null},"7":{"1":[0.51,1000,0.031],"2":[0.194,1000,0.025],"3":[0.065,1000,0.015],"4":[0.017,1000,0.008],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":null,"8":null},"8":{"1":[0.47,1000,0.031],"2":[0.136,1000,0.021],"3":[0.055,1000,0.014],"4":[0.009,1000,0.006],"5":[0.004,1000,0.004],"6":[0.0,1000,0.0],"7":null,"8":null},"9":{"1":[0.449,1000,0.031],"2":[0.101,1000,0.019],"3":[0.038,1000,0.012],"4":[0.008,1000,0.006],"5":[0.002,1000,0.003],"6":[0.0,1000,0.0],"7":null,"8":null},"10":{"1":[0.419,1000,0.031],"2":[0.079,1000,0.017],"3":[0.028,1000,0.01],"4":[0.004,1000,0.004],"5":[0.003,1000,0.003],"6":[0.0,1000,0.0],"7":null,"8":null},"11":{"1":[0.417,1000,0.031],"2":[0.057,1000,0.014],"3":[0.015,1000,0.008],"4":[0.005,1000,0.004],"5":[0.001,1000,0.002],"6":[0.001,1000,0.002],"7":[0.0,1000,0.0],"8":null},"12":{"1":[0.398,1000,0.03],"2":[0.038,1000,0.012],"3":[0.011,1000,0.006],"4":[0.004,1000,0.004],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"13":{"1":[0.352,1000,0.03],"2":[0.03,1000,0.011],"3":[0.011,1000,0.006],"4":[0.007,1000,0.005],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"14":{"1":null,"2":[0.025,1000,0.01],"3":[0.002,1000,0.003],"4":[0.003,1000,0.003],"5":[0.002,1000,0.003],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"15":{"1":null,"2":[0.013,1000,0.007],"3":[0.005,1000,0.004],"4":[0.003,1000,0.003],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"16":{"1":null,"2":[0.015,1000,0.008],"3":[0.001,1000,0.002],"4":[0.001,1000,0.002],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":[0.0,1000,0.0]}},"looped-normal":{"1":{"1":[1.0,24,0.0],"2":[1.0,25,0.0],"3":null,"4":null,"5":null,"6":null,"7":null,"8":null},"2":{"1":[1.0,1000,0.0],"2":[0.997,1000,0.003],"3":[0.977,1000,0.009],"4":null,"5":null,"6":null,"7":null,"8":null},"3":{"1":[0.988,1000,0.007],"2":[0.875,1000,0.02],"3":[0.467,1000,0.031],"4":[0.228,1000,0.026],"5":null,"6":null,"7":null,"8":null},"4":{"1":[0.897,1000,0.019],"2":[0.664,1000,0.029],"3":[0.222,1000,0.026],"4":[0.053,1000,0.014],"5":[0.027,1000,0.01],"6":null,"7":null,"8":null},"5":{"1":[0.85,1000,0.022],"2":[0.584,1000,0.031],"3":[0.173,1000,0.023],"4":[0.05,1000,0.014],"5":[0.019,1000,0.008],"6":[0.005,1000,0.004],"7":null,"8":null},"6":{"1":[0.843,1000,0.023],"2":[0.541,1000,0.031],"3":[0.152,1000,0.022],"4":[0.041,1000,0.012],"5":[0.008,1000,0.006],"6":[0.001,1000,0.002],"7":null,"8":null},"7":{"1":[0.763,1000,0.026],"2":[0.447,1000,0.031],"3":[0.135,1000,0.021],"4":[0.026,1000,0.01],"5":[0.007,1000,0.005],"6":[0.001,1000,0.002],"7":null,"8":null},"8":{"1":[0.737,1000,0.027],"2":[0.389,1000,0.03],"3":[0.122,1000,0.02],"4":[0.029,1000,0.01],"5":[0.006,1000,0.005],"6":[0.001,1000,0.002],"7":null,"8":null},"9":{"1":[0.672,1000,0.029],"2":[0.32,1000,0.029],"3":[0.097,1000,0.018],"4":[0.027,1000,0.01],"5":[0.005,1000,0.004],"6":[0.0,1000,0.0],"7":null,"8":null},"10":{"1":[0.62,1000,0.03],"2":[0.254,1000,0.027],"3":[0.086,1000,0.017],"4":[0.011,1000,0.006],"5":[0.005,1000,0.004],"6":[0.0,1000,0.0],"7":null,"8":null},"11":{"1":[0.607,1000,0.03],"2":[0.19,1000,0.024],"3":[0.049,1000,0.013],"4":[0.013,1000,0.007],"5":[0.003,1000,0.003],"6":[0.002,1000,0.003],"7":[0.0,1000,0.0],"8":null},"12":{"1":[0.531,1000,0.031],"2":[0.135,1000,0.021],"3":[0.045,1000,0.013],"4":[0.011,1000,0.006],"5":[0.002,1000,0.003],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"13":{"1":[0.437,1000,0.031],"2":[0.091,1000,0.018],"3":[0.034,1000,0.011],"4":[0.006,1000,0.005],"5":[0.003,1000,0.003],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"14":{"1":null,"2":[0.079,1000,0.017],"3":[0.018,1000,0.008],"4":[0.006,1000,0.005],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"15":{"1":null,"2":[0.04,1000,0.012],"3":[0.018,1000,0.008],"4":[0.002,1000,0.003],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"16":{"1":null,"2":[0.034,1000,0.011],"3":[0.006,1000,0.005],"4":[0.003,1000,0.003],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":[0.0,1000,0.0]}},"deep-normal":{"1":{"1":[1.0,24,0.0],"2":[1.0,25,0.0],"3":null,"4":null,"5":null,"6":null,"7":null,"8":null},"2":{"1":[1.0,1000,0.0],"2":[1.0,1000,0.0],"3":[0.993,1000,0.005],"4":null,"5":null,"6":null,"7":null,"8":null},"3":{"1":[0.992,1000,0.006],"2":[0.959,1000,0.012],"3":[0.767,1000,0.026],"4":[0.474,1000,0.031],"5":null,"6":null,"7":null,"8":null},"4":{"1":[0.906,1000,0.018],"2":[0.707,1000,0.028],"3":[0.352,1000,0.03],"4":[0.126,1000,0.021],"5":[0.052,1000,0.014],"6":null,"7":null,"8":null},"5":{"1":[0.853,1000,0.022],"2":[0.615,1000,0.03],"3":[0.302,1000,0.028],"4":[0.087,1000,0.017],"5":[0.026,1000,0.01],"6":[0.009,1000,0.006],"7":null,"8":null},"6":{"1":[0.831,1000,0.023],"2":[0.569,1000,0.031],"3":[0.235,1000,0.026],"4":[0.078,1000,0.017],"5":[0.02,1000,0.009],"6":[0.002,1000,0.003],"7":null,"8":null},"7":{"1":[0.769,1000,0.026],"2":[0.45,1000,0.031],"3":[0.204,1000,0.025],"4":[0.056,1000,0.014],"5":[0.016,1000,0.008],"6":[0.001,1000,0.002],"7":null,"8":null},"8":{"1":[0.718,1000,0.028],"2":[0.393,1000,0.03],"3":[0.164,1000,0.023],"4":[0.044,1000,0.013],"5":[0.014,1000,0.007],"6":[0.003,1000,0.003],"7":null,"8":null},"9":{"1":[0.643,1000,0.03],"2":[0.344,1000,0.029],"3":[0.14,1000,0.022],"4":[0.036,1000,0.012],"5":[0.012,1000,0.007],"6":[0.002,1000,0.003],"7":null,"8":null},"10":{"1":[0.614,1000,0.03],"2":[0.259,1000,0.027],"3":[0.1,1000,0.019],"4":[0.014,1000,0.007],"5":[0.001,1000,0.002],"6":[0.003,1000,0.003],"7":null,"8":null},"11":{"1":[0.581,1000,0.031],"2":[0.197,1000,0.025],"3":[0.078,1000,0.017],"4":[0.016,1000,0.008],"5":[0.005,1000,0.004],"6":[0.001,1000,0.002],"7":[0.001,1000,0.002],"8":null},"12":{"1":[0.534,1000,0.031],"2":[0.143,1000,0.022],"3":[0.038,1000,0.012],"4":[0.006,1000,0.005],"5":[0.003,1000,0.003],"6":[0.002,1000,0.003],"7":[0.0,1000,0.0],"8":null},"13":{"1":[0.445,1000,0.031],"2":[0.085,1000,0.017],"3":[0.046,1000,0.013],"4":[0.012,1000,0.007],"5":[0.003,1000,0.003],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"14":{"1":null,"2":[0.076,1000,0.016],"3":[0.024,1000,0.009],"4":[0.005,1000,0.004],"5":[0.002,1000,0.003],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"15":{"1":null,"2":[0.054,1000,0.014],"3":[0.026,1000,0.01],"4":[0.002,1000,0.003],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"16":{"1":null,"2":[0.037,1000,0.012],"3":[0.013,1000,0.007],"4":[0.001,1000,0.002],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":[0.0,1000,0.0]}},"shallow-rev":{"1":{"1":[1.0,24,0.0],"2":[1.0,25,0.0],"3":null,"4":null,"5":null,"6":null,"7":null,"8":null},"2":{"1":[0.995,1000,0.004],"2":[0.765,1000,0.026],"3":[0.943,1000,0.014],"4":null,"5":null,"6":null,"7":null,"8":null},"3":{"1":[0.935,1000,0.015],"2":[0.445,1000,0.031],"3":[0.234,1000,0.026],"4":[0.099,1000,0.019],"5":null,"6":null,"7":null,"8":null},"4":{"1":[0.738,1000,0.027],"2":[0.234,1000,0.026],"3":[0.075,1000,0.016],"4":[0.019,1000,0.008],"5":[0.007,1000,0.005],"6":null,"7":null,"8":null},"5":{"1":[0.669,1000,0.029],"2":[0.192,1000,0.024],"3":[0.055,1000,0.014],"4":[0.015,1000,0.008],"5":[0.001,1000,0.002],"6":[0.004,1000,0.004],"7":null,"8":null},"6":{"1":[0.624,1000,0.03],"2":[0.163,1000,0.023],"3":[0.049,1000,0.013],"4":[0.021,1000,0.009],"5":[0.003,1000,0.003],"6":[0.0,1000,0.0],"7":null,"8":null},"7":{"1":[0.557,1000,0.031],"2":[0.143,1000,0.022],"3":[0.033,1000,0.011],"4":[0.01,1000,0.006],"5":[0.004,1000,0.004],"6":[0.0,1000,0.0],"7":null,"8":null},"8":{"1":[0.514,1000,0.031],"2":[0.097,1000,0.018],"3":[0.028,1000,0.01],"4":[0.008,1000,0.006],"5":[0.003,1000,0.003],"6":[0.001,1000,0.002],"7":null,"8":null},"9":{"1":[0.469,1000,0.031],"2":[0.095,1000,0.018],"3":[0.025,1000,0.01],"4":[0.007,1000,0.005],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":null,"8":null},"10":{"1":[0.46,1000,0.031],"2":[0.07,1000,0.016],"3":[0.028,1000,0.01],"4":[0.006,1000,0.005],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":null,"8":null},"11":{"1":[0.458,1000,0.031],"2":[0.059,1000,0.015],"3":[0.018,1000,0.008],"4":[0.003,1000,0.003],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"12":{"1":[0.401,1000,0.03],"2":[0.046,1000,0.013],"3":[0.014,1000,0.007],"4":[0.003,1000,0.003],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"13":{"1":[0.38,1000,0.03],"2":[0.022,1000,0.009],"3":[0.007,1000,0.005],"4":[0.0,1000,0.0],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"14":{"1":null,"2":[0.022,1000,0.009],"3":[0.005,1000,0.004],"4":[0.0,1000,0.0],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"15":{"1":null,"2":[0.015,1000,0.008],"3":[0.004,1000,0.004],"4":[0.001,1000,0.002],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"16":{"1":null,"2":[0.009,1000,0.006],"3":[0.002,1000,0.003],"4":[0.003,1000,0.003],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":[0.0,1000,0.0]}},"looped-rev":{"1":{"1":[1.0,24,0.0],"2":[1.0,25,0.0],"3":null,"4":null,"5":null,"6":null,"7":null,"8":null},"2":{"1":[0.99,1000,0.006],"2":[0.897,1000,0.019],"3":[0.944,1000,0.014],"4":null,"5":null,"6":null,"7":null,"8":null},"3":{"1":[0.937,1000,0.015],"2":[0.671,1000,0.029],"3":[0.352,1000,0.03],"4":[0.129,1000,0.021],"5":null,"6":null,"7":null,"8":null},"4":{"1":[0.845,1000,0.022],"2":[0.444,1000,0.031],"3":[0.155,1000,0.022],"4":[0.039,1000,0.012],"5":[0.019,1000,0.008],"6":null,"7":null,"8":null},"5":{"1":[0.804,1000,0.025],"2":[0.381,1000,0.03],"3":[0.147,1000,0.022],"4":[0.033,1000,0.011],"5":[0.011,1000,0.006],"6":[0.003,1000,0.003],"7":null,"8":null},"6":{"1":[0.796,1000,0.025],"2":[0.378,1000,0.03],"3":[0.1,1000,0.019],"4":[0.02,1000,0.009],"5":[0.003,1000,0.003],"6":[0.002,1000,0.003],"7":null,"8":null},"7":{"1":[0.743,1000,0.027],"2":[0.3,1000,0.028],"3":[0.129,1000,0.021],"4":[0.025,1000,0.01],"5":[0.007,1000,0.005],"6":[0.002,1000,0.003],"7":null,"8":null},"8":{"1":[0.719,1000,0.028],"2":[0.285,1000,0.028],"3":[0.098,1000,0.018],"4":[0.022,1000,0.009],"5":[0.005,1000,0.004],"6":[0.0,1000,0.0],"7":null,"8":null},"9":{"1":[0.651,1000,0.03],"2":[0.231,1000,0.026],"3":[0.065,1000,0.015],"4":[0.023,1000,0.009],"5":[0.004,1000,0.004],"6":[0.0,1000,0.0],"7":null,"8":null},"10":{"1":[0.617,1000,0.03],"2":[0.188,1000,0.024],"3":[0.068,1000,0.016],"4":[0.015,1000,0.008],"5":[0.003,1000,0.003],"6":[0.0,1000,0.0],"7":null,"8":null},"11":{"1":[0.623,1000,0.03],"2":[0.166,1000,0.023],"3":[0.051,1000,0.014],"4":[0.008,1000,0.006],"5":[0.002,1000,0.003],"6":[0.001,1000,0.002],"7":[0.0,1000,0.0],"8":null},"12":{"1":[0.557,1000,0.031],"2":[0.128,1000,0.021],"3":[0.033,1000,0.011],"4":[0.008,1000,0.006],"5":[0.004,1000,0.004],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"13":{"1":[0.489,1000,0.031],"2":[0.078,1000,0.017],"3":[0.035,1000,0.011],"4":[0.011,1000,0.006],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"14":{"1":null,"2":[0.065,1000,0.015],"3":[0.014,1000,0.007],"4":[0.003,1000,0.003],"5":[0.002,1000,0.003],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"15":{"1":null,"2":[0.048,1000,0.013],"3":[0.014,1000,0.007],"4":[0.002,1000,0.003],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"16":{"1":null,"2":[0.027,1000,0.01],"3":[0.015,1000,0.008],"4":[0.002,1000,0.003],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":[0.0,1000,0.0]}},"deep-rev":{"1":{"1":[1.0,24,0.0],"2":[1.0,25,0.0],"3":null,"4":null,"5":null,"6":null,"7":null,"8":null},"2":{"1":[1.0,1000,0.0],"2":[0.997,1000,0.003],"3":[0.993,1000,0.005],"4":null,"5":null,"6":null,"7":null,"8":null},"3":{"1":[0.989,1000,0.006],"2":[0.892,1000,0.019],"3":[0.539,1000,0.031],"4":[0.246,1000,0.027],"5":null,"6":null,"7":null,"8":null},"4":{"1":[0.886,1000,0.02],"2":[0.591,1000,0.03],"3":[0.251,1000,0.027],"4":[0.074,1000,0.016],"5":[0.023,1000,0.009],"6":null,"7":null,"8":null},"5":{"1":[0.844,1000,0.022],"2":[0.511,1000,0.031],"3":[0.185,1000,0.024],"4":[0.053,1000,0.014],"5":[0.017,1000,0.008],"6":[0.002,1000,0.003],"7":null,"8":null},"6":{"1":[0.833,1000,0.023],"2":[0.444,1000,0.031],"3":[0.165,1000,0.023],"4":[0.046,1000,0.013],"5":[0.01,1000,0.006],"6":[0.003,1000,0.003],"7":null,"8":null},"7":{"1":[0.77,1000,0.026],"2":[0.376,1000,0.03],"3":[0.154,1000,0.022],"4":[0.035,1000,0.011],"5":[0.004,1000,0.004],"6":[0.001,1000,0.002],"7":null,"8":null},"8":{"1":[0.751,1000,0.027],"2":[0.287,1000,0.028],"3":[0.123,1000,0.02],"4":[0.017,1000,0.008],"5":[0.006,1000,0.005],"6":[0.001,1000,0.002],"7":null,"8":null},"9":{"1":[0.65,1000,0.03],"2":[0.242,1000,0.027],"3":[0.099,1000,0.019],"4":[0.021,1000,0.009],"5":[0.005,1000,0.004],"6":[0.0,1000,0.0],"7":null,"8":null},"10":{"1":[0.649,1000,0.03],"2":[0.199,1000,0.025],"3":[0.067,1000,0.015],"4":[0.013,1000,0.007],"5":[0.003,1000,0.003],"6":[0.001,1000,0.002],"7":null,"8":null},"11":{"1":[0.62,1000,0.03],"2":[0.162,1000,0.023],"3":[0.061,1000,0.015],"4":[0.011,1000,0.006],"5":[0.004,1000,0.004],"6":[0.001,1000,0.002],"7":[0.0,1000,0.0],"8":null},"12":{"1":[0.557,1000,0.031],"2":[0.12,1000,0.02],"3":[0.039,1000,0.012],"4":[0.018,1000,0.008],"5":[0.005,1000,0.004],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"13":{"1":[0.518,1000,0.031],"2":[0.075,1000,0.016],"3":[0.034,1000,0.011],"4":[0.007,1000,0.005],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"14":{"1":null,"2":[0.072,1000,0.016],"3":[0.023,1000,0.009],"4":[0.007,1000,0.005],"5":[0.001,1000,0.002],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"15":{"1":null,"2":[0.061,1000,0.015],"3":[0.028,1000,0.01],"4":[0.004,1000,0.004],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":null},"16":{"1":null,"2":[0.026,1000,0.01],"3":[0.017,1000,0.008],"4":[0.003,1000,0.003],"5":[0.0,1000,0.0],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0],"8":[0.0,1000,0.0]}}},"rule":{"shallow-normal":{"big":[0.171,12000,0.007],"small":[0.661,10000,0.009],"multi":[0.215,25421,0.005]},"looped-normal":{"big":[0.201,12000,0.007],"small":[0.824,10000,0.007],"multi":[0.278,25421,0.006]},"deep-normal":{"big":[0.293,12000,0.008],"small":[0.843,10000,0.007],"multi":[0.336,25421,0.006]},"shallow-rev":{"big":[0.127,12000,0.006],"small":[0.576,10000,0.01],"multi":[0.217,25421,0.005]},"looped-rev":{"big":[0.163,12000,0.007],"small":[0.714,10000,0.009],"multi":[0.223,25421,0.005]},"deep-rev":{"big":[0.217,12000,0.007],"small":[0.799,10000,0.008],"multi":[0.4,25421,0.006]}},"multi":{"shallow-normal":{"d1-op2":{"1":null,"2":[0.846,410,0.035],"3":null,"4":null,"5":null,"6":null,"7":null},"d1-op3":{"1":[0.152,1000,0.022],"2":[0.09,1000,0.018],"3":[0.384,1000,0.03],"4":[0.16,1000,0.023],"5":[0.049,1000,0.013],"6":[0.01,1000,0.006],"7":null},"d2-op2":{"1":[0.718,1000,0.028],"2":[0.617,1000,0.03],"3":[0.294,1000,0.028],"4":[0.096,1000,0.018],"5":[0.05,1000,0.014],"6":null,"7":null},"d2-op3":{"1":[0.651,1000,0.03],"2":[0.521,1000,0.031],"3":[0.14,1000,0.022],"4":[0.037,1000,0.012],"5":[0.007,1000,0.005],"6":[0.001,1000,0.002],"7":[0.0,1000,0.0]},"d3-op2":{"1":[0.623,1000,0.03],"2":[0.372,1000,0.03],"3":[0.101,1000,0.019],"4":[0.017,1000,0.008],"5":[0.005,1000,0.004],"6":[0.001,1000,0.002],"7":[0.0,1000,0.0]},"d3-op3":{"1":null,"2":null,"3":null,"4":null,"5":null,"6":null,"7":null}},"looped-normal":{"d1-op2":{"1":null,"2":[0.959,410,0.019],"3":null,"4":null,"5":null,"6":null,"7":null},"d1-op3":{"1":[0.174,1000,0.023],"2":[0.239,1000,0.026],"3":[0.264,1000,0.027],"4":[0.172,1000,0.023],"5":[0.081,1000,0.017],"6":[0.013,1000,0.007],"7":null},"d2-op2":{"1":[0.912,1000,0.018],"2":[0.839,1000,0.023],"3":[0.356,1000,0.03],"4":[0.121,1000,0.02],"5":[0.092,1000,0.018],"6":null,"7":null},"d2-op3":{"1":[0.807,1000,0.024],"2":[0.726,1000,0.028],"3":[0.206,1000,0.025],"4":[0.058,1000,0.014],"5":[0.011,1000,0.006],"6":[0.001,1000,0.002],"7":[0.001,1000,0.002]},"d3-op2":{"1":[0.789,1000,0.025],"2":[0.601,1000,0.03],"3":[0.168,1000,0.023],"4":[0.03,1000,0.011],"5":[0.012,1000,0.007],"6":[0.0,1000,0.0],"7":[0.0,1000,0.0]},"d3-op3":{"1":null,"2":null,"3":null,"4":null,"5":null,"6":null,"7":null}},"deep-normal":{"d1-op2":{"1":null,"2":[0.998,410,0.005],"3":null,"4":null,"5":null,"6":null,"7":null},"d1-op3":{"1":[0.296,1000,0.028],"2":[0.286,1000,0.028],"3":[0.376,1000,0.03],"4":[0.21,1000,0.025],"5":[0.116,1000,0.02],"6":[0.02,1000,0.009],"7":null},"d2-op2":{"1":[0.956,1000,0.013],"2":[0.92,1000,0.017],"3":[0.58,1000,0.031],"4":[0.228,1000,0.026],"5":[0.156,1000,0.022],"6":null,"7":null},"d2-op3":{"1":[0.865,1000,0.021],"2":[0.805,1000,0.025],"3":[0.302,1000,0.028],"4":[0.114,1000,0.02],"5":[0.024,1000,0.009],"6":[0.005,1000,0.004],"7":[0.003,1000,0.003]},"d3-op2":{"1":[0.815,1000,0.024],"2":[0.68,1000,0.029],"3":[0.285,1000,0.028],"4":[0.061,1000,0.015],"5":[0.019,1000,0.008],"6":[0.002,1000,0.003],"7":[0.002,1000,0.003]},"d3-op3":{"1":null,"2":null,"3":null,"4":null,"5":null,"6":null,"7":null}}},"ksweep":{"1":{"1":[0.041,49,0.055],"2":[0.018,2000,0.006],"3":[0.014,2000,0.005],"4":[0.009,2000,0.004],"5":[0.007,2000,0.004],"6":[0.007,2000,0.004],"7":[0.007,2000,0.004],"8":[0.004,2000,0.003],"9":[0.004,2000,0.003],"10":[0.004,2000,0.003],"11":[0.003,2000,0.002],"12":[0.003,2000,0.002],"13":[0.002,2000,0.002],"14":[0.004,1000,0.004],"15":[0.004,1000,0.004],"16":[0.003,1000,0.003]},"2":{"1":[0.041,49,0.055],"2":[0.025,2000,0.007],"3":[0.024,2000,0.007],"4":[0.018,2000,0.006],"5":[0.031,2000,0.008],"6":[0.028,2000,0.007],"7":[0.033,2000,0.008],"8":[0.036,2000,0.008],"9":[0.043,2000,0.009],"10":[0.038,2000,0.008],"11":[0.042,2000,0.009],"12":[0.041,2000,0.009],"13":[0.033,2000,0.008],"14":[0.004,1000,0.004],"15":[0.003,1000,0.003],"16":[0.003,1000,0.003]},"4":{"1":[0.02,49,0.04],"2":[0.093,2000,0.013],"3":[0.071,2000,0.011],"4":[0.063,2000,0.011],"5":[0.06,2000,0.01],"6":[0.061,2000,0.01],"7":[0.058,2000,0.01],"8":[0.059,2000,0.01],"9":[0.051,2000,0.01],"10":[0.053,2000,0.01],"11":[0.048,2000,0.009],"12":[0.054,2000,0.01],"13":[0.04,2000,0.009],"14":[0.006,1000,0.005],"15":[0.004,1000,0.004],"16":[0.004,1000,0.004]},"8":{"1":[1.0,49,0.0],"2":[0.999,2000,0.002],"3":[0.931,2000,0.011],"4":[0.78,2000,0.018],"5":[0.717,2000,0.02],"6":[0.692,2000,0.02],"7":[0.605,2000,0.021],"8":[0.563,2000,0.022],"9":[0.496,2000,0.022],"10":[0.437,2000,0.022],"11":[0.399,2000,0.021],"12":[0.333,2000,0.021],"13":[0.264,2000,0.019],"14":[0.079,1000,0.017],"15":[0.04,1000,0.012],"16":[0.034,1000,0.011]},"12":{"1":[0.551,49,0.139],"2":[0.345,2000,0.021],"3":[0.215,2000,0.018],"4":[0.112,2000,0.014],"5":[0.089,2000,0.012],"6":[0.083,2000,0.012],"7":[0.065,2000,0.011],"8":[0.062,2000,0.011],"9":[0.057,2000,0.01],"10":[0.05,2000,0.01],"11":[0.05,2000,0.01],"12":[0.053,2000,0.01],"13":[0.041,2000,0.009],"14":[0.006,1000,0.005],"15":[0.005,1000,0.004],"16":[0.005,1000,0.004]},"16":{"1":[0.429,49,0.139],"2":[0.354,2000,0.021],"3":[0.196,2000,0.017],"4":[0.111,2000,0.014],"5":[0.07,2000,0.011],"6":[0.063,2000,0.011],"7":[0.065,2000,0.011],"8":[0.055,2000,0.01],"9":[0.056,2000,0.01],"10":[0.056,2000,0.01],"11":[0.056,2000,0.01],"12":[0.053,2000,0.01],"13":[0.044,2000,0.009],"14":[0.009,1000,0.006],"15":[0.004,1000,0.004],"16":[0.005,1000,0.004]}}};
-const M = [["shallow", "Shallow 2×1", "var(--s-shallow)"], ["looped", "Looped 2×8", "var(--s-looped)"], ["deep", "Deep 16×1", "var(--s-deep)"]];
+const D = {"depth": {"shallow0": [null, 1.0, 0.989, 0.839, 0.754, 0.722, 0.663, 0.616, 0.592, 0.55, 0.537, 0.47, 0.419], "shallow1": [null, 1.0, 0.982, 0.848, 0.783, 0.755, 0.657, 0.625, 0.577, 0.563, 0.535, 0.484, 0.427], "looped0": [null, 1.0, 0.996, 0.957, 0.91, 0.93, 0.892, 0.857, 0.813, 0.771, 0.75, 0.71, 0.624], "looped1": [null, 1.0, 0.999, 0.961, 0.932, 0.941, 0.902, 0.874, 0.837, 0.795, 0.75, 0.688, 0.599], "deep0": [null, 1.0, 1.0, 0.975, 0.941, 0.94, 0.904, 0.88, 0.843, 0.805, 0.742, 0.722, 0.65], "deep1": [null, 1.0, 0.998, 0.964, 0.921, 0.926, 0.875, 0.855, 0.843, 0.791, 0.769, 0.706, 0.597]},
+  "ansd": {"shallow0": [0.826, 0.626, 0.324, 0.148, 0.021, 0.003], "shallow1": [0.842, 0.625, 0.326, 0.18, 0.024, 0.004], "looped0": [0.948, 0.833, 0.52, 0.291, 0.077, 0.015], "looped1": [0.958, 0.875, 0.594, 0.319, 0.094, 0.025], "deep0": [0.964, 0.881, 0.654, 0.41, 0.137, 0.04], "deep1": [0.952, 0.864, 0.623, 0.4, 0.131, 0.035]}};
+const MODELS = [
+  {key: "shallow", name: "Shallow", tok: "--s-shallow", pre: 1, core: 2, loops: 1, coda: 1, params: "4.4M", note: "2 core blocks, run once"},
+  {key: "looped", name: "Looped", tok: "--s-looped", pre: 1, core: 2, loops: 8, coda: 1, params: "4.4M", note: "same 2 core blocks, run 8 times"},
+  {key: "deep", name: "Deep", tok: "--s-deep", pre: 1, core: 16, loops: 1, coda: 1, params: "19M", note: "16 distinct core blocks, run once"}];
 const NS = "http://www.w3.org/2000/svg";
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
 const tip = document.getElementById("tip");
-function el(tag, attrs, parent, text) {
-  const e = document.createElementNS(NS, tag);
-  for (const k in attrs) e.setAttribute(k, attrs[k]);
-  if (text !== undefined) e.textContent = text;
-  if (parent) parent.appendChild(e);
-  return e;
+function showTip(ev, html) { tip.innerHTML = html; tip.hidden = false; tip.style.left = Math.min(ev.clientX + 12, innerWidth - 250) + "px"; tip.style.top = (ev.clientY + 12) + "px"; }
+function hideTip() { tip.hidden = true; }
+
+// model cards
+const mc = document.getElementById("mcards");
+for (const m of MODELS) {
+  const c = document.createElement("div"); c.className = "panel mcard"; c.style.color = `var(${m.tok})`;
+  let blocks = `<span class="blk">in</span>`;
+  const shown = Math.min(m.core, 16);
+  for (let i = 0; i < shown; i++) blocks += `<span class="blk core">${m.core > 4 ? "" : "c"}</span>`;
+  blocks += m.loops > 1 ? `<span class="loopbadge">×${m.loops}</span>` : "";
+  blocks += `<span class="blk">out</span>`;
+  c.innerHTML = `<div class="name" style="color:var(--ink)">${m.name}</div><div class="blocks">${blocks}</div>
+    <dl class="facts" style="color:var(--ink)"><dt>Weights</dt><dd>${m.params}</dd><dt>Layers run</dt><dd>${m.pre + m.core * m.loops + m.coda}</dd><dt>Core</dt><dd>${m.note}</dd></dl>`;
+  mc.appendChild(c);
 }
-function bindTip(node, html) {
-  const show = (ev) => { tip.innerHTML = html; tip.hidden = false; move(ev); };
-  const move = (ev) => { const x = ev.clientX ?? 0, y = ev.clientY ?? 0;
-    tip.style.left = Math.min(x + 12, window.innerWidth - 250) + "px"; tip.style.top = (y + 12) + "px"; };
-  node.addEventListener("pointerenter", show); node.addEventListener("pointermove", move);
-  node.addEventListener("pointerleave", () => { tip.hidden = true; });
-}
-const pct = (v) => v == null ? "–" : v.toFixed(2);
-const H = (m) => DATA.heat[m + "-normal"];
+function legend(id) { document.getElementById(id).innerHTML = MODELS.map(m => `<span><i class="sw" style="background:var(${m.tok})"></i>${m.name}</span>`).join(""); }
+legend("lg1"); legend("lg2");
 
-// big numbers
-document.getElementById("bigShallow").textContent = pct(DATA.rule["shallow-normal"].small[0]);
-document.getElementById("bigLooped").textContent = pct(DATA.rule["looped-normal"].small[0]);
-document.getElementById("bigDeep").textContent = pct(DATA.rule["deep-normal"].small[0]);
-
-// legend
-const leg = document.getElementById("leg1");
-for (const [, name, c] of M) { const s = document.createElement("span"); s.innerHTML = `<i class="sw" style="background:${c}"></i>${name}`; leg.appendChild(s); }
-
-// line charts: accuracy vs depth for a given answer-digit count
-function lineChart(id, ad) {
-  const svg = document.getElementById(id);
-  const W = 400, Hh = 250, L = 36, R = 74, T = 10, B = 30;
-  const x = (d) => L + (d - 1) / 15 * (W - L - R), y = (v) => T + (1 - v) * (Hh - T - B);
-  el("rect", { x: x(1), y: T, width: x(8) - x(1), height: Hh - T - B, fill: "var(--band)" }, svg);
-  el("text", { x: (x(1) + x(8)) / 2, y: T + 12, "text-anchor": "middle", style: "fill:var(--muted)" }, svg, "trained depths");
-  for (const v of [0, 0.25, 0.5, 0.75, 1]) {
-    el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, svg);
-    el("text", { x: L - 6, y: y(v) + 4, "text-anchor": "end" }, svg, v.toFixed(2));
+function axes(svg, W, H, m, x0, x1, xs, xlab, ylab) {
+  const g = el("g", {}, svg);
+  const X = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r), Y = v => m.t + (1 - v) * (H - m.t - m.b);
+  for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+    el("line", {x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: css("--grid"), "stroke-width": 1}, g);
+    el("text", {x: m.l - 8, y: Y(t) + 4, "text-anchor": "end"}, g).textContent = t.toFixed(2);
   }
-  for (const d of [1, 4, 8, 12, 16]) el("text", { x: x(d), y: Hh - B + 16, "text-anchor": "middle" }, svg, d);
-  el("text", { x: (L + W - R) / 2, y: Hh - 2, "text-anchor": "middle", style: "fill:var(--muted)" }, svg, "depth (sequential steps)");
-  const ends = [];
-  for (const [m, name, c] of M) {
-    const pts = [];
-    for (let d = 1; d <= 16; d++) { const cell = H(m)[d][ad]; if (cell && cell[1] >= 100) pts.push([d, cell]); }
-    el("path", { d: pts.map((p, i) => (i ? "L" : "M") + x(p[0]).toFixed(1) + " " + y(p[1][0]).toFixed(1)).join(" "), fill: "none", stroke: c, "stroke-width": 2, "stroke-linejoin": "round" }, svg);
-    for (const [d, cell] of pts) {
-      el("circle", { cx: x(d), cy: y(cell[0]), r: 2.5, fill: c, stroke: "var(--surface)", "stroke-width": 1 }, svg);
-      const hit = el("circle", { cx: x(d), cy: y(cell[0]), r: 9, fill: "transparent", tabindex: 0 }, svg);
-      bindTip(hit, `<b>${name}</b><br>depth ${d}, ${ad}-digit answers<br>accuracy ${cell[0].toFixed(2)} ± ${cell[2].toFixed(2)} (n=${cell[1]})`);
-    }
-    const last = pts[pts.length - 1]; ends.push({ y: y(last[1][0]), name, c, x: x(last[0]) });
-  }
-  ends.sort((a, b) => a.y - b.y); for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;
-  for (const e of ends) el("text", { x: e.x + 6, y: e.y + 4, style: "fill:var(--ink-2)" }, svg, e.name.split(" ")[0]);
-}
-lineChart("line1", "1"); lineChart("line2", "2");
-
-// heatmaps: depth rows x answer digits cols
-function heat(container, m, name) {
-  const panel = document.createElement("div"); panel.className = "panel";
-  panel.innerHTML = `<h3>${name}</h3>`; container.appendChild(panel);
-  const cols = 7, rows = 16, cw = 30, ch = 16, L = 26, T = 18;
-  const svg = el("svg", { viewBox: `0 0 ${L + cols * cw + 4} ${T + rows * ch + 4}`, role: "img", "aria-label": name + " accuracy heatmap" }, panel);
-  for (let a = 1; a <= cols; a++) el("text", { x: L + (a - 0.5) * cw, y: 12, "text-anchor": "middle" }, svg, a + "d");
-  for (let d = 1; d <= rows; d++) {
-    el("text", { x: L - 6, y: T + (d - 0.5) * ch + 4, "text-anchor": "end" }, svg, d);
-    for (let a = 1; a <= cols; a++) {
-      const cell = H(m)[d][a]; if (!cell) continue;
-      const v = cell[0];
-      el("rect", { x: L + (a - 1) * cw + 1, y: T + (d - 1) * ch + 1, width: cw - 2, height: ch - 2, rx: 2,
-        style: `fill: color-mix(in oklab, var(--heat-hi) ${(v * 100).toFixed(0)}%, var(--heat-lo))` }, svg);
-      if (v >= 0.1) el("text", { x: L + (a - 0.5) * cw, y: T + (d - 0.5) * ch + 3.5, "text-anchor": "middle",
-        style: `fill:${v > 0.55 ? "var(--heat-ink-light)" : "var(--heat-ink-dark)"}; font-size:8.5px` }, svg, v.toFixed(2).replace(/^0/, ""));
-      const hit = el("rect", { x: L + (a - 1) * cw, y: T + (d - 1) * ch, width: cw, height: ch, fill: "transparent", tabindex: 0 }, svg);
-      bindTip(hit, `<b>${name}</b><br>depth ${d}, ${a}-digit answers<br>accuracy ${v.toFixed(2)} ± ${cell[2].toFixed(2)} (n=${cell[1]})`);
-    }
-  }
-  el("text", { x: 2, y: 12 }, svg, "depth");
-}
-const hc = document.getElementById("heats");
-for (const [m, name] of M) heat(hc, m, name);
-
-// gain heatmaps (diverging)
-function gain(id, a, b, label) {
-  const svg = document.getElementById(id);
-  const cols = 7, rows = 16, cw = 40, ch = 16, L = 26, T = 18;
-  svg.setAttribute("viewBox", `0 0 ${L + cols * cw + 4} ${T + rows * ch + 4}`);
-  for (let c = 1; c <= cols; c++) el("text", { x: L + (c - 0.5) * cw, y: 12, "text-anchor": "middle" }, svg, c + "-digit");
-  for (let d = 1; d <= rows; d++) {
-    el("text", { x: L - 6, y: T + (d - 0.5) * ch + 4, "text-anchor": "end" }, svg, d);
-    for (let c = 1; c <= cols; c++) {
-      const ca = H(a)[d][c], cb = H(b)[d][c]; if (!ca || !cb || ca[1] < 100) continue;
-      const g = cb[0] - ca[0], s = Math.min(1, Math.abs(g) / 0.3);
-      const pole = g >= 0 ? "var(--div-pos)" : "var(--div-neg)";
-      el("rect", { x: L + (c - 1) * cw + 1, y: T + (d - 1) * ch + 1, width: cw - 2, height: ch - 2, rx: 2,
-        style: `fill: color-mix(in oklab, ${pole} ${(s * 100).toFixed(0)}%, var(--div-mid))` }, svg);
-      if (Math.abs(g) >= 0.05) el("text", { x: L + (c - 0.5) * cw, y: T + (d - 0.5) * ch + 3.5, "text-anchor": "middle",
-        style: `fill:${s > 0.6 ? "var(--heat-ink-light)" : "var(--ink)"}; font-size:8.5px` }, svg, (g > 0 ? "+" : "") + g.toFixed(2).replace("0.", "."));
-      const hit = el("rect", { x: L + (c - 1) * cw, y: T + (d - 1) * ch, width: cw, height: ch, fill: "transparent", tabindex: 0 }, svg);
-      bindTip(hit, `<b>${label}</b><br>depth ${d}, ${c}-digit answers<br>${(g > 0 ? "+" : "") + g.toFixed(2)} (${ca[0].toFixed(2)} → ${cb[0].toFixed(2)})`);
-    }
-  }
-  el("text", { x: 2, y: 12 }, svg, "depth");
-}
-gain("gainLoop", "shallow", "looped", "Looped − shallow");
-gain("gainWeights", "looped", "deep", "Deep − looped");
-
-// rule table
-{
-  const t = document.getElementById("ruleTable");
-  let h = "<tr><th>model</th><th>big answers, normal</th><th>reversed</th><th>change</th><th>small answers, normal</th><th>reversed</th><th>change</th><th>verdict</th></tr>";
-  for (const [m, name] of M) {
-    const n = DATA.rule[m + "-normal"], r = DATA.rule[m + "-rev"];
-    const db = r.big[0] - n.big[0], ds = r.small[0] - n.small[0];
-    const ok = db >= 0.05 && ds >= -0.03;
-    h += `<tr><td>${name}</td><td>${pct(n.big[0])}</td><td>${pct(r.big[0])}</td><td>${(db >= 0 ? "+" : "") + db.toFixed(2)}</td><td>${pct(n.small[0])}</td><td>${pct(r.small[0])}</td><td>${(ds >= 0 ? "+" : "") + ds.toFixed(2)}</td><td>${ok ? "adopt reversed" : "keep normal"}</td></tr>`;
-  }
-  t.innerHTML = h;
+  for (const v of xs) el("text", {x: X(v), y: H - m.b + 16, "text-anchor": "middle"}, g).textContent = v;
+  el("text", {x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle"}, g).textContent = xlab;
+  el("text", {x: 12, y: m.t - 8}, g).textContent = ylab;
+  return {X, Y};
 }
 
-// multi-digit table
-{
-  const t = document.getElementById("multiTable");
-  let h = "<tr><th>problem type</th><th>model</th>" + [1,2,3,4,5,6].map(a => `<th>${a}-digit ans</th>`).join("") + "</tr>";
-  const groups = [["d1-op3", "depth 1, 3-digit inputs"], ["d2-op2", "depth 2, 2-digit inputs"], ["d3-op2", "depth 3, 2-digit inputs"]];
-  for (const [g, label] of groups) for (const [m, name] of M) {
-    const row = DATA.multi[m + "-normal"][g];
-    h += `<tr><td>${m === "shallow" ? label : ""}</td><td>${name}</td>` + [1,2,3,4,5,6].map(a => `<td>${row[a] ? row[a][0].toFixed(2) : ""}</td>`).join("") + "</tr>";
-  }
-  t.innerHTML = h;
-}
-
-// K sweep
-{
-  const svg = document.getElementById("ksweep");
-  const W = 400, Hh = 230, L = 36, R = 70, T = 10, B = 30;
-  const Ks = Object.keys(DATA.ksweep).map(Number).sort((a, b) => a - b);
-  const x = (k) => L + (k - 1) / 15 * (W - L - R), y = (v) => T + (1 - v) * (Hh - T - B);
-  for (const v of [0, 0.25, 0.5, 0.75, 1]) {
-    el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: v === 0 ? "var(--axis)" : "var(--grid)" }, svg);
-    el("text", { x: L - 6, y: y(v) + 4, "text-anchor": "end" }, svg, v.toFixed(2));
-  }
-  for (const k of Ks) el("text", { x: x(k), y: Hh - B + 16, "text-anchor": "middle" }, svg, k);
-  el("text", { x: (L + W - R) / 2, y: Hh - 2, "text-anchor": "middle", style: "fill:var(--muted)" }, svg, "loops at test time");
-  el("line", { x1: x(8), x2: x(8), y1: T, y2: Hh - B, stroke: "var(--axis)", "stroke-dasharray": "3 3" }, svg);
-  el("text", { x: x(8) + 4, y: T + 10, style: "fill:var(--muted)" }, svg, "trained at 8");
-  const series = [["4", "depth 4", "var(--s-looped)"], ["8", "depth 8", "var(--s-shallow)"]];
-  for (const [d, name, c] of series) {
-    const pts = Ks.map(k => [k, DATA.ksweep[k][d]]).filter(p => p[1]);
-    el("path", { d: pts.map((p, i) => (i ? "L" : "M") + x(p[0]) + " " + y(p[1][0])).join(" "), fill: "none", stroke: c, "stroke-width": 2 }, svg);
-    for (const [k, cell] of pts) {
-      el("circle", { cx: x(k), cy: y(cell[0]), r: 3, fill: c, stroke: "var(--surface)", "stroke-width": 1 }, svg);
-      const hit = el("circle", { cx: x(k), cy: y(cell[0]), r: 10, fill: "transparent", tabindex: 0 }, svg);
-      bindTip(hit, `<b>Looped 2×8, ${name}</b><br>${k} loops at test time<br>accuracy ${cell[0].toFixed(2)} (n=${cell[1]})`);
-    }
+function drawDepth() {
+  const svg = document.getElementById("c1"); svg.innerHTML = "";
+  const W = 640, H = 300, m = {l: 44, r: 70, t: 22, b: 40};
+  const xs = [2,3,4,5,6,7,8,9,10,11,12,13];
+  const {X, Y} = axes(svg, W, H, m, 2, 13, xs, "nested steps (depth)", "accuracy");
+  el("rect", {x: X(2), y: m.t, width: X(8) - X(2), height: H - m.t - m.b, fill: css("--grid"), opacity: 0.35}, svg);
+  el("text", {x: X(5), y: m.t + 14, "text-anchor": "middle"}, svg).textContent = "trained depths";
+  for (const mm of MODELS) {
+    const col = css(mm.tok), a = D.depth[mm.key + "0"], b = D.depth[mm.key + "1"];
+    const pts = xs.map(x => ({x, lo: Math.min(a[x-1], b[x-1]), hi: Math.max(a[x-1], b[x-1]), mean: (a[x-1] + b[x-1]) / 2, a: a[x-1], b: b[x-1]}));
+    el("path", {d: "M" + pts.map(p => `${X(p.x)},${Y(p.hi)}`).join("L") + "L" + pts.slice().reverse().map(p => `${X(p.x)},${Y(p.lo)}`).join("L") + "Z", fill: col, opacity: 0.18}, svg);
+    el("path", {d: "M" + pts.map(p => `${X(p.x)},${Y(p.mean)}`).join("L"), fill: "none", stroke: col, "stroke-width": 2}, svg);
     const last = pts[pts.length - 1];
-    el("text", { x: x(last[0]) + 6, y: y(last[1][0]) + (d === "4" ? -4 : 10) }, svg, name);
+    el("text", {x: X(last.x) + 8, y: Y(last.mean) + 4, style: `fill:${col};font-weight:600`}, svg).textContent = mm.name;
+    for (const p of pts) {
+      el("circle", {cx: X(p.x), cy: Y(p.mean), r: 3, fill: col, stroke: css("--surface"), "stroke-width": 1.5}, svg);
+      const hit = el("circle", {cx: X(p.x), cy: Y(p.mean), r: 10, fill: "transparent"}, svg);
+      hit.addEventListener("pointermove", ev => showTip(ev, `<b>${mm.name}</b>, depth ${p.x}<br>seed 0: ${p.a.toFixed(2)} · seed 1: ${p.b.toFixed(2)}`));
+      hit.addEventListener("pointerleave", hideTip);
+    }
   }
 }
 
-// full tables
-{
-  const box = document.getElementById("tables");
-  for (const [m, name] of M) {
-    let h = `<h3 style="margin:12px 0 6px">${name}</h3><table><tr><th>depth</th>` + [1,2,3,4,5,6,7,8].map(a => `<th>${a}d</th>`).join("") + "</tr>";
-    for (let d = 1; d <= 16; d++) h += `<tr><td>${d}</td>` + [1,2,3,4,5,6,7,8].map(a => { const c = H(m)[d][a]; return `<td>${c ? c[0].toFixed(2) : ""}</td>`; }).join("") + "</tr>";
-    box.insertAdjacentHTML("beforeend", h + "</table>");
+function drawAns() {
+  const svg = document.getElementById("c2"); svg.innerHTML = "";
+  const W = 640, H = 280, m = {l: 44, r: 12, t: 22, b: 40};
+  const n = 6, gw = (W - m.l - m.r) / n, bw = Math.min(26, gw / 4.2);
+  const Y = v => m.t + (1 - v) * (H - m.t - m.b);
+  for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+    el("line", {x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: css("--grid"), "stroke-width": 1}, svg);
+    el("text", {x: m.l - 8, y: Y(t) + 4, "text-anchor": "end"}, svg).textContent = t.toFixed(2);
+  }
+  el("text", {x: 12, y: m.t - 8}, svg).textContent = "accuracy";
+  el("text", {x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle"}, svg).textContent = "answer digits (depths 3–6)";
+  for (let i = 0; i < n; i++) {
+    const cx = m.l + gw * (i + 0.5);
+    el("text", {x: cx, y: H - m.b + 16, "text-anchor": "middle"}, svg).textContent = i + 1;
+    MODELS.forEach((mm, j) => {
+      const a = D.ansd[mm.key + "0"][i], b = D.ansd[mm.key + "1"][i], v = (a + b) / 2;
+      const x = cx + (j - 1) * (bw + 2) - bw / 2, y = Y(v), h = Math.max(1, Y(0) - y);
+      el("path", {d: `M${x},${Y(0)}V${y + Math.min(4, h)}Q${x},${y} ${x + Math.min(4, bw/2)},${y}H${x + bw - Math.min(4, bw/2)}Q${x + bw},${y} ${x + bw},${y + Math.min(4, h)}V${Y(0)}Z`, fill: css(mm.tok)}, svg);
+      el("line", {x1: x + bw / 2, x2: x + bw / 2, y1: Y(Math.min(a, b)), y2: Y(Math.max(a, b)), stroke: css("--ink"), "stroke-width": 1.5, opacity: 0.6}, svg);
+      const hit = el("rect", {x: x - 1, y: m.t, width: bw + 2, height: Y(0) - m.t, fill: "transparent"}, svg);
+      hit.addEventListener("pointermove", ev => showTip(ev, `<b>${mm.name}</b>, ${i + 1}-digit answers<br>seed 0: ${a.toFixed(2)} · seed 1: ${b.toFixed(2)}`));
+      hit.addEventListener("pointerleave", hideTip);
+    });
   }
 }
+
+function drawOrder() {
+  const svg = document.getElementById("c5"); svg.innerHTML = "";
+  const rows = [
+    {label: "Big answers", vals: {shallow: [-0.070, -0.082], looped: [-0.029, -0.033], deep: [0.126, 0.099]}},
+    {label: "1-digit inputs, depths 1–3", vals: {shallow: [-0.095, -0.102], looped: [-0.014, -0.012], deep: [0.021, 0.019]}}];
+  const W = 640, H = 190, m = {l: 170, r: 20, t: 18, b: 26};
+  const X = v => m.l + (v + 0.15) / 0.30 * (W - m.l - m.r);
+  for (const t of [-0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15]) {
+    el("line", {x1: X(t), x2: X(t), y1: m.t, y2: H - m.b, stroke: t === 0 ? css("--axis") : css("--grid"), "stroke-width": 1}, svg);
+    el("text", {x: X(t), y: H - 8, "text-anchor": "middle"}, svg).textContent = (t > 0 ? "+" : "") + t.toFixed(2);
+  }
+  const rh = (H - m.t - m.b) / rows.length;
+  rows.forEach((r, i) => {
+    const y0 = m.t + rh * i;
+    el("text", {x: 4, y: y0 + 14, style: "font-weight:600"}, svg).textContent = r.label;
+    MODELS.forEach((mm, j) => {
+      const yy = y0 + 22 + j * 18;
+      el("text", {x: 14, y: yy + 9}, svg).textContent = mm.name;
+      r.vals[mm.key].forEach((v, s) => {
+        const y = yy + s * 7, x = Math.min(X(0), X(v)), w = Math.abs(X(v) - X(0));
+        el("rect", {x, y, width: Math.max(w, 1), height: 5, rx: 2, fill: v >= 0 ? css("--div-pos") : css("--div-neg")}, svg);
+        const hit = el("rect", {x: m.l, y: y - 1, width: W - m.l - m.r, height: 7, fill: "transparent"}, svg);
+        hit.addEventListener("pointermove", ev => showTip(ev, `<b>${mm.name}</b>, ${r.label}<br>seed ${s}: ${(v > 0 ? "+" : "") + v.toFixed(3)}`));
+        hit.addEventListener("pointerleave", hideTip);
+      });
+    });
+  });
+}
+
+function table() {
+  const t = document.getElementById("tdata");
+  let h = "<thead><tr><th>depth (1-digit answers)</th>" + MODELS.map(m => `<th>${m.name}</th>`).join("") + "</tr></thead><tbody>";
+  for (let d = 2; d <= 13; d++) h += `<tr><td>${d}</td>` + MODELS.map(m => `<td>${D.depth[m.key+"0"][d-1].toFixed(2)} / ${D.depth[m.key+"1"][d-1].toFixed(2)}</td>`).join("") + "</tr>";
+  h += "<tr><th>answer digits (depths 3–6)</th>" + MODELS.map(m => `<th>${m.name}</th>`).join("") + "</tr>";
+  for (let i = 0; i < 6; i++) h += `<tr><td>${i+1}</td>` + MODELS.map(m => `<td>${D.ansd[m.key+"0"][i].toFixed(2)} / ${D.ansd[m.key+"1"][i].toFixed(2)}</td>`).join("") + "</tr>";
+  t.innerHTML = h + "</tbody>";
+}
+function drawAll() { drawDepth(); drawAns(); drawOrder(); }
+drawAll(); table();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawAll);
+new MutationObserver(drawAll).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
 </script>
