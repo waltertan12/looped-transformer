@@ -38,6 +38,8 @@ Shallow 2×1 (4.4M), looped 2×8 (same 4.4M, 8 passes), deep 16×1 (19M, same co
   120k steps, `--place_emb`, normal order. Results `results/toy/long/`; queue log
   `results/toy/long.queue.log` (6 "done" lines = finished; order shallow → looped → deep,
   2 at a time). Shallow ~40 min, looped and deep ~2.5 h each → done ~03:30–04:00.
+- Shallow pair done (21:55): 120k ≫ 40k (+0.08…+0.26), seeds agree within 0.03. Shallow at
+  120k ≈ looped at 40k, so the looped 120k pair decides whether the loop gap is real (research log).
 - D-011 screen is finished: **tags on (looped big answers +0.055), normal order** (reversed
   +0.033 on multi-digit inputs but −0.110 on 1-digit inputs). See research log and D-011 card.
   Re-run the comparison: `.venv/bin/python scripts/d011_compare.py`.

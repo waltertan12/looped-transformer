@@ -663,6 +663,23 @@ only; seed noise still unmeasured).
 **D-012 launched 21:40** with `--place_emb` (normal order): `results/toy/long/`, queue log
 `results/toy/long.queue.log`. Analysis script: `scripts/d011_compare.py`.
 
+## 2026-11-22 — D-012 shallow pair (120k steps, tags, normal): training longer helps a lot
+
+| shallow 2×1 + tags | 40k s0 | 120k s0 | 120k s1 |
+|---|---|---|---|
+| big answers, 1-digit inputs, depths 2–6 | 0.16 | 0.25 | 0.26 |
+| small answers, 1-digit inputs, depths 2–6 | 0.68 | 0.78 | 0.79 |
+| multi-digit inputs, depths 1–3 | 0.25 | 0.40 | 0.38 |
+| depth 1, 3-digit inputs | 0.18 | 0.44 | 0.41 |
+| 1-digit answers, depth 8 / 10 / 13 | 0.49 / 0.44 / 0.35 | 0.62 / 0.55 / 0.42 | 0.63 / 0.56 / 0.43 |
+
+- **First seed-to-seed spread:** 0.01–0.03 on these slices. The 0.05 bar was about right.
+- 3× training lifts the shallow model by +0.08 to +0.26. The 40k runs were well short of done.
+- **Caution for the loop claim:** shallow at 120k (big 0.25, small 0.78) ≈ looped at 40k
+  (0.26, 0.83). The 40k loop gap may be partly "learns faster", not "can do more". The looped
+  120k pair decides this. If looped at 120k doesn't stay clearly ahead, the headline changes.
+- Train accuracy at the end is still 0.42 (loss 0.68): not converged.
+
 ---
 
 ## Open questions / ideas to come back to
