@@ -35,6 +35,11 @@ Related hypotheses in `hypotheses.md`.
   fair. (c) more / smaller heads. (d) tree-masked attention (each token sees only its own
   sub-expression): likely helps, but it hand-codes the algorithm, so a win says little about
   loops. Do (a) before anything else.
+  (e) attention supervision (Walter, 23 Nov): keep normal attention but add a small extra loss that
+  pulls one head toward the expected pattern (for example each `)` looks at the operands inside its
+  brackets). Softer than (d) because the model can still ignore it. Same catch as (d): a win shows the
+  pattern helps, not that loops find it. The loop-specific test is whether it helps looped more than deep.
+  Step (a) now has a viewer: `docs/visual/attention.html` (data from `scripts/attn_export.py`).
 - **I-M4 Saunshi's cosine regularizer** on deep 16×1 (pull blocks toward each other): keeps deep's
   arithmetic and gains looped's step skill?
 - **I-M5 Additive vs concat input injection**; McLeish's multiplication tweaks (no injection

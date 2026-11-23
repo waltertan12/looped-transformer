@@ -1,0 +1,367 @@
+<title>Where the Model Looks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one working column. Controls, then the problem as clickable tokens, then that token's
+   focus through every layer (one heatmap per head), then the full map for one layer. */
+:root {
+  --plane: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --ring: rgba(11,11,11,0.10);
+  --s-shallow: #2a78d6; --s-looped: #eb6834; --s-deep: #1baf7a; --on-acc: #ffffff;
+  --f-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --plane: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --ring: rgba(255,255,255,0.10);
+  --s-shallow: #3987e5; --s-looped: #d95926; --s-deep: #199e70; --on-acc: #ffffff; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --plane: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --ring: rgba(255,255,255,0.10);
+  --s-shallow: #3987e5; --s-looped: #d95926; --s-deep: #199e70; --on-acc: #ffffff; color-scheme: dark; }
+
+body { background: var(--plane); color: var(--ink); font: 15px/1.55 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 960px; margin: 0 auto; padding-block: 32px 72px; display: grid; gap: 28px; }
+h1, h2 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.2; font-weight: 600; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.15rem; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.lede { color: var(--ink-2); font-size: 1.02rem; }
+.note { font-size: 0.85rem; color: var(--muted); }
+section { display: grid; gap: 12px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 4px; }
+li { max-width: 68ch; color: var(--ink-2); }
+code { font-family: var(--f-mono); font-size: 0.9em; }
+a { color: var(--acc); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; }
+.ctl { display: grid; gap: 4px; min-width: 0; }
+.ctl > span { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--ring); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 0.88rem var(--f-body); padding: 6px 12px; border: 0; background: var(--surface); color: var(--ink-2); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--ring); }
+.seg button[aria-pressed="true"] { background: var(--acc); color: var(--on-acc); }
+select { font: 0.9rem var(--f-mono); padding: 6px 8px; border-radius: 8px; border: 1px solid var(--ring); background: var(--surface); color: var(--ink); max-width: 100%; }
+button:focus-visible, select:focus-visible, input:focus-visible, canvas:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+
+.layerbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.layerbar input[type=range] { flex: 1 1 240px; accent-color: var(--acc); min-width: 0; }
+.layerbar .lab { font: 600 0.95rem var(--f-display); min-width: 11ch; }
+.play { font: 500 0.85rem var(--f-body); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--ring); background: var(--surface); color: var(--ink); cursor: pointer; }
+
+.tokens { display: flex; flex-wrap: wrap; gap: 4px; }
+.tok { font: 600 1.05rem var(--f-mono); width: 2rem; height: 2.4rem; border-radius: 6px; border: 1px solid var(--ring);
+  cursor: pointer; display: grid; place-items: center; position: relative; padding: 0; color: var(--ink); }
+.tok.ans { border-style: dashed; }
+.tok[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 2px; }
+.tok .w { position: absolute; bottom: -1.15rem; font: 0.66rem var(--f-body); color: var(--muted); font-variant-numeric: tabular-nums; }
+.tokwrap { padding-bottom: 1.2rem; }
+.caption { color: var(--ink-2); font-size: 0.92rem; }
+.caption b { font-family: var(--f-mono); }
+
+.heads { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 16px; }
+.head { display: grid; gap: 6px; min-width: 0; }
+.head h3 { margin: 0; font: 600 0.9rem var(--f-display); color: var(--ink-2); }
+.scroll { overflow-x: auto; }
+canvas { display: block; cursor: pointer; }
+.scale { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+.ramp { width: 120px; height: 10px; border-radius: 3px; background: linear-gradient(to right, var(--surface), var(--acc)); border: 1px solid var(--ring); }
+.status { font-size: 0.85rem; color: var(--muted); }
+</style>
+
+<main>
+  <header style="display:grid;gap:10px">
+    <div class="eyebrow">Looped transformer · attention viewer</div>
+    <h1>Where the model looks</h1>
+    <p class="lede">Pick a model and a problem, then click a character. The page shows which earlier
+      characters it pays attention to, layer by layer and pass by pass. No hypothesis built in. Just look.</p>
+  </header>
+
+  <section class="panel">
+    <div class="controls">
+      <label class="ctl"><span>Model</span>
+        <div class="seg" id="models" role="group" aria-label="Model">
+          <button data-m="looped" aria-pressed="true">Looped 2×8</button>
+          <button data-m="deep" aria-pressed="false">Deep 16×1</button>
+          <button data-m="shallow" aria-pressed="false">Shallow 2×1</button>
+        </div>
+      </label>
+      <label class="ctl" for="prob"><span>Problem</span><select id="prob"></select></label>
+      <label class="ctl"><span>Head</span>
+        <div class="seg" id="headsel" role="group" aria-label="Head">
+          <button data-h="-1" aria-pressed="true">All 4</button>
+          <button data-h="0" aria-pressed="false">1</button>
+          <button data-h="1" aria-pressed="false">2</button>
+          <button data-h="2" aria-pressed="false">3</button>
+          <button data-h="3" aria-pressed="false">4</button>
+        </div>
+      </label>
+    </div>
+    <div class="layerbar">
+      <button class="play" id="play">Play passes</button>
+      <input type="range" id="layer" min="0" max="17" value="1" aria-label="Layer">
+      <span class="lab" id="layerlab">pass 1 · block 1</span>
+    </div>
+    <p class="status" id="status">Loading…</p>
+  </section>
+
+  <section>
+    <h2>1. The problem, as the model sees it</h2>
+    <p class="note">Each box is one token. Dashed boxes are the answer the model wrote. Click a box to look from it.
+      Shading shows where that token looks at the layer above (averaged over heads when "All 4" is on).</p>
+    <div class="panel">
+      <div class="tokwrap"><div class="tokens" id="tokens"></div></div>
+      <p class="caption" id="caption"></p>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. How its focus moves through the layers</h2>
+    <p class="note">One heatmap per head. Rows run top to bottom in the order the model computes: the layer
+      before the loop, each block of each pass, then the layer after. Columns are the tokens. Click a row to jump to that layer.</p>
+    <div class="panel">
+      <div class="scale"><span>none</span><span class="ramp"></span><span>all of it</span><span>· square-root scale, so weak attention still shows</span></div>
+      <div class="heads" id="film"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. The whole map for one layer</h2>
+    <p class="note">Every token at once. Each row is a token looking back at the tokens before it (it can't see ahead).
+      Click a row to look from that token.</p>
+    <div class="panel"><div class="heads" id="full"></div></div>
+  </section>
+
+  <section class="panel">
+    <h2>How to read it</h2>
+    <ul>
+      <li>A token's row is what it gathers while working out the <em>next</em> character. So <code>=</code> is the step that writes the first answer digit.</li>
+      <li>Attention says where information is pulled from, not what is done with it. A strong look is a clue, not proof.</li>
+      <li>Things to look for: does <code>=</code> look at the innermost brackets on early passes and outer ones later? Do heads split jobs (one on the previous token, one on operators)? Does deep do the same over its layers?</li>
+      <li>Every answer here is correct. The models are the 120k-step runs, seed 0. Data comes from <code>scripts/attn_export.py</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(() => {
+  const B36 = "0123456789abcdefghijklmnopqrstuvwxyz";
+  const ACC = { looped: "--s-looped", deep: "--s-deep", shallow: "--s-shallow" };
+  const st = { model: "looped", ex: 0, head: -1, layer: 1, q: null, data: {}, timer: null };
+  const $ = (id) => document.getElementById(id);
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const cache = new Map();
+
+  function mapOf(model, ex, layer, head) {
+    const key = `${model}|${ex}|${layer}|${head}`;
+    if (cache.has(key)) return cache.get(key);
+    const e = st.data[model].examples[ex];
+    const T = e.tokens.length;
+    let out;
+    if (head >= 0) {
+      const s = e.maps[layer][head];
+      out = new Float32Array(T * T);
+      for (let i = 0; i < s.length; i++) out[i] = B36.indexOf(s[i]) / 35;
+    } else {
+      out = new Float32Array(T * T);
+      for (let h = 0; h < 4; h++) { const m = mapOf(model, ex, layer, h); for (let i = 0; i < out.length; i++) out[i] += m[i] / 4; }
+    }
+    cache.set(key, out);
+    return out;
+  }
+
+  async function load(model) {
+    if (st.data[model]) return st.data[model];
+    const r = await fetch(`attn/${model}.json`);
+    if (!r.ok) throw new Error(`attn/${model}.json: ${r.status}`);
+    st.data[model] = await r.json();
+    return st.data[model];
+  }
+
+  function setAccent() { document.documentElement.style.setProperty("--acc", `var(${ACC[st.model]})`); }
+
+  function ex() { return st.data[st.model].examples[st.ex]; }
+  function layers() { return st.data[st.model].layers; }
+  function defaultQ() { const e = ex(); return e.prompt.length - 1; }  // the "=" token
+
+  function fillProblems() {
+    const sel = $("prob");
+    sel.innerHTML = "";
+    st.data[st.model].examples.forEach((e, i) => {
+      const o = document.createElement("option");
+      o.value = i; o.textContent = `${e.prompt}${e.answer}`;
+      sel.appendChild(o);
+    });
+    sel.value = st.ex;
+  }
+
+  function nextChar(e, q) { return q + 1 < e.tokens.length ? e.tokens[q + 1] : "end of answer"; }
+
+  function renderTokens() {
+    const e = ex(), T = e.tokens.length, box = $("tokens");
+    const m = mapOf(st.model, st.ex, st.layer, st.head);
+    box.innerHTML = "";
+    e.tokens.forEach((c, j) => {
+      const b = document.createElement("button");
+      b.className = "tok" + (j >= e.prompt.length ? " ans" : "");
+      b.setAttribute("aria-pressed", j === st.q ? "true" : "false");
+      b.setAttribute("aria-label", `token ${j + 1}: ${c}`);
+      const w = j <= st.q ? m[st.q * T + j] : 0;
+      const pct = Math.round(Math.sqrt(w) * 100);
+      b.style.background = j <= st.q ? `color-mix(in srgb, var(--acc) ${pct}%, var(--surface))` : "var(--plane)";
+      b.style.color = pct > 55 ? "var(--on-acc)" : (j <= st.q ? "var(--ink)" : "var(--muted)");
+      b.textContent = c;
+      if (j <= st.q && w >= 0.05) { const s = document.createElement("span"); s.className = "w"; s.textContent = Math.round(w * 100) + "%"; b.appendChild(s); }
+      b.onclick = () => { st.q = j; render(); };
+      box.appendChild(b);
+    });
+    const hd = st.head < 0 ? "all heads averaged" : `head ${st.head + 1}`;
+    $("caption").innerHTML = `Looking from <b>${esc(e.tokens[st.q])}</b> (token ${st.q + 1}), which is working out the next character <b>${esc(nextChar(e, st.q))}</b>. ` +
+      `Layer: ${layers()[st.layer]}, ${hd}. Correct answer ${esc(e.truth)}, model wrote ${esc(e.answer)}.`;
+  }
+
+  function esc(s) { return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]); }
+
+  // Draw a heatmap. rows x cols values in [0,1]; labels; optional highlighted row/col; click -> (r, c).
+  function heat(canvas, { rows, cols, val, rowLabels, colLabels, selRow, selCol, onPick, cell, mask }) {
+    const dpr = window.devicePixelRatio || 1;
+    const padL = rowLabels ? 112 : 6, padB = 18, padT = 4;
+    const W = padL + cols * cell + 4, H = padT + rows * cell + padB;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    const g = canvas.getContext("2d");
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const surf = css("--surface"), acc = css(ACC[st.model]), grid = css("--grid"), ink = css("--ink"), ink2 = css("--ink-2"), plane = css("--plane");
+    g.fillStyle = surf; g.fillRect(0, 0, W, H);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const x = padL + c * cell, y = padT + r * cell;
+      if (mask && mask(r, c)) { g.fillStyle = plane; g.fillRect(x, y, cell, cell); continue; }
+      g.fillStyle = surf; g.fillRect(x, y, cell, cell);
+      g.globalAlpha = Math.sqrt(Math.max(0, val(r, c)));
+      g.fillStyle = acc; g.fillRect(x, y, cell, cell);
+      g.globalAlpha = 1;
+    }
+    g.strokeStyle = grid; g.lineWidth = 1;
+    g.strokeRect(padL + 0.5, padT + 0.5, cols * cell, rows * cell);
+    g.font = `11px ${css("--f-body") || "sans-serif"}`;
+    g.textBaseline = "middle";
+    if (rowLabels) {
+      g.textAlign = "right";
+      rowLabels.forEach((l, r) => { g.fillStyle = r === selRow ? ink : ink2; g.font = `${r === selRow ? 600 : 400} 11px ${css("--f-body")}`; g.fillText(l, padL - 6, padT + r * cell + cell / 2); });
+    }
+    g.textAlign = "center"; g.font = `11px ${css("--f-mono")}`;
+    colLabels.forEach((l, c) => { g.fillStyle = c === selCol ? ink : ink2; g.fillText(l, padL + c * cell + cell / 2, padT + rows * cell + padB / 2 + 2); });
+    g.strokeStyle = ink; g.lineWidth = 1.5;
+    if (selRow != null) g.strokeRect(padL + 0.75, padT + selRow * cell + 0.75, cols * cell - 1.5, cell - 1.5);
+    if (selCol != null && rowLabels == null) { /* full map: mark query column lightly */ }
+    canvas.onclick = (ev) => {
+      const b = canvas.getBoundingClientRect();
+      const x = ev.clientX - b.left - padL, y = ev.clientY - b.top - padT;
+      const c = Math.floor(x / cell), r = Math.floor(y / cell);
+      if (r >= 0 && r < rows && c >= 0 && c < cols) onPick(r, c);
+    };
+  }
+
+  function cellSize(container, cols, extra) {
+    const w = container.clientWidth || 600;
+    const per = st.head < 0 ? (w >= 832 ? (w - 16) / 2 : w) : w;
+    return Math.max(9, Math.min(22, Math.floor((per - extra) / cols)));
+  }
+
+  function renderFilm() {
+    const e = ex(), T = e.tokens.length, L = layers().length, box = $("film");
+    box.innerHTML = "";
+    const heads = st.head < 0 ? [0, 1, 2, 3] : [st.head];
+    const cell = cellSize(box, T, 120);
+    heads.forEach((h) => {
+      const d = document.createElement("div"); d.className = "head";
+      d.innerHTML = `<h3>Head ${h + 1}</h3>`;
+      const sc = document.createElement("div"); sc.className = "scroll";
+      const cv = document.createElement("canvas"); cv.setAttribute("aria-label", `Head ${h + 1}: attention from token ${st.q + 1} at every layer`);
+      sc.appendChild(cv); d.appendChild(sc); box.appendChild(d);
+      heat(cv, { rows: L, cols: T, cell: Math.max(cell, 9), rowLabels: layers(), colLabels: e.tokens, selRow: st.layer, selCol: st.q,
+        val: (r, c) => c <= st.q ? mapOf(st.model, st.ex, r, h)[st.q * T + c] : 0,
+        mask: (r, c) => c > st.q,
+        onPick: (r) => { st.layer = r; $("layer").value = r; render(); } });
+    });
+  }
+
+  function renderFull() {
+    const e = ex(), T = e.tokens.length, box = $("full");
+    box.innerHTML = "";
+    const heads = st.head < 0 ? [0, 1, 2, 3] : [st.head];
+    const cell = cellSize(box, T, 30);
+    heads.forEach((h) => {
+      const d = document.createElement("div"); d.className = "head";
+      d.innerHTML = `<h3>Head ${h + 1} · ${esc(layers()[st.layer])}</h3>`;
+      const sc = document.createElement("div"); sc.className = "scroll";
+      const cv = document.createElement("canvas"); cv.setAttribute("aria-label", `Head ${h + 1}: full attention map at ${layers()[st.layer]}`);
+      sc.appendChild(cv); d.appendChild(sc); box.appendChild(d);
+      const m = mapOf(st.model, st.ex, st.layer, h);
+      heat(cv, { rows: T, cols: T, cell, rowLabels: e.tokens.map((t, i) => `${t}`), colLabels: e.tokens, selRow: st.q, selCol: null,
+        val: (r, c) => m[r * T + c], mask: (r, c) => c > r,
+        onPick: (r) => { st.q = r; render(); } });
+    });
+  }
+
+  function render() {
+    if (!st.data[st.model]) return;
+    $("layerlab").textContent = layers()[st.layer];
+    renderTokens(); renderFilm(); renderFull();
+  }
+
+  async function switchModel(m) {
+    stop();
+    st.model = m; setAccent();
+    document.querySelectorAll("#models button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.m === m ? "true" : "false"));
+    $("status").textContent = "Loading…";
+    try { await load(m); } catch (err) { $("status").textContent = `Couldn't load the attention data (${err.message}). Open this page from a web server, not as a local file.`; return; }
+    const d = st.data[m];
+    const L = d.layers.length;
+    $("layer").max = L - 1;
+    st.layer = Math.min(st.layer, L - 1);
+    if (L <= 4) st.layer = Math.min(st.layer, L - 1);
+    $("layer").value = st.layer;
+    fillProblems();
+    if (st.q == null || st.q >= ex().tokens.length) st.q = defaultQ();
+    $("status").textContent = `${d.ckpt} · ${d.loops > 1 ? d.loops + " passes through 2 shared blocks" : (L - 2) + " core layers"} · ${L} attention layers in all`;
+    $("play").textContent = d.loops > 1 ? "Play passes" : "Play layers";
+    render();
+  }
+
+  function stop() { if (st.timer) { clearInterval(st.timer); st.timer = null; $("play").textContent = st.data[st.model]?.loops > 1 ? "Play passes" : "Play layers"; } }
+
+  $("models").addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (b) switchModel(b.dataset.m); });
+  $("headsel").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button"); if (!b) return;
+    st.head = +b.dataset.h;
+    document.querySelectorAll("#headsel button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    render();
+  });
+  $("prob").addEventListener("change", (ev) => { st.ex = +ev.target.value; st.q = defaultQ(); render(); });
+  $("layer").addEventListener("input", (ev) => { st.layer = +ev.target.value; render(); });
+  $("play").addEventListener("click", () => {
+    if (st.timer) return stop();
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    $("play").textContent = "Stop";
+    st.layer = 0; render();
+    st.timer = setInterval(() => {
+      if (st.layer >= layers().length - 1) return stop();
+      st.layer++; $("layer").value = st.layer; render();
+    }, reduce ? 1200 : 650);
+  });
+
+  const rerender = () => render();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender);
+  new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(rerender, 120); });
+
+  setAccent();
+  switchModel("looped");
+})();
+</script>
