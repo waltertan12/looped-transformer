@@ -70,7 +70,7 @@ def test_build_ops_small(tmp_path):
     fd = FrozenData(tmp_path, device="cpu")
     sets = fd.test_sets()
     assert sorted(sets) == [1, 2, 3]
-    assert meta["columns"] == ["answer", "n_ops", "depth", "length", "n_tgt", "in_digits", "ans_digits"]
+    assert meta["columns"] == ["answer", "n_ops", "depth", "length", "n_tgt", "in_digits", "ans_digits", "in_train"]
     for lv, b in sets.items():
         prompts = []
         for i in range(len(b["pos"])):
@@ -198,3 +198,39 @@ def test_h13_verdict():
     assert h13_verdict([0.01, 0.02], [0.0, 0.03]) == "supported"
     assert h13_verdict([0.01], [0.06]) == "rejected"
     assert h13_verdict([0.04], [0.0]) == "unclear"
+
+
+# ---- Final-review fixes ----
+def _fake_train_root(src: Path, dst: Path):
+    """A dataset whose train split is src's test split (so every src prompt is 'seen')."""
+    import json, shutil
+    meta = json.loads((src / "meta.json").read_text())
+    (dst / "train").mkdir(parents=True)
+    for f in (src / "test").iterdir():
+        shutil.copy(f, dst / "train" / f.name)
+    (dst / "meta.json").write_text(json.dumps(meta))
+
+
+def test_build_ops_overlap_per_cell_and_row_flag(tmp_path):
+    from build_ops import build_ops
+    from looptf.toy.dataset import FrozenData
+
+    build_ops("sub", tmp_path / "a", n_per_cell=20, max_depth=2)
+    _fake_train_root(tmp_path / "a", tmp_path / "b")
+    meta = build_ops("sub", tmp_path / "c", n_per_cell=20, max_depth=2, overlap_root=tmp_path / "b")
+    assert meta["columns"][-1] == "in_train"
+    for lv in ("1", "2"):
+        ov = meta["slices"][lv]["overlap_by_cell"]
+        assert set(ov) == {"in1", "in2", "in3", "in4"} and all(v == 1.0 for v in ov.values())
+    for b in FrozenData(tmp_path / "c", device="cpu").test_sets().values():
+        assert (b["in_train"] == 1).all()
+    no_ov = build_ops("sub", tmp_path / "d", n_per_cell=5, max_depth=1)
+    assert "overlap_by_cell" not in no_ov["slices"]["1"]
+
+
+def test_region_acc_excludes_seen():
+    from ops_report import region_acc
+
+    d = {"depth": np.array([1, 1, 2, 4]), "in_digits": np.array([2, 2, 3, 2]),
+         "in_train": np.array([1, 0, 0, 0]), "correct": np.array([1.0, 0.0, 1.0, 1.0])}
+    assert region_acc(d) == pytest.approx(0.5)  # seen row and depth-4 row excluded

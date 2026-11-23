@@ -25,7 +25,8 @@ from looptf.toy.ops_data import feasible_n_ops, gen_single_op
 
 REPO = Path(__file__).resolve().parent.parent
 WIDTH = 80
-COLUMNS = ["answer", "n_ops", "depth", "length", "n_tgt", "in_digits", "ans_digits"]
+COLUMNS = ["answer", "n_ops", "depth", "length", "n_tgt", "in_digits", "ans_digits", "in_train"]
+# in_train: 1 = prompt also in the overlap root's train split at this depth, 0 = unseen, -1 = not checked
 MAX_DEPTH = {"add": 15, "sub": 8}
 IN_DIGITS = (1, 2, 3, 4)
 
@@ -79,18 +80,22 @@ def build_ops(kind: str, root: Path, n_per_cell: int = 1000, seed: int = 0, max_
             cells[f"in{k}"] = len(cell)
             for prompt, ans, n_ops in cell:
                 rows.append((prompt, ans, [ans, n_ops, depth, len(prompt), len(answer_tokens(ans)), k,
-                                           num_digits(ans)]))
+                                           num_digits(ans), -1]))
         if not rows:
             break
+        if overlap_root is not None:
+            tr = _train_prompts(Path(overlap_root), depth)
         random.Random(seed_for(seed, name, "shuffle", depth, 0)).shuffle(rows)
         tok = encode_rows([full_sequence(p, a) for p, a, _ in rows], WIDTH)
         lab = np.array([r for _, _, r in rows], dtype=np.int64)
-        write_slice(root, "test", depth, tok, lab)
         sl = {"train": 0, "test": len(rows), "cells": cells}
         if overlap_root is not None:
-            tr = _train_prompts(Path(overlap_root), depth)
-            sl["overlap_with_nested_bal_train"] = float(np.mean([tok[i, :lab[i, 3]].tobytes() in tr
-                                                                 for i in range(len(tok))]))
+            seen = np.array([tok[i, :lab[i, 3]].tobytes() in tr for i in range(len(tok))], dtype=np.int64)
+            lab[:, COLUMNS.index("in_train")] = seen
+            sl["overlap_with_nested_bal_train"] = float(seen.mean())
+            sl["overlap_by_cell"] = {f"in{k}": float(seen[lab[:, 5] == k].mean()) if (lab[:, 5] == k).any() else 0.0
+                                     for k in IN_DIGITS}
+        write_slice(root, "test", depth, tok, lab)
         slices[str(depth)] = sl
         print(f"  {name} depth {depth:2d}: {len(rows):5d} rows  {cells}"
               + (f"  overlap {sl['overlap_with_nested_bal_train']:.4f}" if overlap_root else ""), flush=True)

@@ -95,7 +95,7 @@ def dump_per_example(model, eval_sets, loops_list, path):
             rows.setdefault("K", []).append(torch.full_like(b["pos"], k).cpu())
             rows.setdefault("correct", []).append(torch.cat(correct))
             for c in ("depth", "chain_len", "n_ops", "n_ops_total", "n_tgt", "answer", "length",
-                      "op_digits", "ans_digits", "n_distractors", "in_digits"):
+                      "op_digits", "ans_digits", "n_distractors", "in_digits", "in_train"):
                 if c in b:
                     rows.setdefault(c, []).append(b[c].cpu())
     model.train()

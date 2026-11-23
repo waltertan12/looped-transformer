@@ -779,6 +779,12 @@ model, so averaging them in shrinks every gap. Where models are off the floor an
 | sub, 3-digit inputs | 0.21 / 0.29 | 0.36 / 0.41 | +0.15 / +0.12 |
 | mixed data, same region | | | +0.07…+0.10 |
 
+**Corrected after code review (depth-1 2-digit prompts are ~97% training items, so the table
+above mixes recall with held-out problems).** Unseen prompts only, same region (depths 1–3,
+2–3-digit inputs): add looped 0.44 / 0.43 vs deep 0.49 / 0.58 (**+0.05 / +0.15**); sub 0.39 / 0.48
+vs 0.51 / 0.55 (**+0.11 / +0.08**). Conclusion unchanged. (Reversed-order arm, unseen: add
+deep − looped −0.10 / −0.13, i.e. looped wins; sub +0.15 / +0.02. Noted, not explained.)
+
 → **H13 rejected in practice:** deep's edge on big numbers is as large without `*` as with it.
 "Weights buy arithmetic" is about **number size**, not multiplication lookup. (Contrast McLeish:
 their looped models matched depth on addition with far more training and length-generalizing tricks.)

@@ -21,13 +21,20 @@ Accuracy by input digits (equal weight over depths), seed 0 / seed 1:
 
 **Rule metric** (deep − looped, inputs 2–4 digits, all depths): +0.024 / +0.033
 
-Accuracy by depth, 2–4-digit inputs, seed 0 / seed 1 (overlap = share of prompts also in training):
+Off-the-floor view (exploratory, after the rule): unseen prompts only, depths 1–3, 2–3-digit inputs,
+where training had multi-digit inputs. seed 0 / seed 1:
+
+| shallow | looped | deep | deep − looped |
+|---|---|---|---|
+| 0.43 / 0.38 | 0.44 / 0.43 | 0.49 / 0.58 | +0.05 / +0.15 |
+
+Accuracy by depth, 2–4-digit inputs, seed 0 / seed 1 (overlap = share of these 2–4-digit prompts also in training):
 
 | depth | overlap | shallow | looped | deep |
 |---|---|---|---|---|
-| 1 | 0.34 | 0.56 / 0.53 | 0.55 / 0.57 | 0.58 / 0.59 |
-| 2 | 0.16 | 0.32 / 0.30 | 0.35 / 0.30 | 0.36 / 0.45 |
-| 3 | 0.02 | 0.18 / 0.14 | 0.17 / 0.18 | 0.22 / 0.26 |
+| 1 | 0.33 | 0.56 / 0.53 | 0.55 / 0.57 | 0.58 / 0.59 |
+| 2 | 0.00 | 0.32 / 0.30 | 0.35 / 0.30 | 0.36 / 0.45 |
+| 3 | 0.00 | 0.18 / 0.14 | 0.17 / 0.18 | 0.22 / 0.26 |
 | 4 | 0.00 | 0.05 / 0.05 | 0.09 / 0.09 | 0.16 / 0.15 |
 | 5 | 0.00 | 0.02 / 0.03 | 0.04 / 0.05 | 0.12 / 0.08 |
 | 6 | 0.00 | 0.01 / 0.01 | 0.01 / 0.02 | 0.08 / 0.06 |
@@ -54,13 +61,20 @@ Accuracy by input digits (equal weight over depths), seed 0 / seed 1:
 
 **Rule metric** (deep − looped, inputs 2–4 digits, all depths): +0.018 / +0.017
 
-Accuracy by depth, 2–4-digit inputs, seed 0 / seed 1 (overlap = share of prompts also in training):
+Off-the-floor view (exploratory, after the rule): unseen prompts only, depths 1–3, 2–3-digit inputs,
+where training had multi-digit inputs. seed 0 / seed 1:
+
+| shallow | looped | deep | deep − looped |
+|---|---|---|---|
+| 0.34 / 0.29 | 0.39 / 0.48 | 0.51 / 0.55 | +0.11 / +0.08 |
+
+Accuracy by depth, 2–4-digit inputs, seed 0 / seed 1 (overlap = share of these 2–4-digit prompts also in training):
 
 | depth | overlap | shallow | looped | deep |
 |---|---|---|---|---|
-| 1 | 0.34 | 0.49 / 0.49 | 0.49 / 0.56 | 0.62 / 0.65 |
-| 2 | 0.19 | 0.30 / 0.24 | 0.32 / 0.35 | 0.38 / 0.40 |
-| 3 | 0.01 | 0.09 / 0.08 | 0.17 / 0.20 | 0.17 / 0.20 |
+| 1 | 0.32 | 0.49 / 0.49 | 0.49 / 0.56 | 0.62 / 0.65 |
+| 2 | 0.00 | 0.30 / 0.24 | 0.32 / 0.35 | 0.38 / 0.40 |
+| 3 | 0.00 | 0.09 / 0.08 | 0.17 / 0.20 | 0.17 / 0.20 |
 | 4 | 0.00 | 0.02 / 0.01 | 0.07 / 0.07 | 0.06 / 0.07 |
 | 5 | 0.00 | 0.01 / 0.01 | 0.03 / 0.04 | 0.03 / 0.04 |
 | 6 | 0.00 | 0.00 / 0.00 | 0.02 / 0.03 | 0.02 / 0.03 |
@@ -103,13 +117,20 @@ Accuracy by input digits (equal weight over depths), seed 0 / seed 1:
 
 **Rule metric** (deep − looped, inputs 2–4 digits, all depths): +0.021 / +0.001
 
-Accuracy by depth, 2–4-digit inputs, seed 0 / seed 1 (overlap = share of prompts also in training):
+Off-the-floor view (exploratory, after the rule): unseen prompts only, depths 1–3, 2–3-digit inputs,
+where training had multi-digit inputs. seed 0 / seed 1:
+
+| shallow | looped | deep | deep − looped |
+|---|---|---|---|
+| 0.65 / 0.66 | 0.70 / 0.71 | 0.60 / 0.58 | -0.10 / -0.13 |
+
+Accuracy by depth, 2–4-digit inputs, seed 0 / seed 1 (overlap = share of these 2–4-digit prompts also in training):
 
 | depth | overlap | shallow | looped | deep |
 |---|---|---|---|---|
-| 1 | 0.34 | 0.67 / 0.67 | 0.67 / 0.67 | 0.51 / 0.50 |
-| 2 | 0.16 | 0.57 / 0.54 | 0.51 / 0.48 | 0.43 / 0.41 |
-| 3 | 0.02 | 0.18 / 0.22 | 0.33 / 0.36 | 0.40 / 0.38 |
+| 1 | 0.33 | 0.67 / 0.67 | 0.67 / 0.67 | 0.51 / 0.50 |
+| 2 | 0.00 | 0.57 / 0.54 | 0.51 / 0.48 | 0.43 / 0.41 |
+| 3 | 0.00 | 0.18 / 0.22 | 0.33 / 0.36 | 0.40 / 0.38 |
 | 4 | 0.00 | 0.03 / 0.04 | 0.13 / 0.16 | 0.34 / 0.30 |
 | 5 | 0.00 | 0.01 / 0.01 | 0.07 / 0.08 | 0.21 / 0.19 |
 | 6 | 0.00 | 0.00 / 0.01 | 0.03 / 0.05 | 0.11 / 0.09 |
@@ -136,13 +157,20 @@ Accuracy by input digits (equal weight over depths), seed 0 / seed 1:
 
 **Rule metric** (deep − looped, inputs 2–4 digits, all depths): +0.045 / +0.009
 
-Accuracy by depth, 2–4-digit inputs, seed 0 / seed 1 (overlap = share of prompts also in training):
+Off-the-floor view (exploratory, after the rule): unseen prompts only, depths 1–3, 2–3-digit inputs,
+where training had multi-digit inputs. seed 0 / seed 1:
+
+| shallow | looped | deep | deep − looped |
+|---|---|---|---|
+| 0.43 / 0.46 | 0.49 / 0.58 | 0.64 / 0.60 | +0.15 / +0.02 |
+
+Accuracy by depth, 2–4-digit inputs, seed 0 / seed 1 (overlap = share of these 2–4-digit prompts also in training):
 
 | depth | overlap | shallow | looped | deep |
 |---|---|---|---|---|
-| 1 | 0.34 | 0.64 / 0.65 | 0.61 / 0.65 | 0.59 / 0.60 |
-| 2 | 0.19 | 0.35 / 0.37 | 0.41 / 0.42 | 0.47 / 0.44 |
-| 3 | 0.01 | 0.06 / 0.07 | 0.15 / 0.23 | 0.35 / 0.28 |
+| 1 | 0.32 | 0.64 / 0.65 | 0.61 / 0.65 | 0.59 / 0.60 |
+| 2 | 0.00 | 0.35 / 0.37 | 0.41 / 0.42 | 0.47 / 0.44 |
+| 3 | 0.00 | 0.06 / 0.07 | 0.15 / 0.23 | 0.35 / 0.28 |
 | 4 | 0.00 | 0.02 / 0.02 | 0.04 / 0.04 | 0.11 / 0.08 |
 | 5 | 0.00 | 0.01 / 0.01 | 0.02 / 0.02 | 0.06 / 0.03 |
 | 6 | 0.00 | 0.00 / 0.00 | 0.01 / 0.01 | 0.03 / 0.02 |

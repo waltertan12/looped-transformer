@@ -15,7 +15,7 @@ Evidence is seed 0 / seed 1 at 120k steps (D-012 normal arm) unless noted.
 | H5 | A model trained at K loops works at other K | **Rejected** | ≤ 0.11 at other K (40k grid) |
 | H6 | Reversed answer order helps | **Rejected by the rule; depends on capacity** | fails the rule on all 3 models. Big answers: shallow −0.07, looped −0.03, deep +0.13/+0.10. Helps shallow on one big multiplication (+0.12…+0.15) |
 | H7 | Place-value tags help | **Weakly supported** | looped 40k: big answers +0.055; shallow: no effect. Only one seed of tags-vs-no-tags |
-| H13 | Loops match deep on pure add/sub (so H3 is about multiplication lookup) | **Rejected** | depths 1–3, 2–3-digit inputs: deep − looped +0.04…+0.15, same as mixed data. Pre-set rule said "unclear" only because of 0%-floor cells (rule-design mistake) |
+| H13 | Loops match deep on pure add/sub (so H3 is about multiplication lookup) | **Rejected** | depths 1–3, 2–3-digit inputs, unseen prompts only: deep − looped +0.05…+0.15 (add and sub, both seeds), same as mixed data. Pre-set rule said "unclear" only because of 0%-floor cells (rule-design mistake) |
 | H14 | Operator mix predicts errors beyond depth and number size | **Not supported** | matched cells: low − high `*` third −0.01…+0.015 |
 | H8 | The 40k models were undertrained | **Supported** | 120k lifts everything +0.08…+0.26; train acc still 0.42–0.54 at 120k |
 

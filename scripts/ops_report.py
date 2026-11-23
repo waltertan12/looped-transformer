@@ -51,6 +51,13 @@ def h13_verdict(gap_add: list[float], gap_sub: list[float]) -> str:
     return "unclear"
 
 
+def region_acc(d: dict, depth_max: int = 3, digits: tuple[int, ...] = (2, 3)) -> float:
+    """Accuracy on unseen prompts (in_train == 0) at depths <= depth_max with the given input sizes:
+    the in-distribution, off-the-floor region where training had multi-digit inputs."""
+    m = (d["depth"] <= depth_max) & np.isin(d["in_digits"], digits) & (d["in_train"] == 0)
+    return float(d["correct"][m].mean())
+
+
 def _run(model: str, seed: int, rev: bool) -> str:
     return f"{MODELS[model][0]}{'-rev' if rev else ''}-s{seed}"
 
@@ -90,11 +97,22 @@ def h13_section(rev: bool) -> tuple[list[str], dict]:
                               _cell_mean(D[("looped", s)], m24(D[("looped", s)])))
         L.append(f"\n**Rule metric** (deep − looped, inputs 2–4 digits, all depths): "
                  + " / ".join(f"{g:+.3f}" for g in gaps[kind]) + "\n")
-        L.append("Accuracy by depth, 2–4-digit inputs, seed 0 / seed 1 (overlap = share of prompts also in training):\n")
+        L.append("Off-the-floor view (exploratory, after the rule): unseen prompts only, depths 1–3, 2–3-digit inputs,\n"
+                 "where training had multi-digit inputs. seed 0 / seed 1:\n")
+        L.append("| shallow | looped | deep | deep − looped |")
+        L.append("|---|---|---|---|")
+        ra = {ms: region_acc(d) for ms, d in D.items()}
+        g = lambda m: " / ".join(f"{ra[(m, s)]:.2f}" for s in SEEDS)  # noqa: E731
+        L.append(f"| {g('shallow')} | {g('looped')} | {g('deep')} | "
+                 + " / ".join(f"{ra[('deep', s)] - ra[('looped', s)]:+.2f}" for s in SEEDS) + " |\n")
+        L.append("Accuracy by depth, 2–4-digit inputs, seed 0 / seed 1 (overlap = share of these 2–4-digit prompts also in training):\n")
         L.append("| depth | overlap | shallow | looped | deep |")
         L.append("|---|---|---|---|---|")
         for lv in sorted(int(x) for x in meta["slices"]):
-            ov = meta["slices"][str(lv)].get("overlap_with_nested_bal_train", float("nan"))
+            sl = meta["slices"][str(lv)]
+            n24 = sum(sl["cells"].get(f"in{k}", 0) for k in (2, 3, 4))
+            ov = (sum(sl["overlap_by_cell"][f"in{k}"] * sl["cells"].get(f"in{k}", 0) for k in (2, 3, 4)) / n24
+                  if "overlap_by_cell" in sl and n24 else float("nan"))
             cells = []
             for m in MODELS:
                 vals = []
