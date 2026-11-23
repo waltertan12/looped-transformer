@@ -21,6 +21,10 @@ REPO = Path(__file__).resolve().parent.parent
 EXAMPLES = ["(8-3)*(4-6)+7=", "9-(7-9-(1*4+3*4))=", "(1-1*(9+6*(5-(6-(1-6)))))*2="]
 
 
+def _round(v):
+    return [_round(u) for u in v] if isinstance(v, list) else round(v, 3)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt", default="long/c2k8-s0")
@@ -34,7 +38,7 @@ def main() -> None:
         _, attn = pass_states(model, x, k, per_layer=(k == 1))
         w = torch.stack(attn)[:, :, 0]  # [pass, core block, head, T, T]
         out["examples"].append({"prompt": p, "nodes": subexpr_nodes(p),
-                                "attn": [[[[round(v, 3) for v in row] for row in hd] for hd in blk] for blk in w.tolist()]})
+                                "attn": _round(w.tolist())})
     path = REPO / a.out
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(out))
