@@ -15,8 +15,10 @@ as more distinct layers at the same compute.
 
 ## Results so far
 
-120k training steps, two seeds each. Full write-up with charts:
-[results page](https://claude.ai/artifact/BBw1f6Y9HGTgb75UBM1Nfj) (source `docs/visual/loop-depth-results.html`).
+120k training steps, two seeds each. Full write-up with charts and a primer on every term:
+[`docs/visual/loop-depth-results.html`](docs/visual/loop-depth-results.html) (download and open in a
+browser; GitHub shows HTML as source). Tables: [`docs/results-ops.md`](docs/results-ops.md),
+[`docs/hypotheses.md`](docs/hypotheses.md).
 
 - **Loops buy steps.** On many-step problems with small answers, looped beats shallow by +0.11
   (4 steps) to +0.25 (8 steps) and matches deep within ±0.03, including past the training depth.

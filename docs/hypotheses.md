@@ -1,7 +1,7 @@
 # Hypothesis log
 
-One line per claim, with its status and evidence. Walter ranks the open ones; rank goes in the
-first column. Update the status when a result comes in (link the research-log entry).
+One line per claim, with its status and evidence. Open ones are listed in priority order;
+Walter re-ranks by reordering. Update the status when a result comes in (link the research-log entry).
 Evidence is seed 0 / seed 1 at 120k steps (D-012 normal arm) unless noted.
 
 ## Tested
@@ -19,17 +19,17 @@ Evidence is seed 0 / seed 1 at 120k steps (D-012 normal arm) unless noted.
 | H14 | Operator mix predicts errors beyond depth and number size | **Not supported** | matched cells: low − high `*` third −0.01…+0.015 |
 | H8 | The 40k models were undertrained | **Supported** | 120k lifts everything +0.08…+0.26; train acc still 0.42–0.54 at 120k |
 
-## Open (untested), for ranking
+## Open (untested), in current priority order
 
-| Rank | # | Hypothesis | Plan step / idea |
+Order follows the roadmap in `plan.md`: reorder the rows to re-rank.
+
+| Priority | # | Hypothesis | Plan step / idea |
 |---|---|---|---|
-| | H9 | A looped model can learn to use fewer loops on easy problems and more on hard ones, with no accuracy loss | plan step 5 |
-| | H10 | A stop head on the hidden state beats a hand rule or an external checker ("the model knows it's done") | plan step 6 |
-| | H11 | Which blocks loop matters (looping the middle beats looping everything) | plan step 7 |
-| | H12 | Looping helps following references (chain task), not just nested evaluation | plan step 8 |
-
-
-| | H15 | Letting the question tokens see each other (prefix attention) helps, because causal attention hides later operators | I-M3 |
-| | H16 | Wider models fix number size; loops still add steps on top | I-L1 |
-| | H17 | Step skill transfers to algebra (solving 3x+5=20) | I-L2 |
-| | H18 | Tags + random offset (or separate question/answer tag tables) let models handle longer numbers than trained. Today tags make 4-digit inputs garbage (within-5%: 0.01–0.10) while no-tag models stay approximately right (0.92) | I-M2 |
+| 1 | H18 | Tags + random offset (or separate question/answer tag tables) let models handle longer numbers than trained. Today tags make 4-digit inputs garbage (within-5%: 0.01–0.10) while no-tag models stay approximately right (0.92) | I-M2 |
+| 2 | H9 | A looped model can learn to use fewer loops on easy problems and more on hard ones, with no accuracy loss | plan step 5 |
+| 3 | H10 | A stop head on the hidden state beats a hand rule or an external checker ("the model knows it's done") | plan step 6 |
+| 4 | H15 | Letting the question tokens see each other (prefix attention) helps, because causal attention hides later operators | I-M3 |
+| 5 | H11 | Which blocks loop matters (looping the middle beats looping everything) | plan step 7 |
+| 6 | H16 | Wider models fix number size; loops still add steps on top | I-L1 |
+| 7 | H12 | Looping helps following references (chain task), not just nested evaluation | plan step 8 |
+| 8 | H17 | Step skill transfers to algebra (solving 3x+5=20) | I-L2 |

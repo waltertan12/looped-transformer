@@ -11,6 +11,7 @@ Current track: **tiny transformers trained from scratch on synthetic PEMDAS arit
 (`src/looptf/toy/`). The earlier Qwen-retrofit track (exp1–3) is paused: it didn't work.
 
 ## Where things are
+
 | what | file |
 |---|---|
 | Code on GitHub (public, branch `main`) | https://github.com/waltertan12/looped-transformer |
@@ -22,7 +23,7 @@ Current track: **tiny transformers trained from scratch on synthetic PEMDAS arit
 | Reasoning and results, chronological | `docs/research-log.md` |
 | State snapshots (newest first) | `docs/status.md` |
 | Glossary: plain (for Walter) / terse (for agents) | `docs/glossary.md`, `docs/glossary-agent.md` |
-| Visual results page (published) | https://claude.ai/artifact/BBw1f6Y9HGTgb75UBM1Nfj, source `docs/visual/loop-depth-results.html` |
+| Visual results page (claude.ai artifact, private to Walter; republish to keep the URL) | https://claude.ai/artifact/BBw1f6Y9HGTgb75UBM1Nfj, source `docs/visual/loop-depth-results.html` |
 | Skills | `.claude/skills/status-update`, `.claude/skills/decision-brief` (has a pre-launch checklist) |
 | Working rules | `CLAUDE.md` (bottom section "Working with Walter") |
 
