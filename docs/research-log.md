@@ -462,6 +462,8 @@ random-K runs 2×(1–8) and 4×(1–4). 40k steps, lr 3e-4, `data/nested`. Scri
 
 ---
 
+<a id="log-grid"></a>
+
 ## 2026-11-22 — Grid results, seed 0 (curriculum, real-valued nested data)
 
 Full tables: `docs/results-arith-grid.md`. Depth-3 test accuracy (unseen problems, 1,000 per
@@ -633,6 +635,8 @@ by input size) are a co-primary metric with the same ≥ 0.05 bar.
 
 ---
 
+<a id="log-tags"></a>
+
 ## 2026-11-22 — D-011 screen, looped pair: tags on, normal order (→ D-012 launched)
 
 Looped 2×8 at K=8, seed 0, 40k steps. Differences with 95% bootstrap intervals (test-set noise
@@ -663,6 +667,8 @@ only; seed noise still unmeasured).
 **D-012 launched 21:40** with `--place_emb` (normal order): `results/toy/long/`, queue log
 `results/toy/long.queue.log`. Analysis script: `scripts/d011_compare.py`.
 
+<a id="log-long-shallow"></a>
+
 ## 2026-11-22 — D-012 shallow pair (120k steps, tags, normal): training longer helps a lot
 
 | shallow 2×1 + tags | 40k s0 | 120k s0 | 120k s1 |
@@ -679,6 +685,8 @@ only; seed noise still unmeasured).
   (0.26, 0.83). The 40k loop gap may be partly "learns faster", not "can do more". The looped
   120k pair decides this. If looped at 120k doesn't stay clearly ahead, the headline changes.
 - Train accuracy at the end is still 0.42 (loss 0.68): not converged.
+
+<a id="log-long-looped"></a>
 
 ## 2026-11-23 00:30 — D-012 looped pair (120k): the loop gap is real, and grows with depth
 
@@ -699,6 +707,8 @@ only; seed noise still unmeasured).
 - Seed spread for looped is wider on multi-digit-input slices (up to 0.07 at depth 1, 3-digit
   inputs); 0.01–0.04 elsewhere.
 - Still undertrained? Train accuracy 0.50 at the end. Deep pair (same compute, 4× weights) next.
+
+<a id="log-long-normal"></a>
 
 ## 2026-11-23 02:55 — D-012 normal arm complete: loops match depth on steps; weights win on number size
 
@@ -745,6 +755,8 @@ Looped 2×8, tags, 120k, reversed − normal, seeds 0 / 1:
 - Read: for the looped model, order is close to a wash, a slight edge to reversed on big
   inputs. Not a reason to switch the default; noted as "order matters less with loops".
 
+<a id="log-reversed"></a>
+
 ## 2026-11-23 08:15 — D-012 reversed arm, deep pair: rule says normal, but the trend flips with capacity
 
 Deep 16×1, tags, 120k, reversed − normal, seeds 0 / 1:
@@ -759,6 +771,8 @@ Deep 16×1, tags, 120k, reversed − normal, seeds 0 / 1:
   pays off only with enough capacity; it costs the small models. Not covered by the rule's
   metric, so noted as a finding, not a recipe change. Possible follow-up: does looped catch up
   with more training?
+
+<a id="log-h13-h14"></a>
 
 ## 2026-11-23 08:40 — H13 / H14 on the D-012 checkpoints (no training): weights buy number size, not lookup; operator mix doesn't matter
 
@@ -801,6 +815,8 @@ their looped models matched depth on addition with far more training and length-
 `*`-share third: shallow −0.006 / −0.011, looped +0.001 / +0.015, deep +0.008 / +0.009 →
 **not supported.** Unmatched, high-`*` problems look much harder (looped 0.50 → 0.19), but that is
 entirely answer size and depth. Operator type adds nothing once those are fixed.
+
+<a id="log-4digit"></a>
 
 ## 2026-11-23 09:10 — Why 4-digit inputs score 0%: the place-value tags break out-of-range numbers
 

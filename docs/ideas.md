@@ -22,8 +22,12 @@ Related hypotheses in `hypotheses.md`.
 ## Medium term
 - **I-M1 Progressive loss** (McLeish): loss at full K + loss at a random smaller K. Cheap first
   version of plan step 5's deep supervision.
+<a id="idea-offset"></a>
+
 - **I-M2 Random offset on place tags** (McLeish, β ~ U[0, max]) + train inputs ≤ 2 digits, test
   3–4 digits. Tests H18.
+<a id="idea-attention"></a>
+
 - **I-M3 Attention changes** (Walter: "PEMDAS attention"). Options, from least to most hand-coded:
   (a) look first (now H19 in `hypotheses.md`): plot attention maps per head per loop pass: do heads
   already focus on the sub-expression being computed? (b) prefix attention: question tokens see the whole question
@@ -38,8 +42,12 @@ Related hypotheses in `hypotheses.md`.
 - **I-M6 Fit accuracy = α·log(effective depth) + β** over the grid; compare α for loops vs layers.
 
 ## Long term
+<a id="idea-wide"></a>
+
 - **I-L1 Much wider model** (Walter): e.g. d_model 512–1024 (McLeish uses 1024). Question: what
   logic appears with width, and do loops still add steps on top? Tests H16.
+<a id="idea-algebra"></a>
+
 - **I-L2 Algebra** (plan "Later"). Tests H17.
 - **I-L3 Number base 2 / 10 / 16**; embedding-space side quest; routing / branching; back to
   Qwen once a recipe clearly works.

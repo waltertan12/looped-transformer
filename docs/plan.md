@@ -81,6 +81,8 @@ Core {2,4,8,16} × loops, with the settled recipe (order + embeddings), 2 seeds 
 grow with depth? **Success:** looped 2×8 within 0.03 of deep 16×1 at depths 4–8 with 4× fewer
 weights, and loops helping more at deeper depths than shallow ones.
 
+<a id="plan-step-5"></a>
+
 ### 5. Variable loop control: let the model decide how many loops (replaces the old step 5)
 Walter's direction: instead of "more loops at test time", teach the model to use **fewer loops
 on easy problems and more on hard ones**, up to a max K (adaptive computation / halting / early
@@ -105,15 +107,21 @@ Fixed-loop models can't do this (they only work at their training loop count). R
 cost accuracy in the first grid, so this step also tries to fix that (e.g. bias the random K
 toward the maximum). **Success:** accuracy at depth 9–16 rises with test-time loops.
 
+<a id="plan-step-6"></a>
+
 ### 6. Who decides to stop? (deferred; Walter: "interesting on its own")
 Same deep-supervision model from step 5, three controllers: (1) hand rule "previous answer ==
 current answer → stop"; (2) a separate small checker network trained on (previous, current)
 answers; (3) the built-in stop head on the hidden state. If (3) clearly beats (1)–(2), the
 model "knows" it is done in a way its outputs don't show. Run after step 5 works.
 
+<a id="plan-step-7"></a>
+
 ### 7. Loop placement
 Fixed 4 unique blocks, same compute: 0+4+0, 1+2+1, 2+1+1, 1+1+2, 3+1+0. **Question:** which
 blocks should recur?
+
+<a id="plan-step-8"></a>
 
 ### 8. Chain task (intermediate values)
 Run the recipe on `data/chain`. **Question:** does looping help with following references,
