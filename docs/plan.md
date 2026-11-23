@@ -84,6 +84,11 @@ exit).
   average. That would mean the model measures difficulty and spends compute to match: new
   beyond the Saunshi et al. replication.
 - Per-token halting (ACT) is out of scope: the answer is read at one position.
+- **5c (optional, Walter's question): who should decide to stop?** Same deep-supervision model,
+  three controllers: (1) hand rule "previous answer == current answer → stop"; (2) a separate
+  small checker network trained on (previous, current) answers; (3) the built-in stop head on
+  the hidden state. If (3) clearly beats (1)–(2), the model "knows" it is done in a way its
+  outputs don't show.
 
 **Earlier version (superseded):** More loops at test time (extrapolation)
 Train on depths ≤ 8 with a **random** loop count, test depths 9–16 at more loops than trained.

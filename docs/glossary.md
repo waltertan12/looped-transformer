@@ -115,6 +115,13 @@ Plain-language definitions, each tied to this project. Terse agent-facing defini
   outputs the probability "I'm done"; trained to balance accuracy against passes used
   (PonderNet, Ouro/LoopLM).
 
+- **Ensemble.** Several separately trained models whose answers are combined (vote or
+  average), e.g. 5 seeds of the looped model, majority answer. More accurate because their
+  mistakes differ. Not cooperation, just combining.
+- **Verifier / controller.** A second model (or rule) that checks the main model's work and
+  decides what happens next: accept, retry, keep looping. "Stop when the answer stops
+  changing" is a hand-written controller.
+
 ## Side-quest vocabulary
 
 - **Logit lens.** Reading off what answer the model would give at an intermediate point
