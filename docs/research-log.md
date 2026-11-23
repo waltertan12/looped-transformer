@@ -700,6 +700,30 @@ only; seed noise still unmeasured).
   inputs); 0.01–0.04 elsewhere.
 - Still undertrained? Train accuracy 0.50 at the end. Deep pair (same compute, 4× weights) next.
 
+## 2026-11-23 02:55 — D-012 normal arm complete: loops match depth on steps; weights win on number size
+
+120k steps, tags, normal order, seeds 0 / 1. Shallow 2×1 (4.4M), looped 2×8 (4.4M), deep 16×1 (19M, same compute as looped).
+
+| slice | shallow | looped | deep | deep − looped |
+|---|---|---|---|---|
+| 1-digit answers, depth 4 | 0.84 / 0.85 | 0.96 / 0.96 | 0.98 / 0.96 | +0.02 / +0.00 |
+| … depth 8 | 0.62 / 0.63 | 0.86 / 0.87 | 0.88 / 0.86 | +0.02 / −0.02 |
+| … depth 13 (past training) | 0.42 / 0.43 | 0.62 / 0.60 | 0.65 / 0.60 | +0.03 / −0.00 |
+| small answers, depths 2–6 | 0.78 / 0.79 | 0.91 / 0.93 | 0.94 / 0.93 | +0.03 / −0.01 |
+| 3-digit answers, depths 3–6 | 0.32 / 0.33 | 0.52 / 0.59 | 0.65 / 0.62 | +0.13 / +0.03 |
+| 4-digit answers, depths 3–6 | 0.15 / 0.18 | 0.29 / 0.32 | 0.41 / 0.40 | +0.12 / +0.08 |
+| multi-digit inputs, depths 1–3 | 0.40 / 0.38 | 0.43 / 0.45 | 0.51 / 0.54 | +0.09 / +0.09 |
+| depth 1, 3-digit inputs | 0.44 / 0.41 | 0.46 / 0.53 | 0.61 / 0.66 | +0.15 / +0.14 |
+
+- **Step count: looped = deep** within ±0.03 at every depth, both seeds, with 4× fewer weights.
+  Meets plan step 4's success bar (within 0.03 at depths 4–8) on the probe set.
+- **Number size: deep > looped** by +0.05…+0.15 (big answers, multi-digit inputs), both seeds.
+  Loops do help here over shallow (+0.13), but unique weights help more. Same split as at 40k,
+  now on 2 seeds and 3× training: **loops buy steps, weights buy arithmetic.**
+- Seed spread is largest on 3-digit answers for looped and deep (up to 0.10): the 0.05 bar is
+  too tight for that slice; use both seeds.
+- Reversed arm started 02:55 (shallow pair first).
+
 ---
 
 ## Open questions / ideas to come back to

@@ -40,7 +40,9 @@ Shallow 2×1 (4.4M), looped 2×8 (same 4.4M, 8 passes), deep 16×1 (19M, same co
   2 at a time). Shallow ~40 min, looped and deep ~2.5 h each → done ~03:30–04:00.
 - Looped pair done (00:30): looped beats shallow at 120k by +0.11 (depth 4) … +0.25 (depth 8),
   both seeds; also +0.13/+0.15 on big answers. Deep pair running → ~02:50.
-- **D-012 reversed arm** (Walter, 22:20): same 6 runs with `--place_emb --reverse_answer`,
+- **Normal arm done (02:55):** looped = deep on step count (±0.03, both seeds); deep beats
+  looped by +0.05…+0.15 on big answers / multi-digit inputs. Research log 2026-11-23 02:55.
+- **D-012 reversed arm** (running since 02:55) (Walter, 22:20): same 6 runs with `--place_emb --reverse_answer`,
   queued behind the normal arm (`scripts/arith_long_arm.sh`, WAIT_PID on the normal queue),
   names `long/<model>-rev-s<seed>`, queue log `results/toy/long-rev.queue.log`; starts ~02:50,
   done ~08:15. Rule on the D-012 card.
