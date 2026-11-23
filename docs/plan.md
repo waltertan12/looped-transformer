@@ -4,7 +4,7 @@ The forward-looking plan, with a decision rule for each step written **before** 
 come in. Reasoning lives in `research-log.md`, choices in `decisions.md`, state in `status.md`.
 Revise this file when a step finishes or the plan changes, and say why.
 
-_Last revised 2026-11-22 21:25._
+_Last revised 2026-11-22 21:45._
 
 ## The question
 
@@ -35,7 +35,7 @@ digit answers. It does not need to win every cell. If the gain is < 0.05, keep n
 widens the gap, the loop benefits from the cleaner arithmetic; if it narrows it, reversal
 mostly helps the no-loop model.
 
-### 2. Place-value embeddings (D-009 / D-011) — screen running (looped pair finishes ~21:35)
+### 2. Place-value embeddings (D-009 / D-011) — done: tags on, normal order
 Walter's design: screen on shallow 2×1 + looped 2×8 only, tags with normal and with reversed
 answers (4 runs). Thresholds below are for direction, not proof; the second seed in step 4
 confirms. Seed-to-seed noise is still unmeasured, which is why 0.05, not 0.03, is the bar.
@@ -53,7 +53,7 @@ on both seeds.
 
 ## Medium term (this week)
 
-### 3b. Long probe set (D-012): the checkpoint
+### 3b. Long probe set (D-012): the checkpoint — running (launched 21:40, ~6 h)
 Shallow / looped / deep × 2 seeds, 120k steps, recipe from the D-011 screen by D-012's rule.
 ≈ 6 h. A good stopping point: the arithmetic result is then checked on 2 seeds with fully
 trained models. Then update the visual report.

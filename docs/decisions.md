@@ -9,7 +9,7 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
-## D-012 · Long probe set: the checkpoint run (decided, recipe pending the D-011 screen)
+## D-012 · Long probe set: the checkpoint run (running: tags on, normal order)
 
 **Question.** Does the looping result hold with fully trained models and on a second seed?
 All D-007 models were still improving at 40k steps, and everything so far is one seed.
@@ -33,9 +33,11 @@ looped − shallow gap, the gap isn't a result yet.
 pause, or go on to test-time loops (plan step 5).
 
 **Needs Walter?** Decided by Walter, 2026-11-22 ("do the probe set long, then update the HTML").
-Recipe chosen by the rule above. **Status.** Launches after the D-011 screen (~21:35).
+**Recipe (by the rule):** `--place_emb`, normal order (reversed: +0.033 on multi-digit inputs,
+−0.110 on 1-digit inputs; fails both halves). **Status.** Launched 2026-11-22 21:40, ~6 h;
+results in `results/toy/long/`.
 
-## D-011 · Place-value embeddings: which runs? (decided: screen on shallow + looped)
+## D-011 · Place-value embeddings: which runs? (done: tags on, normal order)
 
 **Question.** Plan step 2. Looping doesn't fix big answers (+0.03), so number representation
 is the next target. The plan says test place-value embeddings with the winning order (normal).
@@ -64,6 +66,9 @@ used 1-digit inputs, where tags carry ~no information (Claude's design mistake).
 tags + reversed lifts depth-1 3-digit-input problems 0.14 → 0.43 (3-digit answers 0.38 → 0.89);
 tags + normal best at depth 2 (0.35 → 0.43). **Amended before the looped results:** multi-digit-
 input problems are a co-primary metric (≥ 0.05 bar).
+**Looped result (outcome):** tags + normal vs no tags: big +0.055, small +0.006, multi-digit inputs
++0.035 → **adopt tags.** Tags + reversed vs tags + normal: multi-digit inputs +0.033, 1-digit
+inputs −0.110 → **keep normal order.** Details: research log, 2026-11-22 looped pair.
 
 ## D-010 · How much of the grid does each new fix get tested on? (decided: probe set)
 

@@ -6,6 +6,15 @@ the reasoning, this file holds the state.
 
 ---
 
+## 2026-11-22 21:45 EST
+
+**Done:** D-011 place-value screen (4 runs). Looped 2×8 + tags (normal order) vs no tags: big
+answers +0.055, small +0.006, multi-digit inputs +0.035 → tags adopted. Reversed + tags loses
+−0.110 on 1-digit-input problems → normal order kept. Shallow barely uses the tags; looped does.
+**Running:** D-012 long probe set (6 runs, 120k steps, 2 seeds, tags on), launched 21:40, done
+~03:30–04:00. **Next:** D-012 report with seed spread → update visual page.
+**Risk:** big answers are still at 0.26 at best; tags help a little and don't fix number size.
+
 ## 2026-11-22 19:57 EST
 
 **Aim.** Unchanged (see 18:30): stage 2, does looping add reasoning depth.

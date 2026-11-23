@@ -1,6 +1,6 @@
 # Handoff: read this first in a new session
 
-_Written 2026-11-22 21:25 EST. Update it whenever the state below changes._
+_Written 2026-11-22 21:25 EST, updated 21:45. Update it whenever the state below changes._
 
 ## What this project is
 Walter (software engineer, newer to ML research) is testing whether **looped transformers**
@@ -34,28 +34,24 @@ Shallow 2×1 (4.4M), looped 2×8 (same 4.4M, 8 passes), deep 16×1 (19M, same co
   a clean depth-vs-number-size decomposition + negative results.
 
 ## In flight right now
-- **D-011 screen** (place-value tags, `scripts/arith_place.sh`, results `results/toy/place/`):
-  shallow pair done; **looped pair (c2k8-normal-pv, c2k8-rev-pv) finishing ~21:35**
-  (queue log `results/toy/place-s0.queue.log`, 4 "done" lines = finished).
-  Shallow result: no effect on the rule's original metric (1-digit inputs carry no place
-  information: Claude's metric mistake); exploratory: tags + reversed lift depth-1 3-digit-input
-  problems 0.14 → 0.43 (3-digit answers 0.38 → 0.89); tags + normal best at depth 2.
+- **D-012 long probe set**, launched 2026-11-22 21:40: shallow / looped / deep × seeds 0,1,
+  120k steps, `--place_emb`, normal order. Results `results/toy/long/`; queue log
+  `results/toy/long.queue.log` (6 "done" lines = finished; order shallow → looped → deep,
+  2 at a time). Shallow ~40 min, looped and deep ~2.5 h each → done ~03:30–04:00.
+- D-011 screen is finished: **tags on (looped big answers +0.055), normal order** (reversed
+  +0.033 on multi-digit inputs but −0.110 on 1-digit inputs). See research log and D-011 card.
+  Re-run the comparison: `.venv/bin/python scripts/d011_compare.py`.
 
 ## Next actions, in order
-1. When the looped D-011 pair finishes: compare against `results/toy/bal/c2k8-normal-s0` (no
-   tags) on (a) big answers on 1-digit-input problems and (b) multi-digit-input problems,
-   depths 1–3 (co-primary since the shallow results). Log results (research-log, D-011 card).
-2. **Apply D-012's recipe rule** (in `docs/decisions.md`): tags on; reversed only if looped +
-   tags + reversed beats looped + tags + normal by ≥ 0.05 on multi-digit-input problems and is
-   ≤ 0.03 worse on 1-digit-input problems; else normal.
-3. **Launch D-012** (approved by Walter): `nohup scripts/arith_long.sh "--place_emb" >
-   results/toy/long.queue.log 2>&1 &` (add `--reverse_answer` to the flags if the rule says so).
-   6 runs, 120k steps, seeds 0 and 1, ~6 h. Two at a time (Walter's preference).
-4. After D-012: update the visual page (republish the same file path or pass the URL), with
-   seed-to-seed spread on every number. This is the write-up checkpoint.
-5. Offered, not yet accepted: scaffold `docs/paper/outline.md` (sections, numbers, figures,
+1. When D-012 finishes: report with `scripts/arith_report.py --runs results/toy/long --out
+   docs/results-arith-long.md`, plus seed-to-seed spread (seed 0 vs 1) on every headline
+   number. Log in research log and on the D-012 card. Check whether 120k beats 40k (vs
+   `results/toy/place/` and `results/toy/bal/`).
+2. Update the visual page (republish the same file path or pass the URL), with seed spread.
+   This is the write-up checkpoint.
+3. Offered, not yet accepted: scaffold `docs/paper/outline.md` (sections, numbers, figures,
    checked related work). Walter writes the prose.
-6. Later (plan steps 5–8): variable loop control (deep supervision → confidence stop →
+4. Later (plan steps 5–8): variable loop control (deep supervision → confidence stop →
    learned stop head); deferred step 6 "who decides to stop"; loop placement; chain task.
 
 ## Practical notes

@@ -633,6 +633,38 @@ by input size) are a co-primary metric with the same ≥ 0.05 bar.
 
 ---
 
+## 2026-11-22 — D-011 screen, looped pair: tags on, normal order (→ D-012 launched)
+
+Looped 2×8 at K=8, seed 0, 40k steps. Differences with 95% bootstrap intervals (test-set noise
+only; seed noise still unmeasured).
+
+| looped 2×8 | no tags | tags, normal | tags, rev |
+|---|---|---|---|
+| big answers (3–5 d), 1-digit inputs, depths 2–6 | 0.20 | **0.26** | 0.17 |
+| small answers (1–2 d), 1-digit inputs, depths 2–6 | 0.82 | **0.83** | 0.77 |
+| all 1-digit-input problems, depths 1–3 | 0.79 | **0.85** | 0.74 |
+| multi-digit-input problems, depths 1–3 | 0.28 | 0.31 | **0.35** |
+| depth 1, 3-digit inputs | 0.16 | 0.19 | **0.48** |
+| depth 2, 2-digit inputs | 0.46 | **0.53** | 0.45 |
+| 1-digit answers, depth 13 | 0.44 | **0.51** | 0.50 |
+
+- **Tags, normal vs no tags:** big +0.055 [+0.044, +0.065], small +0.006, multi-digit inputs
+  +0.035 [+0.028, +0.043]. Passes the pre-registered rule (≥ 0.05 big, ≤ 0.03 cost) → **adopt tags.**
+  Unlike shallow (−0.01), the looped model can use the tags on big answers.
+- **Tags, reversed vs tags, normal:** multi-digit inputs +0.033 (< 0.05 bar), 1-digit inputs
+  −0.110 (> 0.03 cost). Fails both halves of D-012's rule → **normal order.** Same pattern as
+  shallow: reversed + tags nearly solves a single big multiplication (depth 1, 3-digit inputs
+  0.16 → 0.48) and loses everywhere with more steps.
+- Looped − shallow with tags (normal): big +0.09, small +0.15, multi-digit inputs +0.06
+  (without tags: +0.03 / +0.16 / +0.06). With tags the loop starts to help on big answers;
+  elsewhere the gap is unchanged.
+- Still weak: big answers are at 0.26 at best. Tags help a little; they don't fix number size.
+
+**D-012 launched 21:40** with `--place_emb` (normal order): `results/toy/long/`, queue log
+`results/toy/long.queue.log`. Analysis script: `scripts/d011_compare.py`.
+
+---
+
 ## Open questions / ideas to come back to
 
 - **Number base as a difficulty dial.** Same problems written in base 2 / 10 / 16. Base 2 makes
