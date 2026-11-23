@@ -75,9 +75,9 @@ Shallow 2×1 (4.4M), looped 2×8 (same 4.4M, 8 passes), deep 16×1 (19M, same co
 
 ## Practical notes
 - Run Python as `/mnt/data/walter/loop-transformer/.venv/bin/python`. Tests: `pytest tests -q -k toy`.
-- **Leave at least half the CPU free** (Walter, 2026-11-23): CPU-heavy analysis gets a thread cap
-  (`threadpoolctl` + `torch.set_num_threads`, e.g. `--threads 6` of 24) and `nice -n 10`. sklearn/numpy
-  otherwise grab every core.
+- **Leave CPU headroom** for ssh and other work (Walter, 2026-11-23; not a strict half): cap CPU-heavy
+  analysis (`threadpoolctl` + `torch.set_num_threads`, e.g. `--threads 6`–`12` of 24) and `nice -n 10`.
+  sklearn/numpy otherwise grab every core.
 - Run at most **2 trainings at a time**, each with `--mem_fraction 0.4`. GPU at ~94% use is normal.
 - Don't use `pkill -f <pattern>`: it kills the calling shell. Get PIDs from
   `nvidia-smi --query-compute-apps=pid --format=csv,noheader` or `ps -eo pid,args | grep "[p]attern"`.
