@@ -15,7 +15,7 @@ the reasoning, this file holds the state.
   visual report: https://claude.ai/artifact/BBw1f6Y9HGTgb75UBM1Nfj (source:
   `docs/visual/loop-depth-results.html`). New slices beyond 18:30:
   - Depth 1 → 8, 1-digit answers: shallow loses 0.53, looped 0.26, deep 0.28.
-  - Deep − looped gain is concentrated on 3-digit answers at depths 3–6 (+0.13 to +0.30);
+  - Deep − looped gain is concentrated on 3-digit answers at depths 3–6 (+0.08 to +0.30);
     near zero on 1–2 digit answers. Looped − shallow gain is on 1–2 digit answers, growing
     with depth.
   - Fixed-8-loop model at other test-time loop counts: ≤ 0.11 on small answers (vs 0.78 at

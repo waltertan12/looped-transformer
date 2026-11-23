@@ -70,6 +70,21 @@ details[open] summary { margin-bottom: 8px; }
 .big .k { color: var(--ink-2); font-size: 0.88rem; }
 pre.mermaid { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 12px; overflow-x: auto; }
 code { font-size: 0.88em; }
+.glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.mcard { display: grid; gap: 10px; align-content: start; }
+.mcard .name { font-family: var(--f-display); font-size: 1.15rem; font-weight: 600; }
+.blocks { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; min-height: 26px; }
+.blk { height: 22px; min-width: 12px; padding: 0 5px; border-radius: 4px; font-size: 0.68rem; display: inline-flex; align-items: center; justify-content: center; color: var(--ink-2); border: 1px solid var(--axis); background: var(--plane); }
+.blk.core { border-color: currentColor; }
+.loopbadge { font-size: 0.75rem; font-weight: 600; padding: 1px 6px; border-radius: 999px; border: 1.5px dashed currentColor; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.facts dt { color: var(--muted); } .facts dd { margin: 0; }
+.verdict { font-size: 0.92rem; }
+.qa { display: grid; gap: 12px; }
+.qa div { display: grid; gap: 2px; }
+.qa b { font-family: var(--f-display); }
+.reach td.cell { font-weight: 600; }
+.divider { border: 0; border-top: 1px solid var(--grid); margin: 8px 0 0; }
 :focus-visible { outline: 2px solid var(--s-shallow); outline-offset: 2px; }
 @media (max-width: 480px) { h1 { font-size: 1.6rem; } .status-row { grid-template-columns: 1fr; gap: 4px; } }
 </style>
@@ -78,9 +93,69 @@ code { font-size: 0.88em; }
   <header style="display:grid; gap:10px">
     <div class="eyebrow">loop-transformer · status 22 Nov 2026, 19:57 · seed 0</div>
     <h1>Looping buys depth, not arithmetic</h1>
-    <p class="lede">Tiny transformers trained from scratch on PEMDAS arithmetic. With the same 4.4M weights, running the core 8 times lifts accuracy on many-step problems by up to 27 points and matches a model with 4× the weights. On problems with big answers it barely helps; there, extra weights do.</p>
+    <p class="lede">Tiny models trained from scratch to do arithmetic in their heads. Looping the same layers lets a small model handle more steps, as well as a model 4× its size. Big numbers are a separate problem: looping doesn't fix them, and extra weights only partly do.</p>
   </header>
 
+
+  <section aria-labelledby="g">
+    <h2 id="g">At a glance</h2>
+    <div class="glance">
+      <div class="panel mcard" style="color:var(--s-shallow)">
+        <div class="name" style="color:var(--ink)">Shallow 2×1</div>
+        <div class="blocks"><span class="blk">read</span><span class="blk core">A</span><span class="blk core">B</span><span class="blk">write</span></div>
+        <dl class="facts" style="color:var(--ink)"><dt>Layers</dt><dd>4 blocks, each run once</dd><dt>Weights</dt><dd>4.4M (≈17 MB)</dd><dt>Work per problem</dt><dd>4 block-steps</dd><dt>Training speed</dt><dd>fastest (≈8 ms/step)</dd></dl>
+        <p class="verdict" style="color:var(--ink)"><b>Works on short problems.</b> Small answers stay mostly right up to depth 7; it can't handle many steps.</p>
+      </div>
+      <div class="panel mcard" style="color:var(--s-looped)">
+        <div class="name" style="color:var(--ink)">Looped 2×8</div>
+        <div class="blocks"><span class="blk">read</span><span class="blk core">A</span><span class="blk core">B</span><span class="loopbadge">×8</span><span class="blk">write</span></div>
+        <dl class="facts" style="color:var(--ink)"><dt>Layers</dt><dd>same 4 blocks; A,B run 8 times</dd><dt>Weights</dt><dd>4.4M (≈17 MB), same as shallow</dd><dt>Work per problem</dt><dd>18 block-steps</dd><dt>Training speed</dt><dd>≈32 ms/step</dd></dl>
+        <p class="verdict" style="color:var(--ink)"><b>Looping helps a lot on many-step problems</b> and matches deep there, with a quarter of the weights. It doesn't help with big numbers.</p>
+      </div>
+      <div class="panel mcard" style="color:var(--s-deep)">
+        <div class="name" style="color:var(--ink)">Deep 16×1</div>
+        <div class="blocks"><span class="blk">read</span><span class="blk core">1</span><span class="blk core">2</span><span class="blk core">3</span><span class="blk core">4</span><span class="blk core">…</span><span class="blk core">16</span><span class="blk">write</span></div>
+        <dl class="facts" style="color:var(--ink)"><dt>Layers</dt><dd>18 different blocks, each run once</dd><dt>Weights</dt><dd>19.0M (≈76 MB), 4.4× more</dd><dt>Work per problem</dt><dd>18 block-steps (same as looped)</dd><dt>Training speed</dt><dd>≈32 ms/step (same as looped)</dd></dl>
+        <p class="verdict" style="color:var(--ink)"><b>Best overall, but only on big numbers.</b> On many-step problems it ties looped. It costs 4.4× the weights to store, not more compute.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:6px">How deep does each model stay mostly right (50%+)?</h3>
+    <div class="panel scroll"><table class="reach">
+      <tr><th>model</th><th>1-digit answers</th><th>2-digit</th><th>3-digit</th><th>4-digit</th></tr>
+      <tr><td>Shallow 2×1</td><td class="cell">depth 7</td><td class="cell">depth 3</td><td class="cell">depth 2</td><td class="cell">never</td></tr>
+      <tr><td>Looped 2×8</td><td class="cell">depth 12</td><td class="cell">depth 6</td><td class="cell">depth 2</td><td class="cell">never</td></tr>
+      <tr><td>Deep 16×1</td><td class="cell">depth 12</td><td class="cell">depth 6</td><td class="cell">depth 3</td><td class="cell">never</td></tr>
+    </table></div>
+    <p class="read">Read it as: "the looped model gets more than half of 2-digit-answer problems right up to 6 steps deep." Trained on depths 1–8, so depth 12 is beyond anything it practised. 1-digit inputs, normal answer order.</p>
+
+    <div class="panel qa">
+      <div><b>Does shallow work?</b><span>Yes on short problems (95% at depth 3 with 1-digit answers), and it falls off fast: 47% at depth 8.</span></div>
+      <div><b>Does the loop help?</b><span>Yes, a lot, for many-step problems: same weights as shallow, +16 to +29 points at depths 4–10 on small answers. Almost no help on big answers (+3 points).</span></div>
+      <div><b>Is deep better, and does it use more memory?</b><span>Only on big numbers (3-digit answers at depths 3–6: +8 to +30 points over looped). On many-step problems it ties looped. It needs 4.4× the weights (memory to store), but the same compute and speed as looped.</span></div>
+      <div><b>What falls off?</b><span>Everything falls with depth, and answer size matters more: 1-digit answers last to depth 12 (looped), 2-digit to 6, 3-digit to 2–3, 4-digit never pass 50% even at depth 3.</span></div>
+      <div><b>What happened with backwards answers?</b><span>Writing <code>258</code> as <code>852</code> made every model worse: big answers −0.04 to −0.08, small answers −0.04 to −0.11. We keep normal order. It may only help once digits get place-value tags (next step).</span></div>
+    </div>
+
+    <h3 style="margin-top:6px">Other loop shapes (earlier grid, older and easier data)</h3>
+    <p class="read">These ran on the first, unbalanced dataset with a depth curriculum, so their numbers aren't comparable to the ones above. Accuracy on unseen depth-3 problems (mostly small answers), ±0.02.</p>
+    <div class="panel scroll"><table>
+      <tr><th>model</th><th>layers (read + core + write)</th><th>core runs</th><th>weights</th><th>block-steps</th><th>depth-3 accuracy</th></tr>
+      <tr><td>2×1 (shallow)</td><td>1 + 2 + 1 = 4</td><td>1</td><td>4.4M</td><td>4</td><td>0.80</td></tr>
+      <tr><td>2×2</td><td>4</td><td>2</td><td>4.4M</td><td>6</td><td>0.84</td></tr>
+      <tr><td>2×4</td><td>4</td><td>4</td><td>4.4M</td><td>10</td><td>0.86</td></tr>
+      <tr><td>2×8</td><td>4</td><td>8</td><td>4.4M</td><td>18</td><td>0.86</td></tr>
+      <tr><td>4×1 (medium)</td><td>1 + 4 + 1 = 6</td><td>1</td><td>6.4M</td><td>6</td><td>0.83</td></tr>
+      <tr><td>4×2</td><td>6</td><td>2</td><td>6.4M</td><td>10</td><td>0.86</td></tr>
+      <tr><td>4×4</td><td>6</td><td>4</td><td>6.4M</td><td>18</td><td>0.88</td></tr>
+      <tr><td>8×1 (medium-deep)</td><td>1 + 8 + 1 = 10</td><td>1</td><td>10.6M</td><td>10</td><td>0.81</td></tr>
+      <tr><td>8×2</td><td>10</td><td>2</td><td>10.6M</td><td>18</td><td>0.88</td></tr>
+      <tr><td>16×1 (deep)</td><td>1 + 16 + 1 = 18</td><td>1</td><td>19.0M</td><td>18</td><td>0.88</td></tr>
+      <tr><td>2×(1–8) random loops</td><td>4</td><td>1–8</td><td>4.4M</td><td>4–18</td><td>0.83</td></tr>
+      <tr><td>4×(1–4) random loops</td><td>6</td><td>1–4</td><td>6.4M</td><td>6–18</td><td>0.79</td></tr>
+    </table></div>
+    <p class="read">Same story at small scale: more loops on the same weights help (2×1 0.80 → 2×4 0.86), and every 18-block-step model lands at 0.86–0.88 whatever its weight count. The newer balanced runs only include 2×1, 2×8 and 16×1.</p>
+  </section>
   <section aria-labelledby="st">
     <h2 id="st">Status</h2>
     <div class="panel status">
@@ -91,6 +166,8 @@ code { font-size: 0.88em; }
     </div>
   </section>
 
+  <hr class="divider">
+  <div class="eyebrow">The detail</div>
   <section aria-labelledby="models">
     <h2 id="models">The three models</h2>
     <p class="read">Same width (256), same data, same 40k training steps. "Looped" reuses the same two core blocks 8 times, so it has shallow's weights and deep's compute.</p>
@@ -145,7 +222,7 @@ flowchart LR
       <div class="panel"><h3>Looped − shallow</h3><svg id="gainLoop" role="img" aria-label="Accuracy gain from looping"></svg></div>
       <div class="panel"><h3>Deep − looped</h3><svg id="gainWeights" role="img" aria-label="Accuracy gain from more weights"></svg></div>
     </div>
-    <p class="read">Looping's gains sit in the left columns (small answers) and grow with depth. Extra weights add little there but help on 3-digit answers at depths 3–6 (+0.13 to +0.30), where the arithmetic itself is hard.</p>
+    <p class="read">Looping's gains sit in the left columns (small answers) and grow with depth. Extra weights add little there but help on 3-digit answers at depths 3–6 (+0.08 to +0.30), where the arithmetic itself is hard.</p>
   </section>
 
   <section aria-labelledby="f4">
