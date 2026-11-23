@@ -876,6 +876,32 @@ state at the token right after it ends, after each pass (looped) or layer (deep,
 - Practical: with a 6-thread cap the probes took ~45 s per model vs ~8 min uncapped (thread
   oversubscription with sklearn's BLAS).
 
+<a id="log-h18"></a>
+
+## 2026-11-23 15:20 — H18 screen: the random offset fixes the nonsense, separate tags don't
+
+40k steps, seed 0, normal order. Full tables: `docs/results-tags.md` (`scripts/tags_report.py`).
+
+| looped 2×8 | 4-digit `a+b` within 5% | 4-digit exact | in-range 3-digit `a+b` exact | trained sizes: multi-digit inputs / big answers |
+|---|---|---|---|---|
+| **tags + random offset** | **0.97** | 0.01 | 0.21 | 0.29 / 0.25 |
+| tags, separate tables | 0.00 | 0.00 | 0.15 | 0.30 / 0.26 |
+| tags, no fix | 0.03 | 0.00 | 0.14 | 0.31 / 0.26 |
+| no tags | 0.90 | 0.00 | 0.16 | 0.28 / 0.20 |
+
+Shallow: offset 0.23, separate 0.01, tags 0.07, no tags 0.78 (within 5%).
+
+- **Mechanism confirmed:** training the question-digit tags on ids beyond 3 (offset) turns nonsense
+  into near-misses (0.03 → 0.97 within 5%, better than no tags). Separating question and answer
+  tables does nothing (0.00). The failure was *untrained labels*, not the question/answer collision.
+- **No cost on trained sizes:** offset is within 0.02 of plain tags on multi-digit inputs and big answers.
+- **Exact 4-digit stays ~0 for every variant, but the bar was out of reach:** these 40k models get
+  only 0.14–0.21 of *in-range* 3-digit sums exactly right. The D-014 rule (≥ 0.5 exact) couldn't be
+  met at 40k by any extrapolation fix; it should have been relative to in-range accuracy (rule-design
+  mistake, Claude). By the rule as written: offset "approximate only", separate "fail".
+- Card says "approximate only → report, don't adopt". Offset nonetheless dominates plain tags
+  (same in-range, 0.97 vs 0.03 out of range). Whether to make it the default is Walter's call.
+
 ---
 
 ## Open questions / ideas to come back to

@@ -43,29 +43,20 @@ Shallow 2×1 (4.4M), looped 2×8 (4.4M, 8 passes), deep 16×1 (19M, same compute
 - Prior work: Saunshi et al. ICLR 2025, McLeish et al. NeurIPS 2024 (`docs/related-work.md`).
 
 ## In flight right now
-- **H18 screen (D-014)**, launched 2026-11-23 ~13:45: `scripts/arith_tags.sh 0`, results
-  `results/toy/tags/`, queue log `results/toy/tags-s0.queue.log` (4 "done" lines = finished).
-  Runs: `tags/c2k1-offset-s0`, `tags/c2k1-sep-s0` (done), `tags/c2k8-offset-s0`, `tags/c2k8-sep-s0`
-  (finishing ~15:00). Options: `--tag_offset 8` (train-only random shift of question-digit tags),
-  `--sep_tags` (separate answer tag table). 40k steps, seed 0, same settings as the D-011 screen.
+- **Nothing running.** H18 screen finished and scored (`docs/results-tags.md`, research log 15:20):
+  random tag offset → 4-digit `a+b` within 5% 0.97 (plain tags 0.03, no tags 0.90), no cost in range;
+  separate tables do nothing. Exact 4-digit ~0 for all (in-range 3-digit exact only 0.14–0.21 at 40k).
 
 ## Next actions, in order
-1. **When the H18 queue shows 4 done:** `.venv/bin/python scripts/tags_report.py --score` (scores
-   8 checkpoints on `data/longnum_add`, `data/longnum_mul`; GPU, a few minutes), then
-   `.venv/bin/python scripts/tags_report.py` (writes `docs/results-tags.md`, prints the D-014
-   verdict per fix). Baselines: tags no fix = `place/*-normal-pv-s0`, no tags = `bal/*-normal-s0`.
-   Rule: looped 4-digit `a+b` exact ≥ 0.5 and trained sizes within 0.03 → pass; also report vs ≥ 0.7.
-2. Log the result (research log entry with `<a id="log-h18">`, D-014 outcome, `hypotheses.md` row
-   H18 → Done, link `results-tags.md` from `docs/index.md`). Tell Walter.
-3. If a fix passes: card for the long probe set with it (shallow / looped / deep × 2 seeds,
-   120k, ≈ 6 h: `scripts/arith_long_arm.sh "--place_emb --tag_offset 8" offset` or `--sep_tags`).
-   Run (c) both fixes only if both pass. If neither passes: discuss with Walter (no tags, or
-   train on longer numbers).
-4. Update the results page (`docs/visual/loop-depth-results.html` + the claude.ai artifact
-   BBw1f6Y9HGTgb75UBM1Nfj from `/tmp/.../scratchpad/viz/loop-depth-results.html` if it still
-   exists, else from the docs copy) with H19 and H18 findings. Keep the v2 writing style:
-   what / why / result / meaning, no semicolons, no H-codes in the body.
-5. Then H9 (variable loop count, plan step 5).
+1. **Walter decides:** adopt `--tag_offset 8` as the tag default? (The D-014 rule says "approximate
+   only, don't adopt", but offset matches plain tags in range and fixes out-of-range nonsense.)
+   If yes: card for the long probe set with it (shallow / looped / deep × 2 seeds, 120k, ≈ 6 h:
+   `scripts/arith_long_arm.sh "--place_emb --tag_offset 8" offset`), which also shows whether exact
+   4-digit accuracy rises once in-range exactness is higher.
+2. Update the results page (`docs/visual/loop-depth-results.html` + claude.ai artifact
+   BBw1f6Y9HGTgb75UBM1Nfj) with H19 and H18. v2 style: what / why / result / meaning, no
+   semicolons, no H-codes in the body.
+3. Then H9 (variable loop count, plan step 5).
 
 ## Practical notes
 - Run Python as `/mnt/data/walter/loop-transformer/.venv/bin/python`. Tests: `pytest tests -q -k toy`.

@@ -45,6 +45,10 @@ only if both pass.
 **Needs Walter?** Yes. **Status.** Decided by Walter, 2026-11-23: (a) and (b) as separate runs.
 Pass bar stays ≥ 0.5 exact; results also reported against ≥ 0.7 ("as good as in-range": tagged
 3-digit sums are 0.74).
+**Outcome (2026-11-23 15:20):** offset "approximate only" (4-digit `a+b` within 5%: 0.97 vs 0.03 plain
+tags, 0.90 no tags; exact 0.01), separate tables "fail" (0.00). No cost on trained sizes. The 0.5-exact
+bar was unreachable at 40k: in-range 3-digit sums are only 0.14–0.21 exact. Adopting offset as the
+default is open for Walter. Research log 15:20.
 
 ## D-013 · H19: how do we tell whether each loop pass handles one level of brackets? (decided: (b))
 
