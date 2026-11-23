@@ -34,3 +34,4 @@ Precise meanings as used in this repo, with code locations. Human-facing explana
 - **diagonal**: cells with equal effective depth (compute-matched). **row**: equal params.
 - **decision card**: entry in `docs/decisions.md` (question, options + what each outcome means, recommendation, owner, status). Required before any experiment or design change that alters what a result means; see skill `decision-brief`.
 - **status entry**: `docs/status.md`, via skill `status-update`.
+- **adaptive loops (plan step 5, not implemented)**: deep supervision = loss on the answer after each pass 1..K (coda + head applied per pass); 5a confidence stop at inference; 5b learned halting head (PonderNet-style: P(halt) per pass, expected loss + penalty on passes).

@@ -68,7 +68,24 @@ Core {2,4,8,16} × loops, with the settled recipe (order + embeddings), 2 seeds 
 grow with depth? **Success:** looped 2×8 within 0.03 of deep 16×1 at depths 4–8 with 4× fewer
 weights, and loops helping more at deeper depths than shallow ones.
 
-### 5. More loops at test time (extrapolation)
+### 5. Variable loop control: let the model decide how many loops (replaces the old step 5)
+Walter's direction: instead of "more loops at test time", teach the model to use **fewer loops
+on easy problems and more on hard ones**, up to a max K (adaptive computation / halting / early
+exit).
+- **Prerequisite:** an answer must be usable after *every* pass (a fixed-K=8 model scores
+  ≤ 0.11 at other K). Train looped 2×8 with **deep supervision**: read out and train an answer
+  after every pass 1…K (better than the random-K training that cost accuracy in the grid).
+- **5a. Confidence stop** (no training): loop until the answer stops changing or confidence
+  ≥ a threshold.
+- **5b. Learned stop head** (PonderNet-style, ~250 weights): reads the hidden state after each
+  pass, outputs P(done); loss = expected answer loss + a penalty on extra passes.
+- **Success:** loops used rise with depth (e.g. depth 2 → 2–3 passes, depth 8 → ~8), and
+  accuracy at the chosen K stays within 0.03 of always using max K, with fewer passes on
+  average. That would mean the model measures difficulty and spends compute to match: new
+  beyond the Saunshi et al. replication.
+- Per-token halting (ACT) is out of scope: the answer is read at one position.
+
+**Earlier version (superseded):** More loops at test time (extrapolation)
 Train on depths ≤ 8 with a **random** loop count, test depths 9–16 at more loops than trained.
 Fixed-loop models can't do this (they only work at their training loop count). Random loops
 cost accuracy in the first grid, so this step also tries to fix that (e.g. bias the random K

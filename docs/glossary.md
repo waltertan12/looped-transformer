@@ -107,6 +107,14 @@ Plain-language definitions, each tied to this project. Terse agent-facing defini
 - **Retrofit.** Converting an already-trained model into a looped one.
 - **Dials (gates).** Our exp2/3 numbers that scaled each extra pass; training set them to ~0.
 
+- **Adaptive computation / halting / early exit.** The model decides per problem how many
+  loop passes to use, up to a max K: stop early on easy problems, keep looping on hard ones.
+- **Deep supervision.** Training an answer read out after every loop pass, not just the
+  last, so the model can stop at any pass and still give a real answer.
+- **Stop head (halting head).** A tiny layer that reads the hidden state after each pass and
+  outputs the probability "I'm done"; trained to balance accuracy against passes used
+  (PonderNet, Ouro/LoopLM).
+
 ## Side-quest vocabulary
 
 - **Logit lens.** Reading off what answer the model would give at an intermediate point
