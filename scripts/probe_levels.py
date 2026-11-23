@@ -151,7 +151,7 @@ def probe_curve(feats, H, Y, P, heights, test_frac: float = 0.2):
         for sidx in range(feats.shape[0]):
             X = feats[sidx].astype(np.float32)
             sc = StandardScaler().fit(X[tr])
-            clf = LogisticRegression(max_iter=400, C=1.0).fit(sc.transform(X[tr]), Y[tr])
+            clf = LogisticRegression(max_iter=1000, C=1.0).fit(sc.transform(X[tr]), Y[tr])
             accs.append(float((clf.predict(sc.transform(X[te])) == Y[te]).mean()))
         out[int(h)] = {"acc": accs, "majority": float((Y[te] == maj).mean()), "n_test": int(te.sum())}
     return out
@@ -174,12 +174,21 @@ def main() -> None:
     ap.add_argument("--ckpts", default="long/c2k8-s0,long/c2k8-s1,long/c16k1-s0,long/c16k1-s1,long/c2k1-s0")
     ap.add_argument("--n_per_depth", type=int, default=800)
     ap.add_argument("--out", default="results/toy/probe/levels.json")
-    ap.add_argument("--threads", type=int, default=8)
+    ap.add_argument("--threads", type=int, default=6, help="CPU threads for torch and the probe solver")
     a = ap.parse_args()
+    import warnings
+    from threadpoolctl import threadpool_limits
+    warnings.filterwarnings("ignore")
+    threadpool_limits(limits=a.threads)  # caps OpenBLAS/MKL/OpenMP used by sklearn and numpy
     torch.set_num_threads(a.threads)
     probs = load_problems(a.n_per_depth)
-    res = {"n_problems": len(probs), "models": {}}
+    out = REPO / a.out
+    out.parent.mkdir(parents=True, exist_ok=True)
+    res = json.loads(out.read_text()) if out.exists() else {"n_problems": len(probs), "models": {}}
     for name in a.ckpts.split(","):
+        if name in res["models"]:
+            print(f"{name}: already done, skipping", flush=True)
+            continue
         t0 = time.time()
         model, args = load_checkpoint(REPO / f"checkpoints/toy/{name}.pt", "cpu")
         k = train_k(args)
@@ -192,10 +201,9 @@ def main() -> None:
         print(f"{name}: stages {feats.shape[0]}  ready {rd}  verdict {res['models'][name]['verdict']}  "
               f"({time.time() - t0:.0f}s)", flush=True)
         for h, c in curve.items():
-            print(f"   h{h}: " + " ".join(f"{v:.2f}" for v in c["acc"]) + f"   (majority {c['majority']:.2f}, n {c['n_test']})")
-    out = REPO / a.out
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(res, indent=1))
+            print(f"   h{h}: " + " ".join(f"{v:.2f}" for v in c["acc"]) + f"   (majority {c['majority']:.2f}, n {c['n_test']})",
+                  flush=True)
+        out.write_text(json.dumps(res, indent=1))  # save after every model
     print("->", out)
 
 
