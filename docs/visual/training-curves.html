@@ -116,7 +116,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
     <h2>H16, running now: wider blocks</h2>
     <p class="note">Widths 256 (thin line), 384 and 512 (thick line). 120k-step schedule, each run pauses at 40k for a look.
       Partial curves, refreshed when the page is rebuilt (<code>scripts/curves_export.py</code>). All 9 runs reached the 40k pause.
-      Since 24 Nov 15:29 they are training on to an 80k pause in pairs. Width 512 reached 80k at about 17:30. Width 384 passed 60k at about 18:00 and is training on. One seed each.</p>
+      Since 24 Nov 15:29 they are training on to an 80k pause in pairs. Width 512 reached 80k at about 17:30. Width 384 reached 80k at about 18:40. Width 256 is training now. One seed each.</p>
     <div class="panel">
       <h3>Training loss at the 40k pause</h3>
       <div class="scroll"><table>
@@ -137,13 +137,13 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
         <tbody>
           <tr><td>Looped 2×8, width 512</td><td>0.707</td><td>0.578</td><td><b>0.481</b></td><td>0.333</td><td>0.404</td><td>0.435</td></tr>
           <tr><td>Deep 16×1, width 512</td><td>0.763</td><td>0.631</td><td>0.506</td><td>0.268</td><td>0.338</td><td>0.431</td></tr>
-          <tr><td>Looped 2×8, width 384</td><td>0.793</td><td>0.707</td><td>–</td><td>0.258</td><td>0.312</td><td>–</td></tr>
-          <tr><td>Deep 16×1, width 384</td><td>0.759</td><td>0.633</td><td>–</td><td>0.275</td><td>0.330</td><td>–</td></tr>
+          <tr><td>Looped 2×8, width 384</td><td>0.793</td><td>0.707</td><td>0.603</td><td>0.258</td><td>0.312</td><td>0.358</td></tr>
+          <tr><td>Deep 16×1, width 384</td><td>0.759</td><td>0.633</td><td><b>0.527</b></td><td>0.275</td><td>0.330</td><td><b>0.414</b></td></tr>
         </tbody>
       </table></div>
       <p class="note">Loss is the last logged training-batch loss at that step. Accuracy is exact answers on held-out problems, averaged over depths 1–8
         (the last eval before 80k is at 78k). Looped led deep by 0.07 accuracy at 60k. By 78k deep has caught up (0.431 vs 0.435), while looped still
-        has slightly lower training loss. At width 384 it is the other way round: deep leads at 60k on both loss (0.633 vs 0.707) and accuracy (0.330 vs 0.312). One seed. The other 7 runs reach 60k and 80k later tonight; this table grows as they do.</p>
+        has slightly lower training loss. At width 384 it is the other way round: deep leads on both, and the gap widens from 60k to 78k (accuracy 0.330 vs 0.312, then 0.414 vs 0.358). One seed. The other 7 runs reach 60k and 80k later tonight; this table grows as they do.</p>
     </div>
     <div class="panel"><div class="legend" id="leg-wide"></div><div class="pair" id="g-wide"></div><p class="note" id="wide-status"></p></div>
   </section>
