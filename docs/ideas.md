@@ -68,6 +68,11 @@ Related hypotheses in `hypotheses.md`.
 - **I-M6 Fit accuracy = α·log(effective depth) + β** over the grid; compare α for loops vs layers.
 
 ## Long term
+<a id="idea-protein"></a>
+
+- **I-L4 Protein track** (Walter, 24 Nov). Same loop question on real biology: looped vs deep
+  protein models from scratch on Swiss-Prot, scored on contacts by protein length and contact
+  range. First step: probe ESM-2 8M. Full notes: [protein.md](protein.md).
 <a id="idea-wide"></a>
 
 - **I-L1 Much wider model** (Walter): e.g. d_model 512–1024 (McLeish uses 1024). Question: what

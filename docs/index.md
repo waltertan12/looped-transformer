@@ -11,5 +11,6 @@ Tiny models trained from scratch on nested arithmetic. Code: [GitHub](https://gi
 - [H13 / H14 results](results-ops.md): pure addition / subtraction and operator mix
 - [H18 results](results-tags.md): tag fixes for longer numbers
 - [H19 results](results-h19.md): does each loop pass handle one level of brackets? (probes)
+- [Protein track](protein.md): idea stage, the same loop question on proteins
 - [Related work](related-work.md): the two closest papers, compared with our results
 - [Research log](research-log.md) (chronological) · [Decisions](decisions.md) · [History](history.md) · [Glossary](glossary.md)

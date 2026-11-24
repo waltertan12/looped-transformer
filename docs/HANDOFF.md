@@ -11,6 +11,10 @@ Current track: **tiny transformers trained from scratch on synthetic PEMDAS arit
 (`src/looptf/toy/`). The earlier Qwen-retrofit track (exp1–3) is paused: it didn't work.
 
 ## Running now (2026-11-24)
+**First run `scripts/lock.py show`.** It lists every queue running on this machine, from any
+track (record in `.locks/running.json`, not committed). Register new queues with `scripts/lock.py add`.
+Tracks in this repo: arithmetic (`src/looptf/toy/`, everything below) and protein (idea stage, `docs/protein.md`).
+
 H16 / D-015: `scripts/arith_wide.sh pause` (9 runs, 2 at a time, log `results/toy/wide-pause.queue.log`).
 Each run pauses at 40k. When all 9 say "done … (pause)": score the @40k results against the D-015
 rules and show Walter. If he says continue: `setsid nohup scripts/arith_wide.sh resume > results/toy/wide-resume.queue.log 2>&1 &`.
