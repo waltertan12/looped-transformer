@@ -101,6 +101,28 @@ Related hypotheses in `hypotheses.md`.
 - **I-L3 Number base 2 / 10 / 16**; embedding-space side quest; routing / branching; back to
   Qwen once a recipe clearly works.
 
+<a id="idea-equilibrium"></a>
+
+### Other objectives and physics-style framings (Walter, 24 Nov)
+
+Papers named here are from memory. Check them before relying on them.
+
+- **I-L3 Loop to equilibrium** (deep equilibrium models, Bai et al. 2019). Run the loop until the
+  state stops changing and train on that fixed point. Cheap first check, no training: on today's
+  checkpoints, measure how much the state changes from pass to pass, including past pass 8. H5
+  (fails at other loop counts) hints our models don't settle. A settling state would also give
+  H9 a free stop rule.
+- **I-L4 Energy view** (energy-based models, e.g. iterative reasoning as energy minimization, Du
+  et al. 2022). Learn a score for "how wrong is this partial answer" and let each pass lower it.
+  Harder problems then take more passes on their own, which is H9's goal.
+- **I-L5 Diffusion-style refinement.** Write a rough answer, then fix all digits over several
+  passes instead of left to right. Discrete diffusion models have been tried on puzzles like
+  sudoku. Could help carries, which flow right to left.
+- **I-L6 Latent targets** (JEPA-style). Like H20, but predict the hidden state of the next step
+  instead of its text. Close to Coconut (see related work).
+- **I-L7 Other losses.** Weight answer digits by difficulty, reward exact answers only (RL), or
+  penalize state change late in the loop to push toward equilibrium (links I-L3).
+
 ## Docs (later; Walter, 2026-11-23)
 - **Research log per topic**: split `research-log.md` into one file per line of work (e.g.
   `log/digit-order.md`, `log/place-value.md`, `log/h13-h14.md`), each ordered by date/time, with
