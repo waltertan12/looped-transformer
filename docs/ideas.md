@@ -105,10 +105,9 @@ Related hypotheses in `hypotheses.md`.
 
 ### Other objectives and physics-style framings (Walter, 24 Nov)
 
-**Where these came from.** Walter asked, on 24 Nov: how do custom losses help or hurt? How do
-physics ideas like diffusion and finding equilibrium carry over? How do energy-based models
-relate? Could latent world models (JEPA) help with understanding math? Could RL that rewards
-exact answers help, and what are mid- and post-training? Hypotheses H22–H25 came out of this.
+**Origin.** A 24 Nov discussion of ideas from outside looped transformers: custom losses,
+physics framings (diffusion, equilibrium), energy-based models, latent world models (JEPA), and
+RL post-training that rewards exact answers. Hypotheses H22–H25 come from it.
 Papers named here are from memory. Check them before relying on them.
 
 - **I-L3 Loop to equilibrium → H22** (deep equilibrium models, Bai et al. 2019). Run the loop until the
@@ -124,8 +123,8 @@ Papers named here are from memory. Check them before relying on them.
   sudoku. Could help carries, which flow right to left.
 <a id="idea-solvable"></a>
 
-- **I-L8 Does the model know it will fail? → H23.** From Walter's question "could JEPA tell us if a
-  problem is solvable by the model?". JEPA isn't needed: a probe on the state at `=` that
+- **I-L8 Does the model know it will fail? → H23.** Origin: the question of whether JEPA could tell if a
+  problem is solvable by the model. JEPA isn't needed: a probe on the state at `=` that
   predicts right vs wrong answers the same question. If it works, it is also a stop signal for
   H9 / H10 (keep looping while the model thinks it would be wrong).
 - **I-L6 Latent targets** (JEPA-style). Like H20, but predict the hidden state of the next step
