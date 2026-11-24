@@ -6,7 +6,9 @@ steps unless noted. To re-rank what's next, reorder its rows.
 
 ## Running now
 
-Nothing. The last batch (the long runs and the add/subtract tests) finished on 23 Nov.
+| # | Hypothesis | What's running | Details |
+|---|---|---|---|
+| H16 | Wider models fix number size, and loops still add steps | Widths 256 / 384 / 512 × shallow, looped, deep, no tags, seed 0. Started 24 Nov. Pauses at 40k (about 5 h) for a look, then 120k (about 10 h more) | [card](decisions.md), [log](research-log.md#log-h16) |
 
 ## Next, in priority order
 
@@ -17,7 +19,6 @@ Nothing. The last batch (the long runs and the add/subtract tests) finished on 2
 | H21 | The number of attention heads matters: 1 vs 2 vs 4 (today) vs 8, same weights | Start with 2 vs 4 on shallow, looped and deep | 6 runs (one new head count × 3 models × 2 seeds) | [idea](ideas.md#idea-heads) |
 | H15 | Letting question tokens see each other helps. Today the `+` in `3+4*5` can't see the `*` | One attention-mask change, three models | 6 runs | [idea](ideas.md#idea-attention) |
 | H11 | Looping only the middle layers beats looping all of them | Five layer layouts at the same compute | 5 runs | [plan](plan.md#plan-step-7) |
-| H16 | Wider models fix number size, and loops still add steps | Width 512–1024 | Many hours | [idea](ideas.md#idea-wide) |
 | H12 | Loops help follow chained definitions like `a=3*4; b=a+2` | Same comparison on the chain data (already built) | 6 runs | [plan](plan.md#plan-step-8) |
 | H20 | Teaching each pass to output one intermediate step (one bracket level done) helps loops more than deep | Extra loss per pass on a readout of the half-solved problem | 4–6 runs, needs a target generator | [idea](ideas.md#idea-intermediate) |
 | H17 | Step skill carries over to algebra like `3*x+5=20` | New data generator first | Later | [idea](ideas.md#idea-algebra) |

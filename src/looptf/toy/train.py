@@ -168,6 +168,9 @@ def main(argv=None):
                    help="cap this process's GPU memory to this fraction of the card (0 = no cap); "
                         "use when several runs share the GPU")
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--pause_at", type=int, default=0,
+                   help="H16: at this step save full training state + a snapshot checkpoint, then exit")
+    p.add_argument("--resume", action="store_true", help="continue a run paused with --pause_at")
     p.add_argument("--compile", action="store_true")
     a = p.parse_args(argv)
 
@@ -225,15 +228,43 @@ def main(argv=None):
         t = (step - a.warmup) / max(1, a.steps - a.warmup)
         return a.lr * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * t)))
 
+    state_path = ckpt_dir / f"{a.name}.state.pt"
+    start, elapsed0 = 0, 0.0
+    if a.resume:
+        s = torch.load(state_path, map_location=dev, weights_only=False)
+        model.load_state_dict(s["model"])
+        opt.load_state_dict(s["opt"])
+        start, elapsed0, cur, mastered_at = s["step"], s["elapsed"], s["cur"], s["mastered_at"]
+        rng.setstate(s["py_rng"])
+        torch.set_rng_state(s["torch_rng"].cpu())
+        torch.cuda.set_rng_state(s["cuda_rng"].cpu())
+        if fd:
+            np_rng.bit_generator.state = s["np_rng"]
+        print(f"[{a.name}] resumed at step {start}", flush=True)
+
     meta = {"args": vars(a), "params": model.num_params(), "eval_loops": eval_loops}
     (out_dir / "config.json").write_text(json.dumps(meta, indent=2))
     print(f"[{a.name}] unique params {model.num_params()/1e6:.2f}M  train loops {a.train_loops}  "
           f"train depth {a.train_depth}  eval loops {eval_loops}", flush=True)
 
-    log = open(out_dir / "log.jsonl", "w")
-    t0, run_loss, run_acc = time.time(), 0.0, 0.0
-    for step in range(a.steps + 1):
-        if step % a.eval_every == 0 or step == a.steps:
+    log = open(out_dir / "log.jsonl", "a" if a.resume else "w")
+    t0, run_loss, run_acc = time.time() - elapsed0, 0.0, 0.0
+    for step in range(start, a.steps + 1):
+        if a.pause_at and step == a.pause_at and step < a.steps and not (a.resume and step == start):
+            torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "step": step,
+                        "elapsed": time.time() - t0, "cur": cur, "mastered_at": mastered_at,
+                        "py_rng": rng.getstate(), "torch_rng": torch.get_rng_state(),
+                        "cuda_rng": torch.cuda.get_rng_state(),
+                        "np_rng": np_rng.bit_generator.state if fd else None}, state_path)
+            tag = f"{step / 1000:g}k"
+            torch.save({"cfg": cfg.__dict__, "state_dict": model.state_dict(), "args": vars(a)},
+                       ckpt_dir / f"{a.name}@{tag}.pt")
+            dump_per_example(model, fd.test_sets(eval_depths) if fd else eval_sets, eval_loops,
+                             out_dir / f"per_example@{tag}.npz")
+            print(f"[{a.name}] paused at step {step}; continue with --resume", flush=True)
+            log.close()
+            return
+        if (step % a.eval_every == 0 or step == a.steps) and not (a.resume and step == start):
             ev = evaluate(model, eval_sets, eval_loops)
             log.write(json.dumps({"step": step, "eval": ev}) + "\n"); log.flush()
             print(f"--- step {step} eval (acc; train depth {a.train_depth}) ---\n"

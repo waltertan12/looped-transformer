@@ -10,6 +10,11 @@ evidence-backed opinion about loops. One RTX 5090 (32 GB, 450 W cap) at home.
 Current track: **tiny transformers trained from scratch on synthetic PEMDAS arithmetic**
 (`src/looptf/toy/`). The earlier Qwen-retrofit track (exp1–3) is paused: it didn't work.
 
+## Running now (2026-11-24)
+H16 / D-015: `scripts/arith_wide.sh pause` (9 runs, 2 at a time, log `results/toy/wide-pause.queue.log`).
+Each run pauses at 40k. When all 9 say "done … (pause)": score the @40k results against the D-015
+rules and show Walter. If he says continue: `setsid nohup scripts/arith_wide.sh resume > results/toy/wide-resume.queue.log 2>&1 &`.
+
 ## Where things are
 
 | what | file |

@@ -925,6 +925,22 @@ prelude output (the embedded problem), the same on every pass. So the model sees
 running state and the original problem each pass. This led to H20
 ([idea](ideas.md#idea-intermediate)).
 
+<a id="log-h16"></a>
+
+## 2026-11-24 — H16 started: wider blocks (D-015)
+
+Widths 256 / 384 / 512 (feed-forward 4× width, 4 heads) × shallow 2×1, looped 2×8, deep 16×1. No
+place-value tags, normal order, `data/nested_bal`, lr 3e-4, 120k schedule, seed 0. Width 256 is
+rerun because no existing run matches (old 40k runs had a 40k schedule, old 120k runs had tags).
+New `--pause_at` / `--resume` in `train.py` (test: paused + resumed = unbroken run). Each run
+pauses at 40k and writes `checkpoints/toy/wide/<run>@40k.pt` and
+`results/toy/wide/<run>/per_example@40k.npz`. Queue: `scripts/arith_wide.sh pause`, log
+`results/toy/wide-pause.queue.log`. Speed at 512: about 0.17 s/step (2.4× width 256), so the 40k
+stage takes about 5 h and the rest to 120k about 10 h. Continue with `scripts/arith_wide.sh resume`.
+
+The 120k target from the old runs (tags on), exact: multi-digit inputs 0.40 / 0.44 / 0.52, big
+answers 0.25 / 0.39 / 0.47 (shallow / looped / deep).
+
 ---
 
 ## Open questions / ideas to come back to

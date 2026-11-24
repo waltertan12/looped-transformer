@@ -9,6 +9,43 @@ Card format: **Question** · **Options** (with what each outcome would tell us) 
 
 ---
 
+## D-015 · H16: do wider blocks fix number size? (decided: widths 1.5× and 2×, no tags, pause at 40k)
+
+**Question.** Deep beats looped on number size even on plain addition, and numbers are weak even
+inside the trained range (120k, exact: multi-digit inputs 0.40 / 0.44 / 0.52 and big answers
+0.25 / 0.39 / 0.47 for shallow / looped / deep). If number size is about weights, wider blocks
+should help, and loops should still add steps.
+
+**Design.** Widths 256 (today), 384 (1.5×) and 512 (2×), feed-forward 4× width, **4 heads kept**
+(head width grows) so head count stays a separate question (H21). Shallow 2×1, looped 2×8, deep
+16×1. Normal order, **no place-value tags** (generic, and Walter's "feels like cheating" worry).
+Same recipe as D-012 otherwise (`data/nested_bal`, lr 3e-4, 120k-step schedule), seed 0.
+Weights: 4.4M / 19M at 256, about 10M / 43M at 384, about 18M / 76M at 512 (shallow and looped / deep).
+Bonus: looped at 512 (18M, 16 layers of compute) vs deep at 256 (19M, 16 layers) is a same-weights,
+same-compute fight between width plus loops and depth.
+
+**Pause at 40k.** Every run trains on the 120k schedule and pauses at 40k (`--pause_at 40000`,
+then `--resume`, tested to match an unbroken run). Walter looks, then decides whether to continue.
+Width 256 is rerun without tags, because the old 40k runs used a 40k schedule (different
+learning rate at step 40k) and the old 120k runs used tags. 9 runs, `scripts/arith_wide.sh`.
+
+**Cost.** Width-256 runs took 36 / 143 / 138 min for 120k. Wider runs do about 2.25× (384) and 4×
+(512) the work, likely less in time because small models don't fill the GPU. Estimate for all 9
+to reach 40k: 4–7 h, 2 at a time. To 120k: about 3× that. Timed after the first minutes.
+
+**What would change our minds (pre-registered).** Measured at the 40k pause and again at 120k,
+always against width 256 at the same step, on cells where the baseline is above 0.1:
+1. Width helps numbers: at 512, looped's multi-digit-input exact accuracy is at least +0.10 above
+   looped at 256.
+2. Loops still add steps: at every width, looped beats shallow at depth 8 by at least +0.10.
+3. The gap shrinks: deep's lead over looped on number size is smaller at 512 than at 256.
+H16 is supported if 1–3 hold at 120k. If 1 fails at 40k on both looped and deep, stop and report.
+Confounds: one seed (confirm with seed 1 if supported). Learning rate not retuned for width
+(if a wide run diverges, lower it for that width and note it).
+
+**Needs Walter?** Yes. **Status.** Decided by Walter, 2026-11-24: widths 1.5× and 2× with a 40k
+look, then continue to 120k.
+
 ## D-014 · H18: which tag fix for longer numbers, on which runs? (decided: (a) and (b), separately)
 
 **Question.** With place-value tags, 4-digit inputs come out as nonsense (within 5% for 0.01–0.10
