@@ -961,6 +961,12 @@ rerun from scratch after the queue (`scripts/arith_wide_rerun512.sh`). Their fir
 512 0.33, deep 512 0.23, looped 256 (old, tags) 0.23. One seed, mid-training, and the no-tag 256
 baseline isn't run yet, so this is a hint only.
 
+**Plan change (24 Nov, Walter).** Continue all 9 to a second pause at 80k, then to 120k, without
+waiting at each step. Added `--save_every 10000` (atomic state saves, resume drops log lines from a
+crashed attempt) and tests for two pauses and for resuming from a periodic save. Scoring script
+`scripts/wide_report.py`. Note on rule 2: at 40k, shallow at depth 8 is below 0.1 (floor), so read
+rule 2 at 80k and 120k.
+
 The 120k target from the old runs (tags on), exact: multi-digit inputs 0.40 / 0.44 / 0.52, big
 answers 0.25 / 0.39 / 0.47 (shallow / looped / deep).
 

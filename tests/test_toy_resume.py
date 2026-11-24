@@ -1,4 +1,5 @@
 """Pause at step N then resume must give the same model as an unbroken run (H16 40k look)."""
+import json
 import shutil
 
 import pytest
@@ -36,5 +37,43 @@ def test_pause_resume_matches_unbroken_run():
         sb = torch.load(ROOT / "checkpoints/toy" / f"{b}.pt", weights_only=False)["state_dict"]
         for k in sa:
             assert torch.allclose(sa[k], sb[k], atol=1e-5), k
+    finally:
+        _cleanup(a, b)
+
+
+def test_two_pauses_then_finish_matches_unbroken_run():
+    """40k -> 80k -> 120k pattern: pause, resume with a later pause, resume to the end."""
+    a, b = "zz_test_full2", "zz_test_sub/pause2"
+    _cleanup(a, b)
+    try:
+        train.main(["--name", a, *BASE])
+        train.main(["--name", b, *BASE, "--pause_at", "100"])
+        train.main(["--name", b, *BASE, "--resume", "--pause_at", "200"])
+        assert (ROOT / "checkpoints/toy" / f"{b}@0.2k.pt").exists()
+        train.main(["--name", b, *BASE, "--resume"])
+        sa = torch.load(ROOT / "checkpoints/toy" / f"{a}.pt", weights_only=False)["state_dict"]
+        sb = torch.load(ROOT / "checkpoints/toy" / f"{b}.pt", weights_only=False)["state_dict"]
+        for k in sa:
+            assert torch.allclose(sa[k], sb[k], atol=1e-5), k
+    finally:
+        _cleanup(a, b)
+
+
+def test_resume_from_periodic_save_matches_unbroken_run():
+    """--save_every: as if the run crashed after the save at step 200, then resumed."""
+    a, b = "zz_test_full3", "zz_test_sub/save3"
+    _cleanup(a, b)
+    try:
+        train.main(["--name", a, *BASE])
+        train.main(["--name", b, *BASE, "--save_every", "200"])  # finishes; state file holds step 200
+        st = torch.load(ROOT / "checkpoints/toy" / f"{b}.state.pt", weights_only=False)
+        assert st["step"] == 200
+        train.main(["--name", b, *BASE, "--resume"])
+        sa = torch.load(ROOT / "checkpoints/toy" / f"{a}.pt", weights_only=False)["state_dict"]
+        sb = torch.load(ROOT / "checkpoints/toy" / f"{b}.pt", weights_only=False)["state_dict"]
+        for k in sa:
+            assert torch.allclose(sa[k], sb[k], atol=1e-5), k
+        steps = [json.loads(ln).get("step") for ln in (ROOT / "results/toy" / b / "log.jsonl").read_text().splitlines()]
+        assert steps == sorted(steps)  # no duplicated tail from the "crashed" attempt
     finally:
         _cleanup(a, b)

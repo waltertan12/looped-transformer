@@ -171,6 +171,8 @@ def main(argv=None):
     p.add_argument("--pause_at", type=int, default=0,
                    help="H16: at this step save full training state + a snapshot checkpoint, then exit")
     p.add_argument("--resume", action="store_true", help="continue a run paused with --pause_at")
+    p.add_argument("--save_every", type=int, default=0,
+                   help="also save full training state every N steps (crash safety; --resume picks it up)")
     p.add_argument("--compile", action="store_true")
     a = p.parse_args(argv)
 
@@ -248,15 +250,27 @@ def main(argv=None):
     print(f"[{a.name}] unique params {model.num_params()/1e6:.2f}M  train loops {a.train_loops}  "
           f"train depth {a.train_depth}  eval loops {eval_loops}", flush=True)
 
+    def save_state(step):
+        tmp = state_path.with_suffix(".tmp")
+        torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "step": step,
+                    "elapsed": time.time() - t0, "cur": cur, "mastered_at": mastered_at,
+                    "py_rng": rng.getstate(), "torch_rng": torch.get_rng_state(),
+                    "cuda_rng": torch.cuda.get_rng_state(),
+                    "np_rng": np_rng.bit_generator.state if fd else None}, tmp)
+        tmp.replace(state_path)  # atomic: a crash mid-save never leaves a broken state file
+
+    if a.resume:  # drop log lines written after the saved step (from a crashed attempt)
+        lp = out_dir / "log.jsonl"
+        keep = [ln for ln in lp.read_text().splitlines() if json.loads(ln).get("step", 0) <= start]
+        lp.write_text("".join(ln + "\n" for ln in keep))
     log = open(out_dir / "log.jsonl", "a" if a.resume else "w")
     t0, run_loss, run_acc = time.time() - elapsed0, 0.0, 0.0
     for step in range(start, a.steps + 1):
-        if a.pause_at and step == a.pause_at and step < a.steps and not (a.resume and step == start):
-            torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "step": step,
-                        "elapsed": time.time() - t0, "cur": cur, "mastered_at": mastered_at,
-                        "py_rng": rng.getstate(), "torch_rng": torch.get_rng_state(),
-                        "cuda_rng": torch.cuda.get_rng_state(),
-                        "np_rng": np_rng.bit_generator.state if fd else None}, state_path)
+        fresh = not (a.resume and step == start)
+        if a.save_every and step % a.save_every == 0 and 0 < step < a.steps and step != a.pause_at and fresh:
+            save_state(step)
+        if a.pause_at and step == a.pause_at and step < a.steps and fresh:
+            save_state(step)
             tag = f"{step / 1000:g}k"
             torch.save({"cfg": cfg.__dict__, "state_dict": model.state_dict(), "args": vars(a)},
                        ckpt_dir / f"{a.name}@{tag}.pt")
@@ -265,7 +279,7 @@ def main(argv=None):
             print(f"[{a.name}] paused at step {step}; continue with --resume", flush=True)
             log.close()
             return
-        if (step % a.eval_every == 0 or step == a.steps) and not (a.resume and step == start):
+        if (step % a.eval_every == 0 or step == a.steps) and fresh:
             ev = evaluate(model, eval_sets, eval_loops)
             log.write(json.dumps({"step": step, "eval": ev}) + "\n"); log.flush()
             print(f"--- step {step} eval (acc; train depth {a.train_depth}) ---\n"

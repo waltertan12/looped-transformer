@@ -44,7 +44,7 @@ Confounds: one seed (confirm with seed 1 if supported). Learning rate not retune
 (if a wide run diverges, lower it for that width and note it).
 
 **Needs Walter?** Yes. **Status.** Decided by Walter, 2026-11-24: widths 1.5× and 2× with a 40k
-look, then continue to 120k.
+look, then continue to 120k. Later the same day: run straight through, with a second pause at 80k.
 
 ## D-014 · H18: which tag fix for longer numbers, on which runs? (decided: (a) and (b), separately)
 
