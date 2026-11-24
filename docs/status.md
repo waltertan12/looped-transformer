@@ -6,6 +6,24 @@ the reasoning, this file holds the state.
 
 ---
 
+## 2026-11-24 15:30 EST
+
+**Aim.** H16 / D-015: do wider models change the looped-vs-deep picture? 9 runs (shallow, looped, deep x width 256/384/512), one seed, paused at 40k of 120k steps.
+
+**Done**
+- All 9 runs reached the 40k pause and have `@40k.pt` snapshots. The deep 512 run needed a second restart after an out-of-memory crash (finished at acc 0.354 train, step 40000).
+- Not yet scored against the D-015 rules (`scripts/wide_report.py 40k`, `scripts/wide_ops.sh 40k`).
+
+**Doing.** Nothing is training; GPU is idle (0%, 15 MiB). It has been idle since about 13:45.
+
+**Blocked / problems.** `scripts/arith_wide_chain.sh` (pid 630224, log empty) is stuck in its wait loop. Its `pgrep -f "pause_at 40000"` matches the old launcher shell (pid 630222), whose command line contains that text, so it thinks a 40k run is still going. Cost: about 1.75 h of GPU lost so far, and the 80k ETA (21:00) and 120k ETA (00:30) in the handoff are now late.
+
+**Update 15:35.** Walter said go: killed 630222, chain resumed both 512 runs to 80k at 15:29 (step 40200, no errors). One add/sub scoring job failed (`c2k8-w512-s0@40k-sub`), rerun later with the GPU free.
+
+**Next decisions**
+1. (Done 15:29) Kill the stale launcher shell 630222 so the chain proceeds (scores add/sub at 40k, then resumes to 80k). Recommended. Needs a yes from Walter, since it is not a process from this session.
+2. Fix the pgrep pattern in the chain script so it cannot match itself again.
+
 ## 2026-11-22 21:45 EST
 
 **Done:** D-011 place-value screen (4 runs). Looped 2×8 + tags (normal order) vs no tags: big

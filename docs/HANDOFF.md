@@ -16,6 +16,11 @@ Update 12:40: `scripts/arith_wide_chain.sh` (log `results/toy/wide-chain.queue.l
 (`arith_wide.sh resume`). Walter approved both steps. State is also saved every 10k steps: after a
 crash, rerun the same mode. Score each checkpoint with `scripts/wide_report.py 40k|80k|120k`.
 Expected: 40k ≈ 14:30 (deep 512 restarted 12:43), 80k ≈ 21:00, 120k ≈ 00:30.
+Update 15:35: the chain sat idle 13:45–15:29 because its `pgrep -f "pause_at 40000"` matched the old
+launcher shell's own command line. Killed that shell (630222); chain resumed to 80k at 15:29. ETAs slip
+~1.75 h (80k ≈ 22:45, 120k ≈ 02:15, rough). TODO once the chain exits: fix that pgrep pattern (don't edit
+the script while it runs: bash reads it as it goes), and rerun `scripts/wide_ops.sh 40k` with the GPU
+free: `c2k8-w512-s0@40k-sub` FAILED (cause not checked; output goes to /dev/null).
 **Never run tests or evals on the GPU while trainings run** (two width-512 runs fill it; one OOM'd on 24 Nov).
 **First run `scripts/lock.py show`.** It lists every queue running on this machine, from any
 track (record in `.locks/running.json`, not committed). Register new queues with `scripts/lock.py add`.
