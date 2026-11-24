@@ -116,7 +116,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
     <h2>H16, running now: wider blocks</h2>
     <p class="note">Widths 256 (thin line), 384 and 512 (thick line). 120k-step schedule, each run pauses at 40k for a look.
       Partial curves, refreshed when the page is rebuilt (<code>scripts/curves_export.py</code>). All 9 runs reached the 40k pause.
-      Since 24 Nov 15:29 they are training on to an 80k pause, the width-512 pair first. One seed each.</p>
+      Since 24 Nov 15:29 they are training on to an 80k pause in pairs. Width 512 reached 80k at about 17:30, width 384 is training now. One seed each.</p>
     <div class="panel">
       <h3>Training loss at the 40k pause</h3>
       <div class="scroll"><table>
@@ -131,16 +131,17 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
         Deep doesn't change with width. This is fit on training batches, not test accuracy, and the runs are only a third done.</p>
     </div>
     <div class="panel">
-      <h3>Sneak peek at 60k: width 512 only</h3>
+      <h3>Width 512 so far: 40k, 60k, 80k</h3>
       <div class="scroll"><table>
-        <thead><tr><th>model (width 512)</th><th>training loss 40k</th><th>training loss 60k</th><th>held-out accuracy 42k</th><th>held-out accuracy 60k</th></tr></thead>
+        <thead><tr><th>model (width 512)</th><th>loss 40k</th><th>loss 60k</th><th>loss 80k</th><th>accuracy 42k</th><th>accuracy 60k</th><th>accuracy 78k</th></tr></thead>
         <tbody>
-          <tr><td>Looped 2×8</td><td>0.707</td><td><b>0.578</b></td><td>0.333</td><td><b>0.404</b></td></tr>
-          <tr><td>Deep 16×1</td><td>0.763</td><td>0.631</td><td>0.268</td><td>0.338</td></tr>
+          <tr><td>Looped 2×8</td><td>0.707</td><td>0.578</td><td><b>0.481</b></td><td>0.333</td><td>0.404</td><td>0.435</td></tr>
+          <tr><td>Deep 16×1</td><td>0.763</td><td>0.631</td><td>0.506</td><td>0.268</td><td>0.338</td><td>0.431</td></tr>
         </tbody>
       </table></div>
-      <p class="note">Held-out accuracy is exact answers on test problems, averaged over depths 1–8. At width 512 looped stays ahead of deep on both,
-        by about 0.05 loss and 0.07 accuracy. One seed. The other 7 runs reach 60k later tonight; this table grows as they do.</p>
+      <p class="note">Loss is the last logged training-batch loss at that step. Accuracy is exact answers on held-out problems, averaged over depths 1–8
+        (the last eval before 80k is at 78k). Looped led deep by 0.07 accuracy at 60k. By 78k deep has caught up (0.431 vs 0.435), while looped still
+        has slightly lower training loss. One seed. The other 7 runs reach 60k and 80k later tonight; this table grows as they do.</p>
     </div>
     <div class="panel"><div class="legend" id="leg-wide"></div><div class="pair" id="g-wide"></div><p class="note" id="wide-status"></p></div>
   </section>
