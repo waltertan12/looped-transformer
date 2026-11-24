@@ -21,6 +21,9 @@ launcher shell's own command line. Killed that shell (630222); chain resumed to 
 ~1.75 h (80k ≈ 22:45, 120k ≈ 02:15, rough). TODO once the chain exits: fix that pgrep pattern (don't edit
 the script while it runs: bash reads it as it goes), and rerun `scripts/wide_ops.sh 40k` with the GPU
 free: `c2k8-w512-s0@40k-sub` FAILED (cause not checked; output goes to /dev/null).
+Walter (15:40): rebuild the curves page automatically at 60k, 80k, 100k, 120k. A Claude session watches
+for this with a scratchpad watcher (not durable). If that session is gone, rebuild by hand: `scripts/curves_export.py`,
+`scripts/breakdown_export.py` (CPU only), then republish `docs/visual/training-curves.html` with `curves/*.json` as files.
 **Never run tests or evals on the GPU while trainings run** (two width-512 runs fill it; one OOM'd on 24 Nov).
 **First run `scripts/lock.py show`.** It lists every queue running on this machine, from any
 track (record in `.locks/running.json`, not committed). Register new queues with `scripts/lock.py add`.
