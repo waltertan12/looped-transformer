@@ -44,6 +44,15 @@ Related hypotheses in `hypotheses.md`.
   arithmetic and gains looped's step skill?
 - **I-M5 Additive vs concat input injection**; McLeish's multiplication tweaks (no injection
   inside the loop, loop gradients ÷ K).
+<a id="idea-heads"></a>
+
+- **I-M8 Head count** (Walter, 24 Nov; H21). Walter's view: steering attention by hand is hard to
+  justify, so let training find the pattern and vary only the head count. 1, 2, 4 (today) or 8
+  heads. Width stays 256, so the weights are identical and only how attention is split changes
+  (8 heads of 32 dims vs 1 head of 256). Already a flag: `--n_heads`. First test: 2 vs 4 on
+  shallow, looped and deep, 2 seeds, 120k steps, on whatever recipe is the default by then. The
+  attention viewer shows whether heads take separate jobs.
+
 <a id="idea-intermediate"></a>
 
 - **I-M7 Teach each pass an intermediate step** (Walter, 23 Nov; H20). Add a loss so the state

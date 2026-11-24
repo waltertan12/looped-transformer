@@ -14,6 +14,7 @@ Nothing. The last batch (the long runs and the add/subtract tests) finished on 2
 |---|---|---|---|---|
 | H9 | A looped model can choose its own loop count: few on easy problems, more on hard ones | Train it to answer after every pass, then let it stop early | A few runs | [plan](plan.md#plan-step-5) |
 | H10 | A stop signal learned from the model's internal state beats a simple rule or a separate checker | Compare the three on the H9 model | After H9 | [plan](plan.md#plan-step-6) |
+| H21 | The number of attention heads matters: 1 vs 2 vs 4 (today) vs 8, same weights | Start with 2 vs 4 on shallow, looped and deep | 6 runs (one new head count × 3 models × 2 seeds) | [idea](ideas.md#idea-heads) |
 | H15 | Letting question tokens see each other helps. Today the `+` in `3+4*5` can't see the `*` | One attention-mask change, three models | 6 runs | [idea](ideas.md#idea-attention) |
 | H11 | Looping only the middle layers beats looping all of them | Five layer layouts at the same compute | 5 runs | [plan](plan.md#plan-step-7) |
 | H16 | Wider models fix number size, and loops still add steps | Width 512–1024 | Many hours | [idea](ideas.md#idea-wide) |
