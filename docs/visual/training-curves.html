@@ -115,9 +115,21 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
   <section>
     <h2>H16, running now: wider blocks</h2>
     <p class="note">Widths 256 (thin line), 384 and 512 (thick line). 120k-step schedule, each run pauses at 40k for a look.
-      Partial curves, refreshed when the page is rebuilt (<code>scripts/curves_export.py</code>). The first width-512 runs
-      crashed while saving at the 40k pause (a missing folder). Their curves up to 40k are real and shown here until the reruns pass them.
-      The thin width-256 baselines without tags start after the 384 runs.</p>
+      Partial curves, refreshed when the page is rebuilt (<code>scripts/curves_export.py</code>). All 9 runs reached the 40k pause.
+      Since 24 Nov 15:29 they are training on to an 80k pause, the width-512 pair first. One seed each.</p>
+    <div class="panel">
+      <h3>Training loss at the 40k pause</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>model</th><th>width 256</th><th>width 384</th><th>width 512</th><th>change 256 → 512</th></tr></thead>
+        <tbody>
+          <tr><td>Shallow 2×1</td><td>0.960</td><td>0.928</td><td>0.873</td><td>−0.087</td></tr>
+          <tr><td>Looped 2×8</td><td>0.821</td><td>0.793</td><td><b>0.707</b></td><td>−0.114</td></tr>
+          <tr><td>Deep 16×1</td><td>0.763</td><td>0.759</td><td>0.763</td><td>0.000</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Last logged training-batch loss at step 40,000. Looped gains the most from width and has the lowest loss of all 9 runs at width 512.
+        Deep doesn't change with width. This is fit on training batches, not test accuracy, and the runs are only a third done.</p>
+    </div>
     <div class="panel"><div class="legend" id="leg-wide"></div><div class="pair" id="g-wide"></div><p class="note" id="wide-status"></p></div>
   </section>
 
