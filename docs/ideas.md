@@ -76,6 +76,21 @@ Related hypotheses in `hypotheses.md`.
 - **I-L5 Virtual cell toys** (Walter, 24 Nov). Gene networks where a knockout spreads hop by hop:
   hops play the role of bracket depth. Smallest: a 10–50 gene on/off network, predict the state
   after t steps. Notes: [virtual-cell.md](virtual-cell.md).
+<a id="idea-objectives"></a>
+
+- **I-L6 Other training objectives** (Walter, 24 Nov). Today the only loss is cross-entropy on the
+  answer characters, each digit weighted the same.
+  (a) **Custom losses**, cheapest: weight the digits that need carries, add per-pass targets (H20),
+  or add small side tasks (answer length, sign). Can hurt if a side task competes with the answer.
+  (b) **Energy-based**: learn a score for "this answer fits this question" and find the answer that
+  scores best, instead of writing it left to right. A loop pass becomes one step of improving the
+  guess, and "stop when the score stops improving" is a natural stop rule for H9. Harder to train
+  (needs wrong answers to push away) and slower to answer. Look up energy-based transformer work first.
+  (c) **JEPA / latent prediction**: predict the *internal representation* of the next simpler
+  form of the problem, not its characters. This is H20 done in latent space: pass p should land
+  near an encoder's embedding of the problem with p bracket levels done. Risk: every state
+  collapsing to the same point, which needs the usual fixes (a slowly updated target encoder).
+  Order if pursued: (a) via H20 first, then (c) as a variant of H20, (b) last.
 <a id="idea-wide"></a>
 
 - **I-L1 Much wider model** (Walter): e.g. d_model 512–1024 (McLeish uses 1024). Question: what
