@@ -31,6 +31,7 @@ rules and show Walter. If he says continue: `setsid nohup scripts/arith_wide.sh 
 | Glossary: plain (for Walter) / terse (for agents) | `docs/glossary.md`, `docs/glossary-agent.md` |
 | Visual results page (claude.ai artifact, private to Walter; republish to keep the URL) | https://claude.ai/artifact/BBw1f6Y9HGTgb75UBM1Nfj, source `docs/visual/loop-depth-results.html` |
 | Attention viewer (artifact, private; publish from a scratchpad copy with `attn/*.json` as files) | https://claude.ai/artifact/BrSUsELtTfMcQZrj6rLxbp, source `docs/visual/attention.html`, data `scripts/attn_export.py` |
+| Training curves page (artifact, private) | https://claude.ai/artifact/3gsN2gCjago7zG2AQs1eFA, source `docs/visual/training-curves.html`, data `scripts/curves_export.py` → `docs/visual/curves/curves.json` (re-run to refresh H16) |
 | Skills | `.claude/skills/status-update`, `.claude/skills/decision-brief` (has a pre-launch checklist) |
 | Working rules | `CLAUDE.md` (bottom section "Working with Walter") |
 

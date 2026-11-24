@@ -925,6 +925,20 @@ prelude output (the embedded problem), the same on every pass. So the model sees
 running state and the original problem each pass. This led to H20
 ([idea](ideas.md#idea-intermediate)).
 
+<a id="log-curves"></a>
+
+## 2026-11-24 — Training curves: nothing has converged
+
+Walter asked whether we ever trained to convergence. No. `scripts/curves_export.py` reads every
+`log.jsonl`. Page: `docs/visual/training-curves.html`. On the 120k runs, held-out accuracy
+(depths 1–8, at the training loop count) was still climbing almost linearly at the end. From 78k
+to 120k: deep +0.12 / +0.11, looped +0.08 / +0.13, shallow +0.08 / +0.09 (seeds 0 / 1). Loss still
+falling with the learning rate at a tenth of peak. Train vs test accuracy close (looped 0.52 vs
+0.45), so it isn't memorizing. 120k × 256 is about 3 passes over the 10M training problems.
+Consequence: every comparison so far is at a fixed budget. "Deep beats looped on numbers" may be
+partly "deep learns faster". A run to convergence (one model of each kind) would separate the two.
+H16 still compares at the same budget, so its rules stand, but read its result the same way.
+
 <a id="log-h16"></a>
 
 ## 2026-11-24 — H16 started: wider blocks (D-015)

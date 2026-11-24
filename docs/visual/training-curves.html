@@ -1,0 +1,260 @@
+<title>Training Curves</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column. The answer ("not converged") first, then one chart pair per run
+   group (loss left, held-out accuracy right), then the live H16 runs. Series colors follow the
+   model, as on the results page. */
+:root {
+  --plane: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+  --s-shallow: #2a78d6; --s-looped: #eb6834; --s-deep: #1baf7a;
+  --f-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --plane: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  --s-shallow: #3987e5; --s-looped: #d95926; --s-deep: #199e70; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --plane: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  --s-shallow: #3987e5; --s-looped: #d95926; --s-deep: #199e70; color-scheme: dark; }
+
+body { background: var(--plane); color: var(--ink); font: 15px/1.55 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 960px; margin: 0 auto; padding-block: 32px 72px; display: grid; gap: 36px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.2; font-weight: 600; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 0.95rem; color: var(--ink-2); }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.lede { color: var(--ink-2); font-size: 1.05rem; }
+.note { font-size: 0.85rem; color: var(--muted); }
+section { display: grid; gap: 12px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; }
+ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; }
+li { max-width: 68ch; }
+code { font-family: var(--f-mono); font-size: 0.88em; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.85rem; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 16px; height: 0; border-top: 2px solid; display: inline-block; }
+.sw.dash { border-top-style: dashed; }
+.chart { position: relative; min-width: 0; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { fill: var(--muted); font: 11px var(--f-body); font-variant-numeric: tabular-nums; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--ring); border-radius: 8px;
+  padding: 8px 10px; font-size: 0.8rem; color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,0.12); min-width: 150px; font-variant-numeric: tabular-nums; z-index: 2; }
+.tip b { font-weight: 600; }
+.tip .row { display: flex; justify-content: space-between; gap: 12px; color: var(--ink-2); }
+.tip .row i { width: 10px; height: 2px; display: inline-block; margin-right: 6px; vertical-align: middle; }
+table { border-collapse: collapse; font-size: 0.88rem; font-variant-numeric: tabular-nums; width: 100%; }
+th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--grid); }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 600; }
+.scroll { overflow-x: auto; }
+.callout { border-left: 3px solid var(--s-looped); padding-left: 14px; display: grid; gap: 6px; }
+</style>
+
+<main>
+  <header style="display:grid;gap:10px">
+    <div class="eyebrow">Looped transformer · training curves</div>
+    <h1>No model here has finished learning</h1>
+    <p class="lede">Every run was still improving when it stopped, including the longest (120k steps).
+      So our results compare models at the same training budget, not at their best.</p>
+  </header>
+
+  <section class="panel callout">
+    <h2>What the curves say</h2>
+    <ul>
+      <li><b>Accuracy climbs almost in a straight line to the end.</b> From step 80k to 120k, held-out accuracy
+        rose +0.11 to +0.12 for deep, +0.08 to +0.13 for looped and +0.08 to +0.09 for shallow. A finished model would have flattened out.</li>
+      <li><b>Training loss is still falling too</b>, even though the learning rate had been turned down to a tenth by the end.</li>
+      <li><b>Training and test accuracy stay close</b> (0.52 vs 0.45 for looped), so it isn't memorizing. It just needs more steps.
+        120k steps of 256 problems is about 3 passes over the 10 million training problems.</li>
+      <li><b>What this changes.</b> "Deep beats looped on numbers" could partly be "deep learns faster".
+        A run to convergence on one model of each kind would tell the two apart.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Main runs: 120k steps, two seeds</h2>
+    <p class="note">Normal answer order, place-value tags on. Solid line seed 0, dashed seed 1. Accuracy is exact answers on held-out
+      problems, averaged over depths 1–8, at each model's training loop count. Hover for values.</p>
+    <div class="panel"><div class="legend" id="leg-long"></div><div class="pair" id="g-long"></div></div>
+  </section>
+
+  <section>
+    <h2>Short runs vs long runs</h2>
+    <p class="note">The same three models trained for 40k steps (no tags, solid) and 120k steps (tags, dashed). The 40k runs
+      wind their learning rate down sooner, so they level off early. The 120k runs pass them and keep going.</p>
+    <div class="panel"><div class="legend" id="leg-short"></div><div class="pair" id="g-short"></div></div>
+  </section>
+
+  <section>
+    <h2>H16, running now: wider blocks</h2>
+    <p class="note">Widths 256 (thin line), 384 and 512 (thick line). 120k-step schedule, each run pauses at 40k for a look.
+      Partial curves, refreshed when the page is rebuilt (<code>scripts/curves_export.py</code>).</p>
+    <div class="panel"><div class="legend" id="leg-wide"></div><div class="pair" id="g-wide"></div><p class="note" id="wide-status"></p></div>
+  </section>
+
+  <section class="panel">
+    <h2>The numbers behind the headline</h2>
+    <div class="scroll"><table id="conv"></table></div>
+    <p class="note">Loss is averaged over the last 2,000 steps before each point. Data: <code>results/toy/*/log.jsonl</code>.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const COLOR = { shallow: "--s-shallow", looped: "--s-looped", deep: "--s-deep" };
+  const LABEL = { shallow: "Shallow 2×1", looped: "Looped 2×8", deep: "Deep 16×1" };
+  const ORDER = ["shallow", "looped", "deep"];
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const NS = "http://www.w3.org/2000/svg";
+  let DATA = null;
+  const charts = [];
+
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const smooth = (pts, w = 5) => pts.map((p, i) => {
+    const s = pts.slice(Math.max(0, i - w), i + w + 1);
+    return [p[0], s.reduce((a, q) => a + q[1], 0) / s.length];
+  });
+  const fmtK = (s) => (s >= 1000 ? `${Math.round(s / 1000)}k` : `${s}`);
+
+  // series: [{key, name, model, dash, width, pts: [[x,y],...]}]
+  function lineChart(host, { title, series, yLabel, yMin, yMax, xMax, logY, fmtY }) {
+    const box = document.createElement("div"); box.className = "chart";
+    box.innerHTML = `<h3>${title}</h3>`;
+    host.appendChild(box);
+    const W = 460, H = 260, m = { l: 44, r: 12, t: 12, b: 30 };
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": title }, null);
+    box.appendChild(svg);
+    const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+    const ty = (v) => (logY ? Math.log10(v) : v);
+    const y0 = ty(yMin), y1 = ty(yMax);
+    const X = (x) => m.l + (x / xMax) * (W - m.l - m.r);
+    const Y = (v) => m.t + (1 - (ty(v) - y0) / (y1 - y0)) * (H - m.t - m.b);
+    const draw = () => {
+      svg.innerHTML = "";
+      const grid = css("--grid"), axis = css("--axis");
+      const ticks = logY ? [0.3, 0.5, 1, 2].filter((v) => v >= yMin && v <= yMax) : [0, 0.2, 0.4, 0.6, 0.8, 1].filter((v) => v >= yMin && v <= yMax);
+      ticks.forEach((v) => {
+        el("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: grid, "stroke-width": 1 }, svg);
+        el("text", { x: m.l - 6, y: Y(v) + 4, "text-anchor": "end" }, svg).textContent = fmtY(v);
+      });
+      const xt = []; const step = xMax > 60000 ? 20000 : 10000;
+      for (let x = 0; x <= xMax; x += step) xt.push(x);
+      xt.forEach((x) => { el("text", { x: X(x), y: H - m.b + 16, "text-anchor": "middle" }, svg).textContent = fmtK(x); });
+      el("line", { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, stroke: axis, "stroke-width": 1 }, svg);
+      el("text", { x: W - m.r, y: H - 2, "text-anchor": "end" }, svg).textContent = "training step";
+      el("text", { x: m.l, y: m.t - 2, "text-anchor": "start" }, svg).textContent = yLabel;
+      series.forEach((s) => {
+        if (!s.pts.length) return;
+        const d = s.pts.map((p, i) => `${i ? "L" : "M"}${X(p[0]).toFixed(1)},${Y(Math.max(yMin, Math.min(yMax, p[1]))).toFixed(1)}`).join("");
+        el("path", { d, fill: "none", stroke: css(COLOR[s.model]), "stroke-width": s.width || 2, "stroke-dasharray": s.dash ? "5 4" : "none",
+          "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+      });
+      el("line", { id: "xh", x1: 0, x2: 0, y1: m.t, y2: H - m.b, stroke: axis, "stroke-width": 1, visibility: "hidden" }, svg);
+      const hit = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent" }, svg);
+      hit.addEventListener("pointermove", (ev) => {
+        const r = svg.getBoundingClientRect();
+        const sx = ((ev.clientX - r.left) / r.width) * W;
+        const x = Math.max(0, Math.min(xMax, ((sx - m.l) / (W - m.l - m.r)) * xMax));
+        const rows = series.map((s) => {
+          if (!s.pts.length) return null;
+          let best = s.pts[0];
+          for (const p of s.pts) if (Math.abs(p[0] - x) < Math.abs(best[0] - x)) best = p;
+          return Math.abs(best[0] - x) <= xMax * 0.04 ? { s, p: best } : null;
+        }).filter(Boolean);
+        if (!rows.length) { tip.hidden = true; return; }
+        const xs = rows[0].p[0];
+        const xh = svg.querySelector("#xh"); xh.setAttribute("x1", X(xs)); xh.setAttribute("x2", X(xs)); xh.setAttribute("visibility", "visible");
+        tip.innerHTML = `<b>step ${fmtK(xs)}</b>` + rows.map(({ s, p }) =>
+          `<div class="row"><span><i style="background:var(${COLOR[s.model]})"></i>${s.name}</span><span>${fmtY(p[1])}</span></div>`).join("");
+        tip.hidden = false;
+        const bx = box.getBoundingClientRect();
+        let left = ev.clientX - bx.left + 14;
+        if (left + 190 > bx.width) left = ev.clientX - bx.left - 200;
+        tip.style.left = Math.max(0, left) + "px"; tip.style.top = (ev.clientY - bx.top - 10) + "px";
+      });
+      hit.addEventListener("pointerleave", () => { tip.hidden = true; svg.querySelector("#xh")?.setAttribute("visibility", "hidden"); });
+    };
+    draw();
+    charts.push(draw);
+  }
+
+  function legend(id, items) {
+    document.getElementById(id).innerHTML = items.map((it) =>
+      `<span><i class="sw${it.dash ? " dash" : ""}" style="border-color:var(${COLOR[it.model]});border-top-width:${it.width || 2}px"></i>${it.label}</span>`).join("");
+  }
+
+  const runs = (f) => DATA.runs.filter(f).sort((a, b) => ORDER.indexOf(a.model) - ORDER.indexOf(b.model) || a.seed - b.seed || a.width - b.width);
+  const lossPts = (r) => smooth(r.train.map((t) => [t[0], t[1]]), 5);
+  const accPts = (r) => r.eval.map((e) => [e[0], e[1]]);
+
+  function groupLong() {
+    const rs = runs((r) => r.group === "long" && r.variant === "normal");
+    const S = (f) => rs.map((r) => ({ name: `${LABEL[r.model]} s${r.seed}`, model: r.model, dash: r.seed === 1, pts: f(r) }));
+    const host = document.getElementById("g-long");
+    lineChart(host, { title: "Training loss", series: S(lossPts), yLabel: "loss (log scale)", yMin: 0.3, yMax: 2.5, xMax: 120000, logY: true, fmtY: (v) => v.toFixed(2) });
+    lineChart(host, { title: "Held-out exact accuracy, depths 1–8", series: S(accPts), yLabel: "accuracy", yMin: 0, yMax: 0.6, xMax: 120000, fmtY: (v) => v.toFixed(2) });
+    legend("leg-long", [...ORDER.map((m) => ({ model: m, label: LABEL[m] })), { model: "shallow", dash: true, label: "dashed: seed 1" }]);
+  }
+
+  function groupShort() {
+    const a = runs((r) => r.group === "bal" && r.variant === "normal");
+    const b = runs((r) => r.group === "long" && r.variant === "normal" && r.seed === 0);
+    const S = (f) => [...a.map((r) => ({ name: `${LABEL[r.model]} 40k`, model: r.model, pts: f(r) })),
+                      ...b.map((r) => ({ name: `${LABEL[r.model]} 120k`, model: r.model, dash: true, pts: f(r) }))];
+    const host = document.getElementById("g-short");
+    lineChart(host, { title: "Training loss", series: S(lossPts), yLabel: "loss (log scale)", yMin: 0.3, yMax: 2.5, xMax: 120000, logY: true, fmtY: (v) => v.toFixed(2) });
+    lineChart(host, { title: "Held-out exact accuracy, depths 1–8", series: S(accPts), yLabel: "accuracy", yMin: 0, yMax: 0.6, xMax: 120000, fmtY: (v) => v.toFixed(2) });
+    legend("leg-short", [...ORDER.map((m) => ({ model: m, label: LABEL[m] })), { model: "shallow", dash: true, label: "dashed: 120k run" }]);
+  }
+
+  function groupWide() {
+    const rs = runs((r) => r.group === "wide");
+    const host = document.getElementById("g-wide");
+    if (!rs.length) { document.getElementById("wide-status").textContent = "No H16 data yet."; return; }
+    const W = { 256: 1.2, 384: 2, 512: 3.2 };
+    const S = (f) => rs.map((r) => ({ name: `${LABEL[r.model]} w${r.width}`, model: r.model, width: W[r.width], pts: f(r) }));
+    lineChart(host, { title: "Training loss", series: S(lossPts), yLabel: "loss (log scale)", yMin: 0.3, yMax: 2.5, xMax: 120000, logY: true, fmtY: (v) => v.toFixed(2) });
+    lineChart(host, { title: "Held-out exact accuracy, depths 1–8", series: S(accPts), yLabel: "accuracy", yMin: 0, yMax: 0.6, xMax: 120000, fmtY: (v) => v.toFixed(2) });
+    legend("leg-wide", [...ORDER.map((m) => ({ model: m, label: LABEL[m] })), { model: "shallow", width: 1.2, label: "thin: 256" }, { model: "shallow", width: 3.2, label: "thick: 512" }]);
+    document.getElementById("wide-status").textContent = "Latest step per run: " +
+      rs.map((r) => `${LABEL[r.model].split(" ")[0]} w${r.width} ${fmtK(r.train.length ? r.train[r.train.length - 1][0] : 0)}`).join(" · ");
+  }
+
+  function table() {
+    const rs = runs((r) => r.group === "long" && r.variant === "normal");
+    const lossAt = (r, s) => { const p = r.train.filter((t) => t[0] > s - 2000 && t[0] <= s); return p.reduce((a, t) => a + t[1], 0) / p.length; };
+    const accAt = (r, s) => (r.eval.find((e) => e[0] === s) || [0, NaN])[1];
+    const rows = rs.map((r) => {
+      const a80 = accAt(r, 78000), a120 = accAt(r, 120000);
+      return `<tr><td>${LABEL[r.model]}, seed ${r.seed}</td><td>${lossAt(r, 80000).toFixed(3)}</td><td>${lossAt(r, 120000).toFixed(3)}</td>` +
+        `<td>${a80.toFixed(2)}</td><td>${a120.toFixed(2)}</td><td>+${(a120 - a80).toFixed(2)}</td></tr>`;
+    });
+    document.getElementById("conv").innerHTML = `<thead><tr><th>120k run</th><th>loss at 80k</th><th>loss at 120k</th><th>accuracy at 78k</th><th>accuracy at 120k</th><th>gain in the last third</th></tr></thead><tbody>${rows.join("")}</tbody>`;
+  }
+
+  function redraw() { charts.forEach((d) => d()); }
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+  new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  fetch("curves/curves.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((d) => {
+    DATA = d; groupLong(); groupShort(); groupWide(); table();
+  }).catch((e) => {
+    document.querySelector("main").insertAdjacentHTML("beforeend", `<p class="note">Couldn't load curves/curves.json (${e.message}). Open the page from a web server.</p>`);
+  });
+})();
+</script>
