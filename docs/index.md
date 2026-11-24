@@ -4,7 +4,6 @@ Does running the same transformer layers several times in a row add reasoning de
 Tiny models trained from scratch on nested arithmetic. Code: [GitHub](https://github.com/waltertan12/looped-transformer).
 
 - **[Results page](visual/loop-depth-results.html)**: charts, a primer on every term, what we learned, and the roadmap
-- **[Training curves](visual/training-curves.html)**: loss and accuracy over training for every run (none has converged)
 - **[Attention viewer](visual/attention.html)**: click any character and see where each model looks, pass by pass
 - [Hypotheses](hypotheses.md): what's been tested and what's open
 - [Plan](plan.md): next steps, with decision rules written in advance

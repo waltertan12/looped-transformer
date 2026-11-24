@@ -6,3 +6,4 @@ checkpoints/
 wandb/
 data/
 .locks/
+docs/visual/curves/
