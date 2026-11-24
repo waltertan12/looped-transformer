@@ -130,6 +130,18 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
       <p class="note">Last logged training-batch loss at step 40,000. Looped gains the most from width and has the lowest loss of all 9 runs at width 512.
         Deep doesn't change with width. This is fit on training batches, not test accuracy, and the runs are only a third done.</p>
     </div>
+    <div class="panel">
+      <h3>Sneak peek at 60k: width 512 only</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>model (width 512)</th><th>training loss 40k</th><th>training loss 60k</th><th>held-out accuracy 42k</th><th>held-out accuracy 60k</th></tr></thead>
+        <tbody>
+          <tr><td>Looped 2×8</td><td>0.707</td><td><b>0.578</b></td><td>0.333</td><td><b>0.404</b></td></tr>
+          <tr><td>Deep 16×1</td><td>0.763</td><td>0.631</td><td>0.268</td><td>0.338</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Held-out accuracy is exact answers on test problems, averaged over depths 1–8. At width 512 looped stays ahead of deep on both,
+        by about 0.05 loss and 0.07 accuracy. One seed. The other 7 runs reach 60k later tonight; this table grows as they do.</p>
+    </div>
     <div class="panel"><div class="legend" id="leg-wide"></div><div class="pair" id="g-wide"></div><p class="note" id="wide-status"></p></div>
   </section>
 
