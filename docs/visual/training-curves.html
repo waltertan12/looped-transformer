@@ -66,6 +66,7 @@ th { color: var(--muted); font-weight: 600; }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
 select { font: 0.9rem var(--f-body); padding: 6px 8px; border-radius: 8px; border: 1px solid var(--ring); background: var(--surface); color: var(--ink); max-width: 100%; }
 button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.caption { color: var(--ink-2); font-size: 0.92rem; }
 .callout { border-left: 3px solid var(--s-looped); padding-left: 14px; display: grid; gap: 6px; }
 </style>
 
@@ -114,18 +115,25 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
   </section>
 
   <section>
-    <h2>Test-set breakdown at a checkpoint</h2>
-    <p class="note">Exact accuracy on held-out problems, split by what makes a problem hard. Full per-problem
-      results only exist at checkpoints (40k, 80k, end of run), so this is a snapshot, not a curve. Cells with
-      fewer than 50 problems are left out.</p>
+    <h2>Where the models fail</h2>
+    <p class="note">Exact accuracy on held-out problems, split by what makes a problem hard: more steps (depth),
+      longer answers, bigger input numbers, or one kind of operator. Pick a question first. These are snapshots
+      at checkpoints (40k, 80k, end of run), not curves. Cells with fewer than 50 problems are left out.</p>
     <div class="panel">
       <div class="controls">
-        <label class="ctl" for="bd-set"><span>Runs</span><select id="bd-set"></select></label>
-        <label class="ctl" id="bd-wctl"><span>Width</span><div class="seg" id="bd-width" role="group" aria-label="Width"></div></label>
+        <div class="ctl"><span>Question</span><div class="seg" id="bd-q" role="group" aria-label="Question">
+          <button data-q="models" aria-pressed="true">Loops vs layers</button>
+          <button data-q="widths" aria-pressed="false">Does width help? (H16)</button>
+        </div></div>
+        <label class="ctl" id="bd-setctl" for="bd-set"><span>Training runs</span><select id="bd-set"></select></label>
+        <div class="ctl" id="bd-wctl"><span>Width</span><div class="seg" id="bd-width" role="group" aria-label="Width"></div></div>
+        <div class="ctl" id="bd-mctl"><span>Model</span><div class="seg" id="bd-model" role="group" aria-label="Model"></div></div>
+        <div class="ctl" id="bd-actl"><span>Checkpoint</span><div class="seg" id="bd-at" role="group" aria-label="Checkpoint"></div></div>
       </div>
+      <p class="caption" id="bd-caption"></p>
       <div class="legend" id="leg-bd"></div>
       <div class="pair" id="g-bd"></div>
-      <p class="note">Depth, answer digits and × share use 1-digit inputs. Input digits uses depths 1–3. The × share view
+      <p class="note">Depth, output length and × share use problems with 1-digit inputs. Input size uses depths 1–3. The × share view
         isn't matched for problem size. H14 found no operator effect once depth and number size are matched.
         Add-only and subtract-only are separate test sets (1-digit inputs, problems not seen in training).</p>
     </div>
@@ -300,7 +308,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
       el("line", { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, stroke: css("--axis"), "stroke-width": 1 }, svg);
       const k = series.length;
       series.forEach((s, j) => {
-        const col = css(COLOR[s.model]);
+        const col = s.mix != null ? mixHex(css(COLOR[s.model]), css("--surface"), s.mix) : css(COLOR[s.model]);
         if (kind === "bar") {
           const gw = bw * 0.72, w1 = gw / k - 2;
           s.vals.forEach((v, i) => {
@@ -321,7 +329,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
         const r = svg.getBoundingClientRect();
         const i = Math.max(0, Math.min(n - 1, Math.floor((((ev.clientX - r.left) / r.width) * W - m.l) / bw)));
         tip.innerHTML = `<b>${xLabel ? xLabel + " " : ""}${cats[i]}</b>` + series.map((s) =>
-          `<div class="row"><span><i style="background:var(${COLOR[s.model]})"></i>${LABEL[s.model]}</span><span>${s.vals[i] == null ? "–" : s.vals[i].toFixed(2)}${s.ns ? ` <span style="color:var(--muted)">n ${s.ns[i]}</span>` : ""}</span></div>`).join("");
+          `<div class="row"><span><i style="background:${s.mix != null ? mixHex(css(COLOR[s.model]), css("--surface"), s.mix) : `var(${COLOR[s.model]})`}"></i>${s.name || LABEL[s.model]}</span><span>${s.vals[i] == null ? "–" : s.vals[i].toFixed(2)}${s.ns ? ` <span style="color:var(--muted)">n ${s.ns[i]}</span>` : ""}</span></div>`).join("");
         tip.hidden = false;
         const bx = box.getBoundingClientRect();
         let left = ev.clientX - bx.left + 14; if (left + 210 > bx.width) left = ev.clientX - bx.left - 220;
@@ -333,44 +341,77 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
   }
 
   let BD = null;
-  const bdState = { set: null, width: 512 };
-  function bdSets() {
-    const seen = [];
-    BD.rows.forEach((r) => { const key = r.group.startsWith("H16") ? `H16|${r.at}` : `${r.group}|${r.at}`; if (!seen.includes(key)) seen.push(key); });
-    return seen;
+  const WMIX = { 256: 0.4, 384: 0.7, 512: 1 };
+  const bd = { q: "models", set: "main", width: 512, model: "looped", at: "40k" };
+  function mixHex(a, b, t) {
+    const p = (h) => { h = h.replace("#", ""); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)); };
+    const [x, y] = [p(a), p(b)];
+    return "#" + x.map((v, i) => Math.round(v * t + y[i] * (1 - t)).toString(16).padStart(2, "0")).join("");
   }
+  const SETS = {
+    main: { label: "Main comparison: 120k steps, with place tags (H1–H4)", group: "Main runs, 120k, tags", at: "end" },
+    short: { label: "First runs: 40k steps, no tags", group: "Short runs, 40k, no tags", at: "end" },
+    wide: { label: "Width test, no tags (H16)", group: "H16", at: null },
+  };
+  const h16At = () => [...new Set(BD.rows.filter((r) => r.group.startsWith("H16")).map((r) => r.at))];
+  const seg = (id, items, cur) => {
+    document.getElementById(id).innerHTML = items.map(([v, l]) => `<button data-v="${v}" aria-pressed="${String(v) === String(cur)}">${l}</button>`).join("");
+  };
   function renderBD() {
+    charts.length = baseCharts;
     const host = document.getElementById("g-bd");
     host.innerHTML = "";
-    const [g, at] = bdState.set.split("|");
-    const isH16 = g === "H16";
-    document.getElementById("bd-wctl").hidden = !isH16;
-    const widths = [...new Set(BD.rows.filter((r) => r.group.startsWith("H16") && r.at === at).map((r) => r.width))].sort((a, b) => a - b);
-    if (isH16 && !widths.includes(bdState.width)) bdState.width = widths[widths.length - 1];
-    document.getElementById("bd-width").innerHTML = widths.map((w) => `<button data-w="${w}" aria-pressed="${w === bdState.width}">${w}</button>`).join("");
-    const rows = BD.rows.filter((r) => (isH16 ? r.group === `H16 width ${bdState.width}` : r.group === g) && r.at === at)
-      .sort((a, b) => ORDER.indexOf(a.model) - ORDER.indexOf(b.model));
-    const S = (key) => rows.filter((r) => r[key]).map((r) => ({ model: r.model, vals: r[key].map((c) => c[0]), ns: r[key].map((c) => c[1]) }));
-    catChart(host, { title: "By depth", cats: [...Array(16)].map((_, i) => i + 1), series: S("depth"), kind: "line", xLabel: "depth" });
-    catChart(host, { title: "By answer length", cats: [...Array(8)].map((_, i) => i + 1), series: S("ans_digits"), kind: "line", xLabel: "answer digits" });
-    catChart(host, { title: "By input number size", cats: ["1 digit", "2 digits", "3 digits"], series: S("in_digits"), kind: "bar" });
-    catChart(host, { title: "By share of × in the problem", cats: BD.mul, series: S("mul"), kind: "bar" });
+    const ats = h16At();
+    if (!ats.includes(bd.at)) bd.at = ats[ats.length - 1];
+    const byWidth = bd.q === "widths", wideSet = !byWidth && bd.set === "wide";
+    document.getElementById("bd-setctl").hidden = byWidth;
+    document.getElementById("bd-wctl").hidden = !wideSet;
+    document.getElementById("bd-mctl").hidden = !byWidth;
+    document.getElementById("bd-actl").hidden = !(byWidth || wideSet);
+    document.querySelectorAll("#bd-q button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.q === bd.q)));
+    let rows, caption, leg;
+    if (byWidth) {
+      seg("bd-model", ORDER.map((m) => [m, LABEL[m].split(" ")[0]]), bd.model);
+      seg("bd-at", ats.map((a) => [a, a]), bd.at);
+      rows = BD.rows.filter((r) => r.group.startsWith("H16") && r.model === bd.model && r.at === bd.at).sort((a, b) => a.width - b.width);
+      caption = `${LABEL[bd.model]} at widths ${rows.map((r) => r.width).join(", ")}, after ${bd.at} steps. Darker line = wider.`;
+      leg = rows.map((r) => ({ model: r.model, mix: WMIX[r.width], label: `width ${r.width}` }));
+    } else {
+      const S0 = SETS[bd.set];
+      const widths = [...new Set(BD.rows.filter((r) => r.group.startsWith("H16") && r.at === bd.at).map((r) => r.width))].sort((a, b) => a - b);
+      if (wideSet && !widths.includes(bd.width)) bd.width = widths[widths.length - 1];
+      seg("bd-width", widths.map((w) => [w, w]), bd.width);
+      seg("bd-at", ats.map((a) => [a, a]), bd.at);
+      rows = BD.rows.filter((r) => (wideSet ? r.group === `H16 width ${bd.width}` && r.at === bd.at : r.group === S0.group && r.at === S0.at))
+        .sort((a, b) => ORDER.indexOf(a.model) - ORDER.indexOf(b.model));
+      caption = wideSet ? `Shallow, looped and deep at width ${bd.width}, after ${bd.at} steps.` : `Shallow, looped and deep, ${S0.label.split(": ")[1]}.`;
+      leg = ORDER.filter((m) => rows.some((r) => r.model === m)).map((m) => ({ model: m, label: LABEL[m] }));
+    }
+    document.getElementById("bd-caption").textContent = caption;
+    const S = (key) => rows.filter((r) => r[key]).map((r) => ({ model: r.model, name: byWidth ? `width ${r.width}` : null, mix: byWidth ? WMIX[r.width] : null,
+      vals: r[key].map((c) => c[0]), ns: r[key].map((c) => c[1]) }));
+    const nums = (k) => [...Array(k)].map((_, i) => i + 1);
+    catChart(host, { title: "By depth (number of steps)", cats: nums(16), series: S("depth"), kind: "line", xLabel: "depth" });
+    catChart(host, { title: "By output length (answer digits)", cats: nums(8), series: S("ans_digits"), kind: "line", xLabel: "answer digits" });
+    catChart(host, { title: "By input size (digits per number)", cats: ["1 digit", "2 digits", "3 digits"], series: S("in_digits"), kind: "bar" });
     const add = S("add_only"), sub = S("sub_only");
-    if (add.length) catChart(host, { title: "Add-only problems, by depth", cats: [...Array(15)].map((_, i) => i + 1), series: add, kind: "line", xLabel: "depth" });
-    if (sub.length) catChart(host, { title: "Subtract-only problems, by depth", cats: [...Array(15)].map((_, i) => i + 1), series: sub, kind: "line", xLabel: "depth" });
-    if (!add.length) host.insertAdjacentHTML("beforeend", `<p class="note">Add-only and subtract-only sets aren't scored for these runs.</p>`);
-    legend("leg-bd", ORDER.filter((m) => rows.some((r) => r.model === m)).map((m) => ({ model: m, label: LABEL[m] })));
+    if (add.length) catChart(host, { title: "Only addition, by depth", cats: nums(15), series: add, kind: "line", xLabel: "depth" });
+    if (sub.length) catChart(host, { title: "Only subtraction, by depth", cats: nums(15), series: sub, kind: "line", xLabel: "depth" });
+    catChart(host, { title: "By share of × in the problem", cats: BD.mul, series: S("mul"), kind: "bar" });
+    if (!add.length) host.insertAdjacentHTML("beforeend", `<p class="note">The only-addition and only-subtraction sets aren't scored for these runs.</p>`);
+    document.getElementById("leg-bd").innerHTML = leg.map((it) =>
+      `<span><i class="sw" style="border-color:${it.mix != null ? `color-mix(in srgb, var(${COLOR[it.model]}) ${it.mix * 100}%, var(--surface))` : `var(${COLOR[it.model]})`}"></i>${it.label}</span>`).join("");
   }
   function initBD() {
     const sel = document.getElementById("bd-set");
-    const name = (k) => { const [g, at] = k.split("|"); return g === "H16" ? `H16 wider blocks, at ${at}` : g; };
-    sel.innerHTML = bdSets().map((k) => `<option value="${k}">${name(k)}</option>`).join("");
-    bdState.set = sel.value;
-    sel.addEventListener("change", () => { bdState.set = sel.value; charts.length = baseCharts; renderBD(); });
-    document.getElementById("bd-width").addEventListener("click", (ev) => {
-      const b = ev.target.closest("button"); if (!b) return;
-      bdState.width = +b.dataset.w; charts.length = baseCharts; renderBD();
-    });
+    sel.innerHTML = Object.entries(SETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join("");
+    sel.value = bd.set;
+    sel.addEventListener("change", () => { bd.set = sel.value; renderBD(); });
+    const on = (id, f) => document.getElementById(id).addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (b) { f(b); renderBD(); } });
+    on("bd-q", (b) => { bd.q = b.dataset.q; });
+    on("bd-width", (b) => { bd.width = +b.dataset.v; });
+    on("bd-model", (b) => { bd.model = b.dataset.v; });
+    on("bd-at", (b) => { bd.at = b.dataset.v; });
     renderBD();
   }
   let baseCharts = 0;
