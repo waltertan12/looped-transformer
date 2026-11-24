@@ -105,9 +105,13 @@ Related hypotheses in `hypotheses.md`.
 
 ### Other objectives and physics-style framings (Walter, 24 Nov)
 
+**Where these came from.** Walter asked, on 24 Nov: how do custom losses help or hurt? How do
+physics ideas like diffusion and finding equilibrium carry over? How do energy-based models
+relate? Could latent world models (JEPA) help with understanding math? Could RL that rewards
+exact answers help, and what are mid- and post-training? Hypotheses H22–H25 came out of this.
 Papers named here are from memory. Check them before relying on them.
 
-- **I-L3 Loop to equilibrium** (deep equilibrium models, Bai et al. 2019). Run the loop until the
+- **I-L3 Loop to equilibrium → H22** (deep equilibrium models, Bai et al. 2019). Run the loop until the
   state stops changing and train on that fixed point. Cheap first check, no training: on today's
   checkpoints, measure how much the state changes from pass to pass, including past pass 8. H5
   (fails at other loop counts) hints our models don't settle. A settling state would also give
@@ -115,11 +119,26 @@ Papers named here are from memory. Check them before relying on them.
 - **I-L4 Energy view** (energy-based models, e.g. iterative reasoning as energy minimization, Du
   et al. 2022). Learn a score for "how wrong is this partial answer" and let each pass lower it.
   Harder problems then take more passes on their own, which is H9's goal.
-- **I-L5 Diffusion-style refinement.** Write a rough answer, then fix all digits over several
+- **I-L5 Diffusion-style refinement → H25.** Flow matching is the current favored way to train diffusion-style models. Discrete versions exist for tokens. Write a rough answer, then fix all digits over several
   passes instead of left to right. Discrete diffusion models have been tried on puzzles like
   sudoku. Could help carries, which flow right to left.
+<a id="idea-solvable"></a>
+
+- **I-L8 Does the model know it will fail? → H23.** From Walter's question "could JEPA tell us if a
+  problem is solvable by the model?". JEPA isn't needed: a probe on the state at `=` that
+  predicts right vs wrong answers the same question. If it works, it is also a stop signal for
+  H9 / H10 (keep looping while the model thinks it would be wrong).
 - **I-L6 Latent targets** (JEPA-style). Like H20, but predict the hidden state of the next step
   instead of its text. Close to Coconut (see related work).
+<a id="idea-rl"></a>
+
+- **I-L9 RL post-training → H24.** Pretraining learns from lots of data. Mid-training is more
+  training on a targeted mix (more math, longer inputs) before the final stage. Post-training is
+  the final shaping: supervised fine-tuning, then RL. For us: take a trained checkpoint, sample its
+  answers, reward 1 for exact and 0 otherwise. Honest prior: when exact labels exist, normal
+  training is usually more efficient. RL's edge is fixing mistakes the model makes on its own
+  outputs. Twist that ties to H9: reward exact answers that use fewer passes, which teaches
+  stopping. Start on shallow (cheap).
 - **I-L7 Other losses.** Weight answer digits by difficulty, reward exact answers only (RL), or
   penalize state change late in the loop to push toward equilibrium (links I-L3).
 
