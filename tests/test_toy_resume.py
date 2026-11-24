@@ -18,10 +18,12 @@ def _cleanup(*names):
         shutil.rmtree(ROOT / "results/toy" / n, ignore_errors=True)
         for f in (ROOT / "checkpoints/toy").glob(n + "*"):
             f.unlink()
+    shutil.rmtree(ROOT / "checkpoints/toy/zz_test_sub", ignore_errors=True)
+    shutil.rmtree(ROOT / "results/toy/zz_test_sub", ignore_errors=True)
 
 
 def test_pause_resume_matches_unbroken_run():
-    a, b = "zz_test_full", "zz_test_pause"
+    a, b = "zz_test_full", "zz_test_sub/pause"  # "/" like real run names (wide/...)
     _cleanup(a, b)
     try:
         train.main(["--name", a, *BASE])

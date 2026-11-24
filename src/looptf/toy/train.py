@@ -229,6 +229,7 @@ def main(argv=None):
         return a.lr * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * t)))
 
     state_path = ckpt_dir / f"{a.name}.state.pt"
+    state_path.parent.mkdir(parents=True, exist_ok=True)  # run names may contain '/'
     start, elapsed0 = 0, 0.0
     if a.resume:
         s = torch.load(state_path, map_location=dev, weights_only=False)

@@ -98,7 +98,9 @@ th { color: var(--muted); font-weight: 600; }
   <section>
     <h2>H16, running now: wider blocks</h2>
     <p class="note">Widths 256 (thin line), 384 and 512 (thick line). 120k-step schedule, each run pauses at 40k for a look.
-      Partial curves, refreshed when the page is rebuilt (<code>scripts/curves_export.py</code>).</p>
+      Partial curves, refreshed when the page is rebuilt (<code>scripts/curves_export.py</code>). The first width-512 runs
+      crashed while saving at the 40k pause (a missing folder). Their curves up to 40k are real and shown here until the reruns pass them.
+      The thin width-256 baselines without tags start after the 384 runs.</p>
     <div class="panel"><div class="legend" id="leg-wide"></div><div class="pair" id="g-wide"></div><p class="note" id="wide-status"></p></div>
   </section>
 
@@ -223,7 +225,7 @@ th { color: var(--muted); font-weight: 600; }
   }
 
   function groupWide() {
-    const rs = runs((r) => r.group === "wide");
+    const rs = runs((r) => r.group === "wide" || (r.group === "wide-crash1" && !DATA.runs.some((q) => q.group === "wide" && q.model === r.model && q.width === r.width && q.train.length > r.train.length)));
     const host = document.getElementById("g-wide");
     if (!rs.length) { document.getElementById("wide-status").textContent = "No H16 data yet."; return; }
     const W = { 256: 1.2, 384: 2, 512: 3.2 };

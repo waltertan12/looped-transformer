@@ -20,6 +20,7 @@ GROUPS = {
     "place": "40k steps, tags (D-011)",
     "tags": "40k steps, tag fixes (D-014)",
     "wide": "H16: widths 256 / 384 / 512, no tags, 120k schedule (D-015)",
+    "wide-crash1": "H16 width-512 first attempt (crashed at the 40k pause, curves valid to 40k)",
 }
 MODEL = {"c2k1": "shallow", "c2k8": "looped", "c16k1": "deep"}
 

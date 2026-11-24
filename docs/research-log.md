@@ -952,6 +952,15 @@ pauses at 40k and writes `checkpoints/toy/wide/<run>@40k.pt` and
 `results/toy/wide-pause.queue.log`. Speed at 512: about 0.17 s/step (2.4× width 256), so the 40k
 stage takes about 5 h and the rest to 120k about 10 h. Continue with `scripts/arith_wide.sh resume`.
 
+**Crash at the 40k pause (24 Nov, about 09:40).** Both width-512 runs reached 40k, then failed
+to save: the pause code didn't create `checkpoints/toy/wide/` (run names contain `/`, and the test
+used a name without one). About 2 h of GPU lost. Fix: create the folder (done by hand at once, so
+the running 384 runs save fine) and in `train.py`. The test now uses a nested name. The 512 runs
+rerun from scratch after the queue (`scripts/arith_wide_rerun512.sh`). Their first logs are kept in
+`results/toy/wide-crash1/` (valid to 40k). Early read at 36k, exact accuracy depths 1–8: looped
+512 0.33, deep 512 0.23, looped 256 (old, tags) 0.23. One seed, mid-training, and the no-tag 256
+baseline isn't run yet, so this is a hint only.
+
 The 120k target from the old runs (tags on), exact: multi-digit inputs 0.40 / 0.44 / 0.52, big
 answers 0.25 / 0.39 / 0.47 (shallow / looped / deep).
 

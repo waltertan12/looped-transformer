@@ -16,7 +16,7 @@ track (record in `.locks/running.json`, not committed). Register new queues with
 Tracks in this repo: arithmetic (`src/looptf/toy/`, everything below) and protein (idea stage, `docs/protein.md`).
 
 H16 / D-015: `scripts/arith_wide.sh pause` (9 runs, 2 at a time, log `results/toy/wide-pause.queue.log`).
-Each run pauses at 40k. When all 9 say "done … (pause)": score the @40k results against the D-015
+The two width-512 runs crashed at the pause (fixed) and rerun afterwards via `scripts/arith_wide_rerun512.sh` (log `results/toy/wide-rerun512.queue.log`). Each run pauses at 40k. When all 9 say "done … (pause)": score the @40k results against the D-015
 rules and show Walter. If he says continue: `setsid nohup scripts/arith_wide.sh resume > results/toy/wide-resume.queue.log 2>&1 &`.
 
 ## Where things are
