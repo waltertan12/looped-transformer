@@ -15,7 +15,8 @@ Update 12:40: `scripts/arith_wide_chain.sh` (log `results/toy/wide-chain.queue.l
 512 reruns to pause at 40k, then runs all 9 to an 80k pause (`arith_wide.sh resume80`), then to 120k
 (`arith_wide.sh resume`). Walter approved both steps. State is also saved every 10k steps: after a
 crash, rerun the same mode. Score each checkpoint with `scripts/wide_report.py 40k|80k|120k`.
-Expected: 40k ≈ 14:05, 80k ≈ 20:30, 120k ≈ 00:00.
+Expected: 40k ≈ 14:30 (deep 512 restarted 12:43), 80k ≈ 21:00, 120k ≈ 00:30.
+**Never run tests or evals on the GPU while trainings run** (two width-512 runs fill it; one OOM'd on 24 Nov).
 **First run `scripts/lock.py show`.** It lists every queue running on this machine, from any
 track (record in `.locks/running.json`, not committed). Register new queues with `scripts/lock.py add`.
 Tracks in this repo: arithmetic (`src/looptf/toy/`, everything below) and protein (idea stage, `docs/protein.md`).

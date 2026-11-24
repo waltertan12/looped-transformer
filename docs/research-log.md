@@ -961,6 +961,11 @@ rerun from scratch after the queue (`scripts/arith_wide_rerun512.sh`). Their fir
 512 0.33, deep 512 0.23, looped 256 (old, tags) 0.23. One seed, mid-training, and the no-tag 256
 baseline isn't run yet, so this is a hint only.
 
+**Second crash (12:15).** The deep 512 rerun ran out of GPU memory at step 1,400: the resume tests
+ran on the GPU next to two width-512 trainings (each allowed 45% of memory). Claude's mistake. Lost
+about 4 minutes. Restarted with `--save_every 10000`. Rule from now on: no tests or evals on the GPU
+while trainings run. The chain now scores the add/sub sets itself, only between stages.
+
 **Plan change (24 Nov, Walter).** Continue all 9 to a second pause at 80k, then to 120k, without
 waiting at each step. Added `--save_every 10000` (atomic state saves, resume drops log lines from a
 crashed attempt) and tests for two pauses and for resuming from a periodic save. Scoring script
