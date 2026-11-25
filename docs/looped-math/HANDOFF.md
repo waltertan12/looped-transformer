@@ -28,8 +28,10 @@ The first approach (Qwen retrofit) is stopped: `history/qwen-retrofit/`.
 ## When the chain finishes
 1. Fix the wait loop (also listed in `docs/housekeeping.md`) in `scripts/arith_wide_chain.sh`: `pgrep -f "pause_at 40000"` matches any shell
    whose command line contains that text. On 24 Nov it hung the chain from 13:45 to 15:29.
-2. Rerun `scripts/wide_ops.sh 40k` with the GPU free. `c2k8-w512-s0@40k-sub` FAILED. The cause is
-   not known, because the script sends its output to /dev/null.
+2. Rerun `scripts/wide_ops.sh 40k` and `scripts/wide_ops.sh 80k` with the GPU free, with output visible.
+   `c2k8-w512-s0` FAILED on the subtract-only set at both 40k and 80k (add-only passed both times).
+   It is the same run and set each time, so the cause is likely systematic. Possible cause (not checked):
+   out of memory at `--mem_fraction 0.25` for the largest looped model. The script sends output to /dev/null.
 3. Score 120k against the D-015 rules: `scripts/wide_report.py 120k`. Show Walter. Write the log
    entry, `results/`, and the verdict in `hypotheses.md`.
 
