@@ -1,4 +1,6 @@
 <title>Amino Acid Map</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
@@ -61,6 +63,9 @@ th { color: var(--muted); font-weight: 600; }
 td.ok { color: var(--ink); } td.miss { color: var(--muted); }
 code { font-family: var(--f-mono); font-size: 0.88em; }
 .clusters { display: grid; gap: 8px; }
+.cmp td b { color: var(--ink); }
+.proved { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.proved > div { display: grid; gap: 6px; align-content: start; min-width: 0; }
 .crow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--grid); }
 .crow .lbl { width: 84px; color: var(--muted); font-size: 0.8rem; flex: none; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 6px; border: 1px solid var(--ring); border-radius: 999px; font-size: 0.85rem; background: var(--plane); }
@@ -115,6 +120,23 @@ ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; } li { max-width:
     <div class="two" id="clus"></div>
     <p class="note">Chips are coloured by the chemistry group from the legend above, so a one-colour row is a clean match.
       Chance comes from scoring the same clusters against shuffled labels 2,000 times.</p>
+    <h3>Why 0.62 is better than it sounds</h3>
+    <p>k-means (ESM-2 8M) is three letters away from the textbook grouping. Move alanine, asparagine and glutamine
+      back and the two match exactly, so 17 of 20 land where the textbook puts them.</p>
+    <div class="scroll"><table class="cmp">
+      <thead><tr><th>textbook group</th><th>k-means cluster</th><th>why the move makes chemical sense</th></tr></thead>
+      <tbody>
+        <tr><td>greasy: <b>A</b> V L I M</td><td>V L I M</td><td rowspan="2">Alanine's side chain is one methyl group, the smallest greasy one, so it sits with the other tiny side chains</td></tr>
+        <tr><td>special: G P C</td><td><b>A</b> G P C</td></tr>
+        <tr><td>polar: S T <b>N Q</b></td><td>S T</td><td rowspan="3">Asparagine and glutamine are the amide forms of aspartate and glutamate: same shape, no charge. Each lands beside its charged relative</td></tr>
+        <tr><td>acidic: D E</td><td><b>N</b> D E</td></tr>
+        <tr><td>basic: K R H</td><td><b>Q</b> K R H</td></tr>
+        <tr><td>aromatic: F W Y</td><td>F W Y</td><td>Exact match</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">ARI is strict with only 20 items. It checks all 190 pairs of amino acids for agreement on
+      "same group or not", so each moved letter breaks many pairs at once. A score of 1.0 would mean copying one
+      textbook's grouping exactly, and textbooks disagree about where alanine and histidine belong.</p>
   </section>
 
   <section class="panel">
@@ -124,15 +146,26 @@ ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; } li { max-width:
   </section>
 
   <section class="panel">
-    <h2>What this does and doesn't show</h2>
-    <ul>
-      <li><b>Shows:</b> the model's built-in letter table already encodes side-chain chemistry: charge, size, aromatic rings, and greasiness.</li>
-      <li><b>Pairs a chemist would make:</b> asparagine sits by aspartate and glutamine by glutamate. Each amide is the same shape as its acid.</li>
-      <li><b>Clustering without labels</b> (k-means, 8M) finds: small side chains (A, G, P, C), greasy (V, L, I, M), aromatic (F, W, Y), the two alcohols (S, T), acids with asparagine (N, D, E), and bases with glutamine (Q, K, R, H). That differs from our textbook groups mainly by splitting the polar group and pairing each amide with charged neighbours.</li>
-      <li><b>Doesn't show</b> anything about folding or structure. These are the 20 letters on their own, before the model reads any protein. Structure is the next test (P1).</li>
-      <li><b>Small numbers:</b> only 20 points, and the 2D plot keeps about 30% of the spread. The scores use all the dimensions, and chance is measured by shuffling the group labels 2,000 times.</li>
-      <li><b>Groups are a simplification:</b> histidine (basic, but weakly), cysteine, glycine and proline don't fit neatly anywhere.</li>
-    </ul>
+    <h2>What we proved, and what we didn't</h2>
+    <div class="proved">
+      <div><h3>Proved</h3><ul>
+        <li>A model that only ever saw protein letter strings stores the 20 amino acids in a way that reflects
+          side-chain chemistry: greasiness, charge, aromatic rings and size.</li>
+        <li>It isn't chance. Three tests agree: nearest neighbours 70% vs 14% chance, the main direction tracks
+          hydropathy at r = 0.80, and clustering with no labels scores 0.62 vs about 0. None of 2,000 label shuffles came close.</li>
+      </ul></div>
+      <div><h3>Not proved</h3><ul>
+        <li><b>Structure or folding.</b> These are the 20 letters on their own, before the model reads any protein. That is P1.</li>
+        <li><b>Anything about loops.</b> These are ESM-2's models, not ours.</li>
+        <li><b>Usefulness for a real task.</b> Whether this helps predict anything a biologist cares about is untested.</li>
+        <li><b>A size trend.</b> One model at each of two sizes, no repeats. 35M scoring a little under 8M can be noise.</li>
+      </ul></div>
+    </div>
+    <p><b>In plain English:</b> a protein model learns basic chemistry just from reading sequences. That is a sanity
+      check that protein embeddings carry real information. It is the first step, not a result about loops.</p>
+    <p class="note">Small print: only 20 points, and the 2D map keeps about 30% of the spread, so the scores use all
+      the dimensions. The six groups are one textbook simplification. Histidine (weakly basic), cysteine, glycine
+      and proline don't fit neatly anywhere.</p>
     <p class="note">Data: <code>scripts/protein_p0.py</code>, models <code>facebook/esm2_t6_8M_UR50D</code> and <code>facebook/esm2_t12_35M_UR50D</code>, run on 2026-11-24 on the CPU (6 threads, under 10 seconds). Clustering: scikit-learn k-means (200 restarts) and average-linkage hierarchical clustering, both on cosine-normalized vectors.</p>
   </section>
 </main>

@@ -23,6 +23,8 @@ Does looping add reasoning depth? Tiny models trained from scratch on nested ari
 
 The same loop question on proteins. [README](protein/README.md) · [Notes](protein/notes.md)
 
+- **[Amino acid map (P0)](protein/visual/p0-amino-acids.html)**: a protein model that only read letters sorts the amino acids by chemistry
+
 ## Virtual cell (idea stage)
 
 Toy gene-network problems shaped like our arithmetic. [README](virtual-cell/README.md) · [Notes](virtual-cell/notes.md)

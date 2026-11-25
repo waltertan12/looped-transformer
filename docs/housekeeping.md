@@ -25,3 +25,8 @@ Add an item when you notice debt. Remove it when it is fixed, and say so in the 
   Optional fix: redirect stubs at the old paths.
 - **The two skills assume looped-math.** `status-update` and `decision-brief` write to
   `docs/looped-math/`. Make them take a project when a second project becomes active.
+- **Visual pages on the public site lack a doctype.** They are written for the claude.ai artifact
+  viewer, which adds the skeleton. GitHub Pages serves them as-is, so browsers use quirks mode.
+  `p0-amino-acids.html` adds its own charset and viewport tags; the three looped-math pages do not.
+  The training-curves page also fetches `curves/*.json`, which is gitignored, so it shows no charts on
+  the public site.

@@ -18,7 +18,7 @@ Chance ARI is about 0 (95th percentile 0.12–0.14). k-means 8M clusters: A G P 
 S T | N D E | Q K R H. It splits our polar group and puts each amide (N, Q) with charged neighbours.
 Not shown: anything about structure (these are the 20 input embeddings, before any protein is read).
 Script `scripts/protein_p0.py`, output `results/protein/p0/p0.json`, page `visual/p0-amino-acids.html`
-(artifact https://claude.ai/artifact/9oU5iL23HiH9cMV6efM1ri). CPU only, 6 threads, under 10 s, 1 GB RAM. Page template:
+(artifact https://claude.ai/artifact/9oU5iL23HiH9cMV6efM1ri, public: https://waltertan12.github.io/looped-transformer/protein/visual/p0-amino-acids.html). CPU only, 6 threads, under 10 s, 1 GB RAM. Page template:
 `scripts/protein_p0_page.template.html` (data goes in at `__DATA__`).
 
 ## Files
