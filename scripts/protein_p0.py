@@ -10,6 +10,9 @@ Scores:
   group match  share of amino acids whose nearest neighbour (cosine, full space) is in the same
                side-chain group. Chance level is computed by shuffling the group labels.
   hydropathy   Pearson r between PC1 / PC2 and the Kyte-Doolittle hydropathy scale.
+  clustering   k-means and hierarchical (average linkage, cosine) into 6 clusters with no labels,
+               scored by adjusted Rand index (ARI) against the 6 side-chain groups. 0 = random, 1 = exact.
+               Chance: ARI of the same clusters against shuffled group labels.
 """
 from __future__ import annotations
 
@@ -19,6 +22,9 @@ from pathlib import Path
 
 os.environ.setdefault("HF_HOME", "/mnt/data/walter/huggingface")
 import numpy as np  # noqa: E402
+from threadpoolctl import threadpool_limits  # noqa: E402
+from sklearn.cluster import AgglomerativeClustering, KMeans  # noqa: E402
+from sklearn.metrics import adjusted_rand_score  # noqa: E402
 import torch  # noqa: E402
 from transformers import AutoModelForMaskedLM, AutoTokenizer  # noqa: E402
 
@@ -45,6 +51,27 @@ def nn_match(X: np.ndarray, labels: list[str]) -> tuple[float, list[str]]:
     return float(np.mean([labels[i] == labels[j] for i, j in enumerate(nn)])), [AAS[j] for j in nn]
 
 
+def clusters(X: np.ndarray, labels: list[str], rng) -> dict:
+    Xn = X / np.linalg.norm(X, axis=1, keepdims=True)
+    out = {}
+    with threadpool_limits(6):
+        found = {
+            "kmeans": KMeans(n_clusters=6, n_init=200, random_state=0).fit_predict(Xn),
+            "hierarchical": AgglomerativeClustering(n_clusters=6, metric="cosine", linkage="average").fit_predict(Xn),
+        }
+    for name, c in found.items():
+        ari = adjusted_rand_score(labels, c)
+        chance = [adjusted_rand_score(list(rng.permutation(labels)), c) for _ in range(2000)]
+        members = {}
+        for a, k in zip(AAS, c):
+            members.setdefault(int(k), []).append(a)
+        out[name] = {"ari": float(ari), "chance_mean": float(np.mean(chance)),
+                     "chance_p95": float(np.quantile(chance, 0.95)),
+                     "p_value": float(np.mean(np.array(chance) >= ari)),
+                     "clusters": sorted(members.values(), key=lambda m: AAS.index(m[0]))}
+    return out
+
+
 def main() -> None:
     out = {"groups": GROUP, "names": NAME, "hydropathy": KD, "models": {}}
     rng = np.random.default_rng(0)
@@ -69,10 +96,15 @@ def main() -> None:
             "group_match": match, "chance_mean": float(np.mean(chance)),
             "chance_p95": float(np.quantile(chance, 0.95)),
             "p_value": float(np.mean(np.array(chance) >= match)), "r_hydropathy_pc": r,
+            "clustering": clusters(X, labels, rng),
         }
+        cl = out["models"][tag]["clustering"]
         print(f"{tag}: dim {X.shape[1]}, group match {match:.2f} (chance {np.mean(chance):.2f}, "
               f"95th pct {np.quantile(chance, 0.95):.2f}), r(PC1,KD) {r[0]:+.2f}, r(PC2,KD) {r[1]:+.2f}, "
               f"PC var {var[0]:.2f}/{var[1]:.2f}")
+        for name, c in cl.items():
+            print(f"   {name}: ARI {c['ari']:.2f} (chance {c['chance_mean']:.2f}, 95th pct {c['chance_p95']:.2f}, "
+                  f"p {c['p_value']:.4f})  " + " | ".join("".join(m) for m in c["clusters"]))
     p = REPO / "results/protein/p0/p0.json"
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(out, indent=1))
