@@ -151,6 +151,18 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
         has slightly lower training loss. At width 384 it is the other way round: deep leads on both, and the gap widens from 60k to 78k (accuracy 0.330 vs 0.312, then 0.414 vs 0.358). Width 256 looks like 384, with a wider gap: at 78k deep 0.419, looped 0.328. Shallow trails at every width and every step. One seed. All 9 runs now continue to 120k.</p>
     </div>
     <div class="panel">
+      <h3>Sneak peek at 100k: width 512</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>model (width 512)</th><th>loss 80k</th><th>loss 100k</th><th>accuracy 78k</th><th>accuracy 102k</th></tr></thead>
+        <tbody>
+          <tr><td>Looped 2×8</td><td>0.481</td><td><b>0.396</b></td><td>0.435</td><td><b>0.568</b></td></tr>
+          <tr><td>Deep 16×1</td><td>0.506</td><td>0.404</td><td>0.431</td><td>0.532</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Tied at 78k, looped leads again by 0.04 at 102k. Both still climb fast (+0.10 to +0.13 in 24k steps).
+        One seed, so a 0.04 lead is within seed-to-seed noise. The other 7 runs reach 100k later tonight.</p>
+    </div>
+    <div class="panel">
       <h3>The pre-registered rules at 80k (interim, judged for real at 120k)</h3>
       <div class="scroll"><table>
         <thead><tr><th>exact accuracy at 80k</th><th>width 256</th><th>width 384</th><th>width 512</th></tr></thead>
