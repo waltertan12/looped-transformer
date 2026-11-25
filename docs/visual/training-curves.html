@@ -177,6 +177,8 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
       </table></div>
       <p class="note">Tied at 78k, looped leads again by 0.04 at 102k. Both still climb fast (+0.10 to +0.13 in 24k steps).
         One seed, so a 0.04 lead is within seed-to-seed noise.</p>
+      <p class="note"><b>Width 256 at 100k:</b> training loss looped 0.554, deep 0.405. Held-out accuracy at 102k looped 0.422,
+        deep 0.537. The widest gap of the three widths, 0.12, in deep's favour.</p>
       <p class="note"><b>Width 384 finished (120k):</b> all problems looped 0.485, deep 0.555. Depth 8 looped 0.36, deep 0.42.
         Multi-digit inputs looped 0.46, deep 0.53. Big answers looped 0.42, deep 0.56. Deep leads on everything at this width,
         unlike 512 where the two end about even.</p>
