@@ -65,6 +65,13 @@ Related hypotheses in `hypotheses.md`.
   step per pass, which may be worse than what the model finds. Loop-specific test: does it help
   looped more than deep given the same per-layer-group loss? Related: deep supervision, progressive
   loss (McLeish), latent-reasoning work. Prior art: [related work](prior-art/related-work.md#rw-steps).
+- **I-M9 Techniques for bigger numbers** (Walter, 24 Nov). Exact accuracy falls off with number size at
+  every width, and more data is unlikely to fix it (10M problems, answer sizes already balanced, train
+  and test accuracy close). Candidates, cheapest first: (a) reversed answer order + place tags together,
+  on pure addition (McLeish's combo; we only tested them apart or on mixed data); (b) a scratchpad: the
+  model writes carries or partial results before the answer, so each pass does one small step;
+  (c) progressive loss (I-M1) and more loops at test time for longer numbers; (d) digit-length
+  curriculum. Start on `data/nested_add`-style pure addition, where the carry chain is the only difficulty.
 - **I-M6 Fit accuracy = α·log(effective depth) + β** over the grid; compare α for loops vs layers.
 
 ## Long term
