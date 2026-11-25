@@ -151,6 +151,22 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
         has slightly lower training loss. At width 384 it is the other way round: deep leads on both, and the gap widens from 60k to 78k (accuracy 0.330 vs 0.312, then 0.414 vs 0.358). Width 256 looks like 384, with a wider gap: at 78k deep 0.419, looped 0.328. Shallow trails at every width and every step. One seed. All 9 runs now continue to 120k.</p>
     </div>
     <div class="panel">
+      <h3>Looped and deep at 120k, all three widths</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>exact accuracy at 120k</th><th>width 256</th><th>width 384</th><th>width 512</th></tr></thead>
+        <tbody>
+          <tr><td>Looped, multi-digit / big answers / depth 8</td><td>0.45 / 0.37 / 0.33</td><td>0.46 / 0.42 / 0.36</td><td>0.53 / 0.57 / 0.43</td></tr>
+          <tr><td>Deep, multi-digit / big answers / depth 8</td><td>0.55 / 0.62 / 0.43</td><td>0.53 / 0.56 / 0.42</td><td>0.57 / 0.62 / 0.42</td></tr>
+          <tr><td>Deep's lead on multi-digit inputs</td><td>+0.10</td><td>+0.07</td><td>+0.04</td></tr>
+          <tr><td>Deep's lead at depth 8</td><td>+0.10</td><td>+0.06</td><td>−0.01</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Width helps looped (+0.08 / +0.20 / +0.10 from 256 to 512) much more than deep (+0.02 / 0.00 / −0.01),
+        so deep's lead shrinks as width grows. Same weights and compute: looped at 512 (18M weights, 16 layers of compute)
+        against deep at 256 (19M, 16 layers) is 0.53 / 0.57 / 0.43 vs 0.55 / 0.62 / 0.43, about even on steps, deep a little
+        ahead on numbers. One seed. The shallow runs finish later tonight, then the pre-registered rules are scored.</p>
+    </div>
+    <div class="panel">
       <h3>Width 512 finished (120k)</h3>
       <div class="scroll"><table>
         <thead><tr><th>exact accuracy at 120k (width 512)</th><th>looped 2×8</th><th>deep 16×1</th></tr></thead>
