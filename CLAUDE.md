@@ -15,7 +15,7 @@ project's memory: read `docs/README.md` for how they work.
 - GPU: one RTX 5090, 32 GB, power-limited to 450 W. Everything must fit on that card.
 - Run at most 2 trainings at a time. Register every queue with `scripts/lock.py add`.
 - Do not run tests or evals on the GPU while trainings run.
-- Leave CPU headroom: cap threads and use `nice -n 10` for CPU-heavy analysis.
+- Leave 25–50% of CPU cores free (Walter, 2026-11-24): use at most 12 of 24 threads (`torch.set_num_threads`, `OMP_NUM_THREADS`, `threadpoolctl`) and `nice -n 10` for CPU-heavy work.
 - `results/`, `checkpoints/`, `data/` are gitignored.
 
 ## Working with Walter
