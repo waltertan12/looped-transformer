@@ -34,15 +34,8 @@ published as claude.ai artifacts. Links are in `HANDOFF.md`.
 Code `src/looptf/toy/`, scripts `scripts/arith_*.sh` and friends, tests `tests/test_toy_*.py`.
 Run outputs `results/toy/`, checkpoints `checkpoints/toy/`, data `data/` (all gitignored).
 
-## Known path debt (docs moved on 2026-11-24, scripts not yet updated)
+## Known path debt
 
-Some report scripts still write to the old flat paths by default. When you run them, pass the
-new path:
-- `scripts/arith_report.py --out docs/looped-math/results/grid.md`
-- `scripts/ops_report.py --out docs/looped-math/results/ops.md`
-- `scripts/tags_report.py --out docs/looped-math/results/tags.md`
-- `scripts/probe_report.py` has no `--out` flag. It writes `docs/results-h19.md`. Move the output to
-  `docs/looped-math/results/h19.md`.
-
-`docs/visual/` stays where it is, because `scripts/curves_export.py`, `scripts/breakdown_export.py`
-and `scripts/attn_export.py` write into it.
+Some report scripts still write to the old flat docs paths, and `docs/visual/` has not moved yet.
+Details and fixes: `../housekeeping.md`. Until then, pass `--out docs/looped-math/results/<name>.md`
+to the report scripts.

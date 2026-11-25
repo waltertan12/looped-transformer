@@ -14,6 +14,7 @@ If it is not in the docs, it did not happen. Write as you go, not at the end.
 docs/
   README.md            this file: how the harness works
   index.md             landing page of the public site (GitHub Pages serves docs/)
+  housekeeping.md      repo structure and tech-debt to-do list, across projects
   glossary.md          shared terms, plain language (for Walter)
   glossary-agent.md    shared terms, terse (for agents)
   visual/              HTML pages published as claude.ai artifacts (looped-math; see below)
@@ -23,6 +24,10 @@ docs/
 ```
 
 Each project folder starts with a `README.md`: intent, current question, status, file map.
+
+**Handoffs.** Each project has its own `HANDOFF.md` with its research state: what runs, how to
+resume, next actions. There is no top-level handoff. Repo-wide structure and tech debt go in
+`housekeeping.md` instead.
 
 ## The files in an active project
 

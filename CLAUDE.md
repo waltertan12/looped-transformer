@@ -8,6 +8,7 @@ project's memory: read `docs/README.md` for how they work.
 2. Read `docs/README.md` (the harness), then the `HANDOFF.md` of the project you work on.
    Active project: `docs/looped-math/` (code `src/looptf/toy/`). Idea stage: `docs/protein/`,
    `docs/virtual-cell/`. Stopped: the Qwen retrofit (`docs/looped-math/history/qwen-retrofit/`).
+3. Repo-wide structure and tech debt: `docs/housekeeping.md`. Add debt you notice there.
 
 ## Machine
 - Repo at `/mnt/data/walter/loop-transformer`. Python venv at `.venv`. Run `.venv/bin/python`.

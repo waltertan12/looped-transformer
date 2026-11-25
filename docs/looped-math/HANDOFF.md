@@ -26,7 +26,7 @@ The first approach (Qwen retrofit) is stopped: `history/qwen-retrofit/`.
 - Do not move `results/toy/`, `checkpoints/toy/`, `src/looptf/toy/` or `scripts/` while it runs.
 
 ## When the chain finishes
-1. Fix the wait loop in `scripts/arith_wide_chain.sh`: `pgrep -f "pause_at 40000"` matches any shell
+1. Fix the wait loop (also listed in `docs/housekeeping.md`) in `scripts/arith_wide_chain.sh`: `pgrep -f "pause_at 40000"` matches any shell
    whose command line contains that text. On 24 Nov it hung the chain from 13:45 to 15:29.
 2. Rerun `scripts/wide_ops.sh 40k` with the GPU free. `c2k8-w512-s0@40k-sub` FAILED. The cause is
    not known, because the script sends its output to /dev/null.
