@@ -36,3 +36,6 @@ Precise meanings as used in this repo, with code locations. Human-facing explana
 - **status entry**: `docs/looped-math/status.md`, via skill `status-update`.
 - **adaptive loops (plan step 5, not implemented)**: deep supervision = loss on the answer after each pass 1..K (coda + head applied per pass); 5a confidence stop at inference; 5b learned halting head (PonderNet-style: P(halt) per pass, expected loss + penalty on passes).
 - **probe**: linear classifier on frozen hidden states (per pass / layer) predicting a target; readability ≠ use.
+- **PCA / PC1, PC2** (protein P0): SVD of mean-centred embeddings (20 × d); PCk = k-th right singular vector; plot = projection on PC1, PC2. Unsupervised: labels not used. Variance explained = s_k² / Σ s². P0 8M: 0.18 / 0.13.
+- **nearest-neighbour group match / ARI** (protein P0): cosine NN in full d; ARI via `sklearn.metrics.adjusted_rand_score`; chance = 2,000 label permutations. Script `scripts/protein_p0.py`.
+

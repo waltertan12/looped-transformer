@@ -105,6 +105,21 @@ ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; } li { max-width:
   </section>
 
   <section class="panel">
+    <h2>How the map's two directions are chosen</h2>
+    <div class="ewhy">
+      <div><b>The problem</b><p>Each amino acid is 320 numbers, a point in a space with 320 directions. A page has only 2.</p></div>
+      <div><b>The trick (PCA)</b><p>Don't pick 2 of the 320 numbers. Find new directions, each a mix of all 320, along which the points spread out the most.</p></div>
+      <div><b>PC1 and PC2</b><p>PC1 is the most spread-out direction. PC2 is the most spread-out direction at right angles to PC1. The plot uses those two.</p></div>
+      <div><b>Who chose them</b><p>The numbers did. PCA never sees the chemistry labels, so PC1 lining up with greasiness (r = 0.80) is a finding, not a setup.</p></div>
+    </div>
+    <p><b>Analogy:</b> shine a flashlight on a sculpture and turn it until its shadow on the wall is as spread out as
+      possible. The wall is the map. Some detail is always lost. Here the map keeps 31% of the spread (PC1 18%, PC2 13% for 8M),
+      which is why the scores above use all 320 numbers, not the map.</p>
+    <p class="note">Small example: for people's height and weight, PC1 is roughly "overall size" (both rise together) and PC2 is
+      roughly "build" (heavy or light for one's height).</p>
+  </section>
+
+  <section class="panel">
     <h2>The main direction is greasy versus water-loving</h2>
     <p>Each point's position along the map's main direction (PC1) against its Kyte–Doolittle hydropathy, the textbook
       scale from greasy (+4.5, isoleucine) to charged (−4.5, arginine). The model was never given this scale.</p>

@@ -128,3 +128,29 @@ Plain-language definitions, each tied to this project. Terse agent-facing defini
   (e.g. after loop pass 3).
 - **Fixed point.** When running another loop pass no longer changes the hidden state.
 - **Probe.** A tiny linear classifier trained to read one fact (say, a sub-expression's value) out of a model's hidden state. If it can, the model has that fact stored there. It doesn't prove the model uses it.
+
+## Protein and embedding-analysis vocabulary
+
+- **PCA (principal component analysis).** A way to draw a cloud of points that lives in many
+  dimensions (ESM-2 8M stores each amino acid as 320 numbers) on a flat 2D page. It doesn't pick
+  2 of the 320 numbers. It finds new directions, each a weighted mix of all 320, and plots along
+  those. Analogy: shine a flashlight on a 3D sculpture and turn it until the shadow on the wall is as
+  spread out as possible. The wall is the 2D plot.
+- **PC1, PC2 (principal components 1 and 2).** PC1 is the direction along which the points are most
+  spread out. PC2 is the most spread-out direction at right angles to PC1. They come from the
+  numbers alone, with no labels, so we didn't choose them and chemistry played no part in picking
+  them. Small example: for people's height and weight, PC1 is roughly "overall size" (both go up
+  together) and PC2 is roughly "build" (heavy for one's height or light).
+- **Variance explained.** How much of the cloud's total spread a direction keeps. In P0, PC1 keeps
+  18% and PC2 13%, so the 2D map shows 31% and hides the rest. That's why scores are computed in
+  all 320 dimensions, not on the map.
+- **Cosine similarity.** How closely two lists of numbers point the same way: 1 = same direction,
+  0 = unrelated. Used to find each amino acid's nearest neighbour.
+- **Clustering (k-means, hierarchical).** Methods that split points into groups using only their
+  numbers, with no labels. k-means puts points into k groups around k centres. Hierarchical
+  clustering joins the closest points first and keeps merging.
+- **ARI (adjusted Rand index).** How well two groupings agree, checked over every pair of items
+  ("same group or not?"). 0 = no better than random, 1 = identical. Strict when there are few items.
+- **Hydropathy (Kyte–Doolittle).** A textbook scale of how greasy (water-avoiding) each amino acid's
+  side chain is, from +4.5 (isoleucine) to −4.5 (arginine).
+
