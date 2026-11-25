@@ -116,7 +116,7 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
     <h2>H16, running now: wider blocks</h2>
     <p class="note">Widths 256 (thin line), 384 and 512 (thick line). 120k-step schedule, each run pauses at 40k for a look.
       Partial curves, refreshed when the page is rebuilt (<code>scripts/curves_export.py</code>). All 9 runs reached the 40k pause.
-      Since 24 Nov 15:29 they are training on to an 80k pause in pairs. Width 512 reached 80k at about 17:30. Width 384 reached 80k at about 18:40. Width 384 and 256 reached 80k by about 19:30. The three shallow runs are training now. One seed each.</p>
+      Since 24 Nov 15:29 they are training on to an 80k pause in pairs. Width 512 reached 80k at about 17:30. Width 384 reached 80k at about 18:40. All 9 runs reached 80k by 19:54. After scoring the add/sub sets, they continue to 120k. One seed each.</p>
     <div class="panel">
       <h3>Training loss at the 40k pause</h3>
       <div class="scroll"><table>
@@ -141,12 +141,31 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
           <tr><td>Deep 16×1, width 384</td><td>0.759</td><td>0.633</td><td><b>0.527</b></td><td>0.275</td><td>0.330</td><td><b>0.414</b></td></tr>
           <tr><td>Looped 2×8, width 256</td><td>0.821</td><td>0.728</td><td>0.644</td><td>0.261</td><td>0.307</td><td>0.328</td></tr>
           <tr><td>Deep 16×1, width 256</td><td>0.763</td><td>0.628</td><td><b>0.499</b></td><td>0.281</td><td>0.356</td><td><b>0.419</b></td></tr>
-          <tr><td>Shallow 2×1, width 512</td><td>0.873</td><td>0.776</td><td>–</td><td>0.211</td><td>0.247</td><td>–</td></tr>
+          <tr><td>Shallow 2×1, width 512</td><td>0.873</td><td>0.776</td><td>0.691</td><td>0.211</td><td>0.247</td><td>0.308</td></tr>
+          <tr><td>Shallow 2×1, width 384</td><td>0.928</td><td>0.845</td><td>0.762</td><td>0.177</td><td>0.240</td><td>0.282</td></tr>
+          <tr><td>Shallow 2×1, width 256</td><td>0.960</td><td>0.880</td><td>0.805</td><td>0.180</td><td>0.213</td><td>0.246</td></tr>
         </tbody>
       </table></div>
       <p class="note">Loss is the last logged training-batch loss at that step. Accuracy is exact answers on held-out problems, averaged over depths 1–8
         (the last eval before 80k is at 78k). Looped led deep by 0.07 accuracy at 60k. By 78k deep has caught up (0.431 vs 0.435), while looped still
-        has slightly lower training loss. At width 384 it is the other way round: deep leads on both, and the gap widens from 60k to 78k (accuracy 0.330 vs 0.312, then 0.414 vs 0.358). Width 256 looks like 384, with a wider gap: at 78k deep 0.419, looped 0.328. Shallow trails at every point so far. One seed. The other 7 runs reach 60k and 80k later tonight; this table grows as they do.</p>
+        has slightly lower training loss. At width 384 it is the other way round: deep leads on both, and the gap widens from 60k to 78k (accuracy 0.330 vs 0.312, then 0.414 vs 0.358). Width 256 looks like 384, with a wider gap: at 78k deep 0.419, looped 0.328. Shallow trails at every width and every step. One seed. All 9 runs now continue to 120k.</p>
+    </div>
+    <div class="panel">
+      <h3>The pre-registered rules at 80k (interim, judged for real at 120k)</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>exact accuracy at 80k</th><th>width 256</th><th>width 384</th><th>width 512</th></tr></thead>
+        <tbody>
+          <tr><td>Looped, multi-digit inputs</td><td>0.31</td><td>0.35</td><td>0.40</td></tr>
+          <tr><td>Deep, multi-digit inputs</td><td>0.39</td><td>0.38</td><td>0.41</td></tr>
+          <tr><td>Looped minus shallow, depth 8</td><td>+0.10</td><td>+0.12</td><td>+0.16</td></tr>
+        </tbody>
+      </table></div>
+      <ul>
+        <li><b>Rule 1, width helps looped with numbers (+0.10 needed):</b> +0.09. Just short.</li>
+        <li><b>Rule 2, loops still add steps at every width (+0.10 each):</b> +0.10, +0.12, +0.16. Fails only because width 256 rounds up to +0.10 from just under it.</li>
+        <li><b>Rule 3, deep's lead on numbers shrinks with width:</b> +0.08 at 256, +0.01 at 512. Passes.</li>
+      </ul>
+      <p class="note">From <code>scripts/wide_report.py 80k</code>. The decision rules (D-015) apply at 120k. Width helps looped (+0.09) much more than deep (+0.02), which is why the gap closes.</p>
     </div>
     <div class="panel"><div class="legend" id="leg-wide"></div><div class="pair" id="g-wide"></div><p class="note" id="wide-status"></p></div>
   </section>

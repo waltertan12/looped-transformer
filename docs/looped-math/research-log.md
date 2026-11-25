@@ -660,3 +660,23 @@ history (`history/qwen-retrofit/`), with its log entries split out of this log, 
 ESM-2 notes moved from virtual-cell to protein, marked unverified. Paths inside old entries were
 updated to the new locations; nothing else in old entries changed. No code or scripts changed.
 
+## 2026-11-24 20:00 — H16 at 80k (interim, one seed)
+
+All 9 wide runs reached the 80k pause. `scripts/wide_report.py 80k`, exact accuracy
+(multi-digit inputs / big answers / depth 8):
+
+| model | width 256 | width 384 | width 512 |
+|---|---|---|---|
+| shallow | 0.25 / 0.19 / 0.14 | 0.29 / 0.23 / 0.15 | 0.31 / 0.27 / 0.17 |
+| looped | 0.31 / 0.29 / 0.23 | 0.35 / 0.32 / 0.27 | 0.40 / 0.43 / 0.33 |
+| deep | 0.39 / 0.44 / 0.32 | 0.38 / 0.41 / 0.30 | 0.41 / 0.44 / 0.30 |
+
+Against the D-015 rules (they apply at 120k, so this is a preview): rule 1 (width helps looped
+with numbers, needs +0.10) +0.09, just short. Rule 2 (loops add steps at every width, +0.10 each)
++0.10 / +0.12 / +0.16, the script marks it FAIL because width 256 is just under +0.10. Rule 3
+(deep's lead shrinks with width) passes: +0.08 at 256, +0.01 at 512.
+
+What it means so far: width helps looped (+0.09 multi-digit) far more than deep (+0.02). At 512,
+looped matches deep on numbers and beats it at depth 8 (0.33 vs 0.30). Not shown yet: whether it
+holds at 120k, and with a second seed. The chain continues to 120k.
+
