@@ -151,6 +151,22 @@ button:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outl
         has slightly lower training loss. At width 384 it is the other way round: deep leads on both, and the gap widens from 60k to 78k (accuracy 0.330 vs 0.312, then 0.414 vs 0.358). Width 256 looks like 384, with a wider gap: at 78k deep 0.419, looped 0.328. Shallow trails at every width and every step. One seed. All 9 runs now continue to 120k.</p>
     </div>
     <div class="panel">
+      <h3>Width 512 finished (120k)</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>exact accuracy at 120k (width 512)</th><th>looped 2×8</th><th>deep 16×1</th></tr></thead>
+        <tbody>
+          <tr><td>All held-out problems, depths 1–8</td><td>0.578</td><td>0.589</td></tr>
+          <tr><td>Depth 8</td><td><b>0.452</b></td><td>0.432</td></tr>
+          <tr><td>Multi-digit inputs (depths 1–3)</td><td>0.53</td><td><b>0.57</b></td></tr>
+          <tr><td>Big answers (3–5 digits, depths 2–6)</td><td>0.57</td><td><b>0.62</b></td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">The lead swapped back and forth (looped +0.04 at 102k, deep +0.01 at 120k), so at width 512 the two are
+        about even overall. Looped stays slightly ahead on many-step problems, deep ahead on bigger numbers, the same split
+        as the main 120k runs at width 256. Training loss ended level: 0.343 looped, 0.341 deep. One seed.
+        The pre-registered rules are scored when all 9 runs reach 120k.</p>
+    </div>
+    <div class="panel">
       <h3>Sneak peek at 100k: width 512</h3>
       <div class="scroll"><table>
         <thead><tr><th>model (width 512)</th><th>loss 80k</th><th>loss 100k</th><th>accuracy 78k</th><th>accuracy 102k</th></tr></thead>
