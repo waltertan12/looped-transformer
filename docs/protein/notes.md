@@ -79,3 +79,10 @@ Recommendation: P1, then P2. P3 only if we want a controlled toy.
 One GPU, at most 2 trainings at a time across both tracks. Before launching anything, run
 `scripts/lock.py show`. Register a new queue with `scripts/lock.py add`. The record lives in
 `.locks/running.json`, which is not committed.
+
+## ESM-2's training data (unverified)
+
+_Moved here from the virtual-cell notes on 2026-11-24: ESM-2 is a protein model, not a virtual-cell one. Written from memory. Check against the ESM-2 paper before relying on it._
+
+ESM-2 (Meta, 2022) was trained on public data: UniRef50 clusters from UniProt, sampling member
+sequences from UniRef90. Code and weights are public on GitHub and HuggingFace.

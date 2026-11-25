@@ -62,17 +62,17 @@ second seed.
 
 **Aim.** Stage 2: does looping add reasoning depth? Separate "many steps" from "big numbers",
 then test whether a looped model matches a deeper one with fewer weights. Plan and decision
-rules: `docs/plan.md`.
+rules: `docs/looped-math/plan.md`.
 
 **Done** (since 14:15)
-- Grid seed 0 finished (`docs/results-arith-grid.md`): at depth 3, looped 2×8 (4.4M) 0.86 vs
+- Grid seed 0 finished (`docs/looped-math/results/grid.md`): at depth 3, looped 2×8 (4.4M) 0.86 vs
   deep 16×1 (19M) 0.88; errors dominated by answer size, not depth.
 - Built `data/nested_bal` (2.6 GB): balanced answer sizes, multi-digit inputs at depth 1–3,
   ~1,000 test problems per (depth × input size × answer size) cell, zero overlap.
-- Workflow: decision cards (`docs/decisions.md`, D-001…D-011), plan with pre-registered rules,
+- Workflow: decision cards (`docs/looped-math/decisions.md`, D-001…D-011), plan with pre-registered rules,
   glossary (plain + agent), pre-launch checklist; place-value embeddings implemented (off).
 - **D-007 probe set finished** (shallow / looped / deep × normal / reversed, mixed depths 1–8,
-  seed 0; `docs/results-arith-bal.md`). Normal order, 1-digit inputs:
+  seed 0; `docs/looped-math/results/bal.md`). Normal order, 1-digit inputs:
 
   | model | weights | small answers, depth 2–6 | big (3–5 digit), depth 2–6 | multi-digit inputs | 1-digit ans @ depth 8 / 10* / 13* |
   |---|---|---|---|---|---|

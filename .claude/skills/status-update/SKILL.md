@@ -1,13 +1,13 @@
 ---
 name: status-update
-description: Write a structured project status update (aim, done, doing, blocked, next decisions) for the loop-transformer research repo, from live evidence (running jobs, latest evals, git log, research log), and append it durably to docs/status.md. Use when the user asks "how are we doing", "status", "where are we", "status update", or invokes /status-update.
+description: Write a structured project status update (aim, done, doing, blocked, next decisions) for the loop-transformer research repo, from live evidence (running jobs, latest evals, git log, research log), and append it durably to docs/looped-math/status.md. Use when the user asks "how are we doing", "status", "where are we", "status update", or invokes /status-update.
 ---
 
 # Status update
 
 Produce a short, structured snapshot of the project **from evidence, not memory**, show it to
-the user, and prepend it to `docs/status.md` (newest first). The research log
-(`docs/research-log.md`) holds reasoning; `docs/status.md` holds state.
+the user, and prepend it to `docs/looped-math/status.md` (newest first). The research log
+(`docs/looped-math/research-log.md`) holds reasoning; `docs/looped-math/status.md` holds state.
 
 ## 1. Gather evidence (run these; don't guess)
 
@@ -18,11 +18,11 @@ Repo root: `/mnt/data/walter/loop-transformer`.
 - **Per-run progress:** for each active or recent `results/toy/**/*.out`: last `^step` line
   (step, train acc, current curriculum depth), `grep mastered` (depths mastered and when), and
   the last eval table (after the last `--- step` line). Check for `Traceback`.
-- **Finished results:** if `docs/results-*.md` exists or runs have `per_example.npz`,
+- **Finished results:** if `docs/looped-math/results/*.md` exists or runs have `per_example.npz`,
   regenerate the report: `.venv/bin/python scripts/arith_report.py --runs <dir> --out <md>`.
 - **What changed:** `git log --oneline -15`, `git status --short`.
-- **Context:** the last 1–2 entries of `docs/research-log.md` and the previous entry in
-  `docs/status.md` (to report what moved since then).
+- **Context:** the last 1–2 entries of `docs/looped-math/research-log.md` and the previous entry in
+  `docs/looped-math/status.md` (to report what moved since then).
 - **Resources if relevant:** `nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv`,
   `df -h /mnt/data`.
 
@@ -53,7 +53,7 @@ Rules:
 
 ## 3. Save it
 
-Prepend the entry to `docs/status.md` directly below the file's header block (the first
+Prepend the entry to `docs/looped-math/status.md` directly below the file's header block (the first
 `---` line), so the newest entry is first. Create the file with that header if it doesn't
 exist. Commit only if the user asks, or if the session's convention is to commit log updates
 (it currently is: commit with a short message like "Status update YYYY-MM-DD").

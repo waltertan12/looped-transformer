@@ -64,7 +64,7 @@ Related hypotheses in `hypotheses.md`.
   model can stop when it is a single number. Catches: it hand-writes the algorithm and fixes one
   step per pass, which may be worse than what the model finds. Loop-specific test: does it help
   looped more than deep given the same per-layer-group loss? Related: deep supervision, progressive
-  loss (McLeish), latent-reasoning work. Prior art: [related work](related-work.md#rw-steps).
+  loss (McLeish), latent-reasoning work. Prior art: [related work](prior-art/related-work.md#rw-steps).
 - **I-M6 Fit accuracy = α·log(effective depth) + β** over the grid; compare α for loops vs layers.
 
 ## Long term
@@ -72,10 +72,10 @@ Related hypotheses in `hypotheses.md`.
 
 - **I-L4 Protein track** (Walter, 24 Nov). Same loop question on real biology: looped vs deep
   protein models from scratch on Swiss-Prot, scored on contacts by protein length and contact
-  range. First step: probe ESM-2 8M. Full notes: [protein.md](protein.md).
+  range. First step: probe ESM-2 8M. Full notes: [protein.md](../protein/notes.md).
 - **I-L5 Virtual cell toys** (Walter, 24 Nov). Gene networks where a knockout spreads hop by hop:
   hops play the role of bracket depth. Smallest: a 10–50 gene on/off network, predict the state
-  after t steps. Notes: [virtual-cell.md](virtual-cell.md).
+  after t steps. Notes: [virtual-cell.md](../virtual-cell/notes.md).
 <a id="idea-objectives"></a>
 
 - **I-L6 Other training objectives** (Walter, 24 Nov). Today the only loss is cross-entropy on the

@@ -1,6 +1,6 @@
 ---
 name: decision-brief
-description: Surface a key research decision to the user as a short decision card (question, options with what each outcome would mean, recommendation, who decides) and record it in docs/decisions.md. Use BEFORE launching any experiment or making any design change that alters what a result means or spends significant compute, and whenever the user asks "what are the key decisions", "what do I need to decide", or invokes /decision-brief.
+description: Surface a key research decision to the user as a short decision card (question, options with what each outcome would mean, recommendation, who decides) and record it in docs/looped-math/decisions.md. Use BEFORE launching any experiment or making any design change that alters what a result means or spends significant compute, and whenever the user asks "what are the key decisions", "what do I need to decide", or invokes /decision-brief.
 ---
 
 # Decision brief
@@ -19,7 +19,7 @@ agent make them silently ("vibe research"). Your job: separate **decisions** fro
 Not decisions: fixing a bug, writing a test, launching a run whose card is already decided,
 formatting, refactors that don't change behaviour.
 
-## The card (append to `docs/decisions.md`, newest first, next ID)
+## The card (append to `docs/looped-math/decisions.md`, newest first, next ID)
 
 ```
 ## D-NNN · <one-line question> (open)

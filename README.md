@@ -17,8 +17,8 @@ as more distinct layers at the same compute.
 
 120k training steps, two seeds each. Full write-up with charts and a primer on every term:
 **[results page](https://waltertan12.github.io/looped-transformer/visual/loop-depth-results.html)**
-(all docs: [waltertan12.github.io/looped-transformer](https://waltertan12.github.io/looped-transformer/)). Tables: [`docs/results-ops.md`](docs/results-ops.md),
-[`docs/hypotheses.md`](docs/hypotheses.md).
+(all docs: [waltertan12.github.io/looped-transformer](https://waltertan12.github.io/looped-transformer/)). Tables: [`docs/looped-math/results/ops.md`](docs/looped-math/results/ops.md),
+[`docs/looped-math/hypotheses.md`](docs/looped-math/hypotheses.md).
 To see where each model looks while it solves a problem, pass by pass:
 **[attention viewer](https://waltertan12.github.io/looped-transformer/visual/attention.html)**.
 
@@ -32,7 +32,7 @@ To see where each model looks while it solves a problem, pass by pass:
 - **A model trained at 8 loops works only at 8 loops.**
 
 Closest prior work: Saunshi et al., *Reasoning with Latent Thoughts* (ICLR 2025) and McLeish et al.,
-*Transformers Can Do Arithmetic with the Right Embeddings* (NeurIPS 2024). See `docs/related-work.md`.
+*Transformers Can Do Arithmetic with the Right Embeddings* (NeurIPS 2024). See `docs/looped-math/prior-art/related-work.md`.
 
 ## The task
 
@@ -73,7 +73,7 @@ Hardware used: one RTX 5090 (32 GB). Each 120k-step run takes 0.6–2.5 h.
 scripts/arith_long.sh "--place_emb"
 
 # Score saved models on the add-only / sub-only sets, then write the report
-scripts/eval_ops.sh && .venv/bin/python scripts/ops_report.py --out docs/results-ops.md
+scripts/eval_ops.sh && .venv/bin/python scripts/ops_report.py --out docs/looped-math/results/ops.md
 
 .venv/bin/python -m pytest tests -q -k toy
 ```
@@ -87,8 +87,8 @@ checkpoint in `checkpoints/toy/`.
   (`dataset.py`), model (`model.py`: prelude / looped core / coda, input injection, place-value tags),
   training (`train.py`)
 - `scripts/`: dataset build and verify, experiment runners (`arith_*.sh`), scoring and reports
-- `docs/`: start with `HANDOFF.md`. `hypotheses.md` (what's tested, what's open), `plan.md`
-  (next steps with decision rules written in advance), `decisions.md`, `research-log.md`
-  (chronological), `history.md` (how the project's direction changed), `glossary.md`
-- `src/looptf/model.py`, `evaluate.py`, `train.py`, `configs/`: the earlier Qwen-retrofit track
-  (paused), see `docs/history.md`
+- `docs/`: the project's written memory, one folder per project. Start with `docs/README.md`
+  (how the docs work), then `docs/looped-math/HANDOFF.md`. Projects: `looped-math/` (active),
+  `protein/` and `virtual-cell/` (idea stage)
+- `src/looptf/model.py`, `evaluate.py`, `train.py`, `configs/`: the earlier Qwen-retrofit approach
+  (stopped), see `docs/looped-math/history/README.md`

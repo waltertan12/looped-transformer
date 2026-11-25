@@ -36,11 +36,6 @@ Each one copies our arithmetic recipe: shallow vs looped vs deep with the same w
 for the number of steps, rules written before the runs. V1–V3 can generate unlimited data in
 seconds. V5 is the first contact with real biology and its noise.
 
-## ESM-2's data
-
-ESM-2 (Meta, 2022) was trained on public data: UniRef50 clusters from UniProt, sampling member
-sequences from UniRef90. Code and weights are public on GitHub and HuggingFace.
-
 ## Links in this repo
 
-[Protein track](protein.md) · [Ideas](ideas.md#idea-protein)
+[Protein track](../protein/notes.md) · [Ideas](../looped-math/ideas.md#idea-protein)
